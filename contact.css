@@ -1,0 +1,133 @@
+/* === CONTACT === */
+.contact-form .row-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.contact-form .set-field span{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:500}
+.contact-form input[type="text"],
+.contact-form input[type="email"],
+.contact-form textarea{
+  width:100%;
+  background:rgba(11,22,40,.5);border:1px solid var(--border);
+  color:var(--text);font-family:inherit;font-size:13.5px;
+  padding:12px 14px;border-radius:10px;outline:none;
+  transition:border-color .2s, box-shadow .2s;
+}
+.contact-form input:focus,
+.contact-form textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(34,184,207,.15)}
+.contact-form textarea{resize:vertical;min-height:130px;font-family:inherit}
+
+/* Custom checkbox */
+.chk-line{
+  display:flex;align-items:center;gap:10px;
+  margin:14px 0 18px;cursor:pointer;font-size:13px;color:var(--muted);
+}
+.chk-line input{display:none}
+.chk-box{
+  width:18px;height:18px;border-radius:5px;border:2px solid var(--border);
+  display:grid;place-items:center;
+  transition:all .2s;color:transparent;font-size:10px;
+}
+.chk-line input:checked + .chk-box{
+  background:var(--primary);border-color:var(--primary);color:#0b1628;
+  box-shadow:0 0 12px rgba(34,184,207,.4);
+}
+
+/* Send button */
+.send-btn{
+  width:100%;display:flex;align-items:center;justify-content:center;gap:10px;
+  background:linear-gradient(135deg,#22b8cf,#4dd4e8);color:#0b1628;
+  border:none;padding:14px 20px;border-radius:10px;
+  font-family:inherit;font-size:14px;font-weight:700;
+  cursor:pointer;box-shadow:0 6px 18px rgba(34,184,207,.4);
+  transition:all .25s;position:relative;overflow:hidden;
+}
+.send-btn::after{
+  content:"";position:absolute;top:0;left:-100%;width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);
+  transition:left .6s;
+}
+.send-btn:hover::after{left:100%}
+.send-btn:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(34,184,207,.55)}
+.send-btn:disabled{opacity:.6;cursor:not-allowed;transform:none}
+.send-btn .spin{animation:spin .8s linear infinite}
+
+/* Contact Info rows */
+.ci-row{
+  display:flex;gap:14px;align-items:flex-start;
+  padding:14px 0;border-top:1px solid var(--border);
+}
+.ci-row:first-of-type{border-top:none;padding-top:0}
+.ci-ico{
+  width:40px;height:40px;border-radius:10px;
+  display:grid;place-items:center;font-size:14px;flex-shrink:0;
+}
+.ci-ico.cyan{background:rgba(34,184,207,.12);color:var(--primary)}
+.ci-ico.green{background:rgba(81,207,102,.12);color:#51cf66}
+.ci-ico.purple{background:rgba(151,117,250,.15);color:#b197fc}
+.ci-t{font-size:12px;color:var(--muted);margin-bottom:2px}
+.ci-v{font-size:13.5px;font-weight:600;color:var(--text);text-decoration:none;display:block;line-height:1.4}
+a.ci-v:hover{color:var(--primary)}
+.ci-sub{font-size:12px;color:var(--muted);margin-top:2px}
+
+/* Support hours */
+.sh-list{display:flex;flex-direction:column}
+.sh-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:11px 0;border-top:1px solid var(--border);font-size:13px;
+}
+.sh-row:first-child{border-top:none;padding-top:0}
+.sh-row strong{font-weight:700}
+.sh-row strong.green{color:#51cf66}
+
+/* Quick Links */
+.quick-links{list-style:none;display:flex;flex-direction:column}
+.quick-links li{border-top:1px solid var(--border)}
+.quick-links li:first-child{border-top:none}
+.quick-links a{
+  display:flex;align-items:center;gap:10px;
+  padding:13px 4px;text-decoration:none;color:var(--text);
+  font-size:13.5px;transition:color .2s, padding .2s;
+}
+.quick-links a .arr{
+  margin-left:auto;font-size:10px;color:var(--muted);
+  transform:translateX(-6px);opacity:0;transition:all .25s;
+}
+.quick-links a:hover{color:var(--primary);padding-left:10px}
+.quick-links a:hover .arr{transform:translateX(0);opacity:1;color:var(--primary)}
+
+/* Emergency card */
+.emergency-card{
+  position:relative;overflow:hidden;
+  background:linear-gradient(135deg,#ff6b6b,#e03131);
+  border-radius:14px;padding:22px;color:white;
+  box-shadow:0 16px 40px rgba(255,107,107,.4), inset 0 1px 0 rgba(255,255,255,.2);
+  opacity:0;transform:translateY(14px);
+  transition:opacity .7s, transform .7s;
+}
+.emergency-card.visible{opacity:1;transform:translateY(0)}
+.em-bg{
+  position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(circle at 90% 20%, rgba(255,255,255,.2), transparent 40%),
+    radial-gradient(circle at 10% 90%, rgba(255,255,255,.1), transparent 50%);
+  animation:pcGlow 5s ease-in-out infinite;
+}
+.em-head{
+  display:flex;align-items:center;gap:10px;
+  font-size:16px;font-weight:800;margin-bottom:8px;position:relative;
+}
+.em-head i{animation:shake 2s ease-in-out infinite}
+@keyframes shake{0%,100%{transform:rotate(0)}25%{transform:rotate(-8deg)}75%{transform:rotate(8deg)}}
+.emergency-card p{font-size:13px;opacity:.95;margin-bottom:14px;line-height:1.5;position:relative}
+.em-btn{
+  width:100%;background:white;color:#e03131;
+  border:none;padding:12px;border-radius:10px;
+  font-family:inherit;font-size:13.5px;font-weight:800;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+  position:relative;transition:all .25s;
+  box-shadow:0 6px 18px rgba(0,0,0,.2);
+}
+.em-btn:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(0,0,0,.3)}
+.em-btn i{animation:pulse 1.5s infinite}
+
+@media(max-width:600px){
+  .contact-form .row-2{grid-template-columns:1fr}
+}

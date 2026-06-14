@@ -1,0 +1,115 @@
+/* === SETTINGS === */
+.settings-section{margin-bottom:18px}
+.set-field{margin-bottom:16px}
+.set-field:last-child{margin-bottom:0}
+.set-field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px;font-weight:500}
+.set-field input[type="text"]{
+  width:100%;
+  background:rgba(11,22,40,.5);border:1px solid var(--border);
+  color:var(--text);font-family:inherit;font-size:13.5px;
+  padding:12px 14px;border-radius:10px;outline:none;
+  transition:border-color .2s, box-shadow .2s;
+}
+.set-field input[type="text"]:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(34,184,207,.15)}
+
+.select-wrap{position:relative}
+.select-wrap select{
+  width:100%;appearance:none;-webkit-appearance:none;
+  background:rgba(11,22,40,.5);border:1px solid var(--border);
+  color:var(--text);font-family:inherit;font-size:13.5px;
+  padding:12px 40px 12px 14px;border-radius:10px;outline:none;
+  cursor:pointer;
+  transition:border-color .2s;
+}
+.select-wrap select:focus{border-color:var(--primary)}
+.select-wrap select option{background:var(--bg-2)}
+.select-wrap .caret{
+  position:absolute;right:14px;top:50%;transform:translateY(-50%);
+  color:var(--muted);pointer-events:none;font-size:12px;
+}
+
+/* Toggle rows */
+.toggle-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:16px 0;border-top:1px solid var(--border);
+}
+.toggle-row:first-of-type{border-top:none;padding-top:6px}
+.tr-title{font-size:14px;font-weight:600;margin-bottom:3px}
+.tr-desc{font-size:12.5px;color:var(--muted)}
+
+/* Switch toggle */
+.switch{position:relative;display:inline-block;width:44px;height:24px;flex-shrink:0}
+.switch input{opacity:0;width:0;height:0}
+.switch span{
+  position:absolute;cursor:pointer;inset:0;
+  background:rgba(255,255,255,.1);border:1px solid var(--border);
+  border-radius:999px;transition:.3s;
+}
+.switch span::before{
+  content:"";position:absolute;height:18px;width:18px;
+  left:2px;top:2px;background:#8ea0b8;border-radius:50%;
+  transition:.3s;
+}
+.switch input:checked + span{
+  background:linear-gradient(135deg,#22b8cf,#4dd4e8);
+  border-color:transparent;
+  box-shadow:0 0 12px rgba(34,184,207,.45);
+}
+.switch input:checked + span::before{transform:translateX(20px);background:white}
+
+/* Slider */
+.slider-wrap{padding-top:4px}
+.slider{
+  width:100%;-webkit-appearance:none;appearance:none;
+  height:6px;border-radius:999px;outline:none;
+  background:linear-gradient(90deg,var(--primary) 0%,var(--primary) 75%, rgba(255,255,255,.08) 75%, rgba(255,255,255,.08) 100%);
+  cursor:pointer;
+}
+.slider::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:18px;height:18px;border-radius:50%;
+  background:white;border:3px solid var(--primary);
+  cursor:pointer;
+  box-shadow:0 0 0 4px rgba(34,184,207,.2), 0 4px 12px rgba(34,184,207,.4);
+  transition:transform .2s;
+}
+.slider::-webkit-slider-thumb:hover{transform:scale(1.15)}
+.slider::-moz-range-thumb{
+  width:18px;height:18px;border-radius:50%;
+  background:white;border:3px solid var(--primary);
+  cursor:pointer;
+}
+.slider-labels{
+  display:flex;justify-content:space-between;
+  margin-top:8px;font-size:11px;color:var(--muted);
+}
+.slider-labels span:nth-child(2){color:var(--primary);font-weight:700;font-size:12px}
+
+/* System Status */
+.sys-list{display:flex;flex-direction:column}
+.sys-row{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:11px 0;border-top:1px solid var(--border);
+  font-size:13px;
+}
+.sys-row:first-child{border-top:none;padding-top:0}
+.sys-tag{
+  display:inline-flex;align-items:center;gap:7px;
+  font-size:12px;font-weight:700;color:#51cf66;
+}
+.sys-tag i{width:7px;height:7px;border-radius:50%;background:#51cf66;box-shadow:0 0 8px #51cf66;animation:blink 1.5s infinite}
+
+/* Save checkmark animation */
+.save-check{
+  width:72px;height:72px;border-radius:50%;
+  background:linear-gradient(135deg,#51cf66,#8ce99a);
+  color:#0b1628;display:grid;place-items:center;
+  font-size:30px;margin:0 auto;
+  box-shadow:0 0 0 8px rgba(81,207,102,.15), 0 0 30px rgba(81,207,102,.5);
+  animation:checkPop .5s cubic-bezier(.2,1.6,.4,1);
+}
+@keyframes checkPop{
+  0%{transform:scale(0);opacity:0}
+  60%{transform:scale(1.2);opacity:1}
+  100%{transform:scale(1)}
+}

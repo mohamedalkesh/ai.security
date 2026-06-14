@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Security Dashboard — AI Security Platform</title>
+<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="dashboard.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+/* ---- Notification Panel ---- */
+.notif-wrap { position:relative; }
+.notif-panel {
+  display:none; position:absolute; top:calc(100% + 10px); right:0;
+  width:340px; background:#0f1d35; border:1px solid rgba(34,184,207,.25);
+  border-radius:14px; box-shadow:0 16px 48px rgba(0,0,0,.5); z-index:999;
+  overflow:hidden;
+}
+.notif-panel.show { display:block; animation:fadeSlideDown .18s ease; }
+@keyframes fadeSlideDown { from{opacity:0;transform:translateY(-8px)} to{opacity:1;transform:translateY(0)} }
+.notif-head {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:14px 16px 10px; border-bottom:1px solid rgba(255,255,255,.07);
+  font-size:14px; font-weight:600; color:#e6edf7;
+}
+.notif-clear {
+  background:none; border:none; color:#22b8cf; font-size:12px;
+  cursor:pointer; padding:2px 6px; border-radius:4px;
+}
+.notif-clear:hover { background:rgba(34,184,207,.1); }
+.notif-list { list-style:none; margin:0; padding:0; max-height:320px; overflow-y:auto; }
+.notif-list::-webkit-scrollbar { width:4px; }
+.notif-list::-webkit-scrollbar-thumb { background:rgba(34,184,207,.3); border-radius:2px; }
+.notif-item {
+  display:flex; align-items:flex-start; gap:12px; padding:12px 16px;
+  cursor:pointer; border-bottom:1px solid rgba(255,255,255,.04);
+  transition:background .15s;
+}
+.notif-item:hover { background:rgba(34,184,207,.07); }
+.notif-item.unread { background:rgba(34,184,207,.04); }
+.notif-ico { font-size:16px; margin-top:2px; flex-shrink:0; }
+.notif-ico.critical,.notif-ico.high { color:#ff6b6b; }
+.notif-ico.medium { color:#ffa94d; }
+.notif-ico.low { color:#22b8cf; }
+.notif-body { flex:1; min-width:0; }
+.notif-title { font-size:13px; font-weight:600; color:#e6edf7; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.notif-sub { font-size:11px; color:#8ea0b8; margin-top:2px; }
+.notif-empty { padding:24px; text-align:center; color:#8ea0b8; font-size:13px; list-style:none; }
+.notif-footer {
+  display:block; text-align:center; padding:10px;
+  border-top:1px solid rgba(255,255,255,.07); color:#22b8cf;
+  font-size:12px; text-decoration:none; font-weight:500;
+}
+.notif-footer:hover { background:rgba(34,184,207,.07); }
+/* ---- Activity Log ---- */
+.log-item {
+  display:flex; align-items:center; gap:10px; padding:10px 14px;
+  border-bottom:1px solid rgba(255,255,255,.04); list-style:none;
+  font-size:12px;
+}
+.log-ico { font-size:13px; flex-shrink:0; }
+.log-txt { flex:1; color:#cbd5e1; }
+.log-time { color:#8ea0b8; white-space:nowrap; }
+</style>
+</head>
+<body class="dash-body">
+
+<div class="dash-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="side-brand">
+      <div class="brand-logo"><i class="fa-solid fa-shield-halved"></i></div>
+      <div>
+        <div class="side-title">AI Security</div>
+        <div class="side-sub">Incident Response</div>
+      </div>
+    </div>
+
+    <nav class="side-nav">
+      <a class="side-link active" href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+      <a class="side-link" href="alerts.html"><i class="fa-solid fa-triangle-exclamation"></i> Alerts </a>
+      <a class="side-link" href="scan.html"><i class="fa-solid fa-magnifying-glass-chart"></i> Scan PCAP</a>
+      <a class="side-link" href="monitoring.html"><i class="fa-solid fa-wave-square"></i> Monitoring</a>
+      <a class="side-link" href="reports.html"><i class="fa-solid fa-file-lines"></i> Reports</a>
+      <a class="side-link" href="users.html"><i class="fa-solid fa-users"></i> Users</a>
+      <a class="side-link" href="audit.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-clipboard-list"></i> Audit Log</a>
+      <a class="side-link" href="webhooks.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-bell"></i> Webhooks</a>
+      <a class="side-link" href="firewall.html"><i class="fa-solid fa-ban"></i> Firewall</a>
+      <a class="side-link" href="analytics.html"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
+      <a class="side-link" href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+      <a class="side-link" href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications</a>
+      <a class="side-link" href="contact.html"><i class="fa-solid fa-envelope"></i> Contact</a>
+    </nav>
+
+    <a href="index.html" class="side-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="dash-main">
+    <!-- Topbar -->
+    <header class="dash-top">
+      <div>
+        <h1>Security Dashboard</h1>
+        <p class="muted">Real-time monitoring and threat detection</p>
+      </div>
+      <div class="top-actions">
+        <div class="search">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input placeholder="Search incidents, IPs, users..."/>
+        </div>
+        <div class="notif-wrap" id="notifWrap">
+          <button class="icon-btn" id="notifBtn" title="Notifications"><i class="fa-solid fa-bell"></i><span class="dot-red" id="notifDot"></span></button>
+          <div class="notif-panel" id="notifPanel">
+            <div class="notif-head">
+              <span>Notifications</span>
+              <button class="notif-clear" id="notifMarkAll">Mark all read</button>
+            </div>
+            <ul class="notif-list" id="notifList">
+              <li class="notif-empty">Loading…</li>
+            </ul>
+            <a href="alerts.html" class="notif-footer">View all alerts →</a>
+          </div>
+        </div>
+        <div class="user-chip" id="userChip">
+          <div class="avatar" id="userAvatar">SA</div>
+          <div>
+            <div class="u-name" id="userName">Security Analyst</div>
+            <div class="u-role muted" id="userRole">Administrator</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- STATS -->
+    <section class="stat-row">
+      <div class="stat-card reveal">
+        <div class="stat-head">
+          <div class="stat-ico red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+          <span class="trend up">—</span>
+        </div>
+        <div class="stat-val" data-target="0">0</div>
+        <div class="stat-lbl">Active Alerts</div>
+        <div class="spark"><div class="spark-bar" style="--h:40%"></div><div class="spark-bar" style="--h:60%"></div><div class="spark-bar" style="--h:35%"></div><div class="spark-bar" style="--h:75%"></div><div class="spark-bar" style="--h:55%"></div><div class="spark-bar" style="--h:90%"></div><div class="spark-bar" style="--h:70%"></div></div>
+      </div>
+
+      <div class="stat-card reveal">
+        <div class="stat-head">
+          <div class="stat-ico green"><i class="fa-solid fa-shield-halved"></i></div>
+          <span class="trend up">—</span>
+        </div>
+        <div class="stat-val" data-target="0">0</div>
+        <div class="stat-lbl">Threats Blocked</div>
+        <div class="spark"><div class="spark-bar" style="--h:30%"></div><div class="spark-bar" style="--h:50%"></div><div class="spark-bar" style="--h:65%"></div><div class="spark-bar" style="--h:45%"></div><div class="spark-bar" style="--h:80%"></div><div class="spark-bar" style="--h:70%"></div><div class="spark-bar" style="--h:95%"></div></div>
+      </div>
+
+      <div class="stat-card reveal">
+        <div class="stat-head">
+          <div class="stat-ico cyan"><i class="fa-solid fa-wave-square"></i></div>
+          <span class="trend down">—</span>
+        </div>
+        <div class="stat-val"><span data-target="0" data-float="1">0</span>%</div>
+        <div class="stat-lbl">System Health</div>
+        <div class="progress-bar"><span style="width:98.5%"></span></div>
+      </div>
+
+      <div class="stat-card reveal">
+        <div class="stat-head">
+          <div class="stat-ico purple"><i class="fa-solid fa-clock"></i></div>
+          <span class="trend down">—</span>
+        </div>
+        <div class="stat-val"><span data-target="0" data-float="1">0</span>s</div>
+        <div class="stat-lbl">Avg Response Time</div>
+        <div class="spark"><div class="spark-bar" style="--h:80%"></div><div class="spark-bar" style="--h:60%"></div><div class="spark-bar" style="--h:70%"></div><div class="spark-bar" style="--h:50%"></div><div class="spark-bar" style="--h:45%"></div><div class="spark-bar" style="--h:35%"></div><div class="spark-bar" style="--h:30%"></div></div>
+      </div>
+    </section>
+
+    <!-- CHARTS -->
+    <section class="chart-row">
+      <div class="panel panel-wide reveal">
+        <div class="panel-head">
+          <div>
+            <h3>Threat Activity</h3>
+            <p class="muted sm">Hover over the chart to see attack details per hour</p>
+          </div>
+          <div class="panel-actions">
+            <div class="range-tabs" id="rangeTabs">
+              <button data-range="24h" class="active">Last 24 Hours</button>
+              <button data-range="7d">7 Days</button>
+              <button data-range="30d">30 Days</button>
+            </div>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="threatChart"></canvas></div>
+        <div class="legend">
+          <span><i class="dot red"></i> Attacks</span>
+          <span><i class="dot green"></i> Blocked</span>
+        </div>
+      </div>
+
+      <div class="panel reveal">
+        <div class="panel-head"><h3>Attack Types</h3></div>
+        <div class="donut-wrap"><canvas id="typesChart"></canvas>
+          <div class="donut-center">
+            <div class="d-num" id="totalThreats">0</div>
+            <div class="d-lbl muted sm">Total</div>
+          </div>
+        </div>
+        <ul class="type-legend" id="typeLegend"></ul>
+      </div>
+    </section>
+
+    <!-- ALERTS + LOG -->
+    <section class="bottom-row">
+      <div class="panel reveal">
+        <div class="panel-head">
+          <h3>Recent Alerts</h3>
+          <a href="#" class="link sm">View All →</a>
+        </div>
+        <div class="alert-list" id="recentAlerts">
+          <div class="muted sm" style="padding:24px;text-align:center">No recent alerts</div>
+        </div>
+      </div>
+
+      <div class="panel reveal">
+        <div class="panel-head"><h3>Activity Log</h3></div>
+        <ul class="log-list" id="activityLog">
+          <li class="muted sm" style="padding:14px;list-style:none">No activity yet</li>
+        </ul>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="api.js"></script>
+<script src="dashboard.js"></script>
+</body>
+</html>

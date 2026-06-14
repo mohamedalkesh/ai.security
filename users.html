@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>User Management — AI Security Platform</title>
+<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="dashboard.css"/>
+<link rel="stylesheet" href="alerts.css"/>
+<link rel="stylesheet" href="incident.css"/>
+<link rel="stylesheet" href="users.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+</head>
+<body class="dash-body">
+
+<div class="dash-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="side-brand">
+      <div class="brand-logo"><i class="fa-solid fa-shield-halved"></i></div>
+      <div><div class="side-title">AI Security</div><div class="side-sub">Incident Response</div></div>
+    </div>
+    <nav class="side-nav">
+      <a class="side-link" href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+      <a class="side-link" href="alerts.html"><i class="fa-solid fa-triangle-exclamation"></i> Alerts </a>
+      <a class="side-link" href="scan.html"><i class="fa-solid fa-magnifying-glass-chart"></i> Scan PCAP</a>
+      <a class="side-link" href="monitoring.html"><i class="fa-solid fa-wave-square"></i> Monitoring</a>
+      <a class="side-link" href="reports.html"><i class="fa-solid fa-file-lines"></i> Reports</a>
+      <a class="side-link active" href="users.html"><i class="fa-solid fa-users"></i> Users</a>
+      <a class="side-link" href="audit.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-clipboard-list"></i> Audit Log</a>
+      <a class="side-link" href="webhooks.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-bell"></i> Webhooks</a>
+      <a class="side-link" href="firewall.html"><i class="fa-solid fa-ban"></i> Firewall</a>
+      <a class="side-link" href="analytics.html"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
+      <a class="side-link" href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+      <a class="side-link" href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications</a>
+      <a class="side-link" href="contact.html"><i class="fa-solid fa-envelope"></i> Contact</a>
+    </nav>
+    <a href="index.html" class="side-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="dash-main">
+    <header class="dash-top">
+      <div>
+        <h1>User Management</h1>
+        <p class="muted">Manage users, roles, and permissions</p>
+      </div>
+      <div class="top-actions">
+        <button class="btn-action add-user" id="addUserBtn" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-plus"></i> Add User</button>
+      </div>
+    </header>
+
+    <div class="inc-layout">
+      <!-- LEFT -->
+      <div class="inc-left">
+        <section class="panel reveal toolbar-panel">
+          <div class="search grow">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input id="usearch" placeholder="Search users..."/>
+          </div>
+        </section>
+
+        <section class="panel reveal table-panel">
+          <div class="table-wrap">
+            <table class="alerts-table users-table">
+              <thead>
+                <tr>
+                  <th>USER</th>
+                  <th>ROLE</th>
+                  <th>STATUS</th>
+                  <th>LAST LOGIN</th>
+                  <th class="right">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody id="usersBody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <!-- RIGHT -->
+      <aside class="inc-right">
+        <section class="panel reveal">
+          <div class="panel-head"><h3><i class="fa-solid fa-user-shield"></i> Roles &amp; Permissions</h3></div>
+          <div class="role-card administrator">
+            <div class="role-name">Administrator</div>
+            <ul class="role-perms">
+              <li><i class="fa-solid fa-circle"></i> Full Access — All Orgs</li>
+              <li><i class="fa-solid fa-circle"></i> User Management</li>
+              <li><i class="fa-solid fa-circle"></i> System Config &amp; Settings</li>
+            </ul>
+          </div>
+          <div class="role-card org-admin">
+            <div class="role-name">Organisation Admin</div>
+            <ul class="role-perms">
+              <li><i class="fa-solid fa-circle"></i> Full Access — Own Org</li>
+              <li><i class="fa-solid fa-circle"></i> User Management (Org)</li>
+              <li><i class="fa-solid fa-circle"></i> Scans, Alerts &amp; Reports</li>
+            </ul>
+          </div>
+          <div class="role-card analyst">
+            <div class="role-name">Security Analyst</div>
+            <ul class="role-perms">
+              <li><i class="fa-solid fa-circle"></i> View Alerts</li>
+              <li><i class="fa-solid fa-circle"></i> Respond to Incidents</li>
+              <li><i class="fa-solid fa-circle"></i> Generate Reports</li>
+            </ul>
+          </div>
+          <div class="role-card operator">
+            <div class="role-name">Operator</div>
+            <ul class="role-perms">
+              <li><i class="fa-solid fa-circle"></i> View Alerts</li>
+              <li><i class="fa-solid fa-circle"></i> Monitor System</li>
+            </ul>
+          </div>
+          <div class="role-card viewer">
+            <div class="role-name">Viewer</div>
+            <ul class="role-perms">
+              <li><i class="fa-solid fa-circle"></i> View Only</li>
+            </ul>
+          </div>
+        </section>
+
+        <section class="panel reveal">
+          <div class="panel-head"><h3><i class="fa-solid fa-chart-pie"></i> User Statistics</h3></div>
+          <div class="stats-list">
+            <div class="st-row"><span>Total Users</span><strong id="stTotal">0</strong></div>
+            <div class="st-row"><span>Active Users</span><strong class="green" id="stActive">0</strong></div>
+            <div class="st-row"><span>Inactive Users</span><strong class="orange" id="stInactive">0</strong></div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </main>
+</div>
+
+<!-- User Modal (Add / Edit) -->
+<div class="modal" id="userModal">
+  <div class="modal-card">
+    <button class="modal-close" id="closeUser"><i class="fa-solid fa-xmark"></i></button>
+    <div class="modal-head">
+      <div class="modal-ico" style="background:rgba(34,184,207,.15);color:var(--primary)"><i class="fa-solid fa-user-plus"></i></div>
+      <div><div class="modal-id" id="umMode">NEW USER</div><h2 id="umTitle">Add User</h2></div>
+    </div>
+    <div class="form-grid">
+      <label><span>Full Name</span><input id="fName" placeholder="John Doe"/></label>
+      <label><span>Email</span><input id="fEmail" type="email" placeholder="john@example.com"/></label>
+      <label id="fUsernameRow"><span>Username</span><input id="fUsername" placeholder="johndoe"/></label>
+      <label><span>Role</span>
+        <select id="fRole">
+          <option value="administrator">Administrator</option>
+          <option value="org_admin">Organisation Admin</option>
+          <option value="analyst">Security Analyst</option>
+          <option value="viewer">Viewer</option>
+        </select>
+      </label>
+      <label id="fOrgRow" style="display:none"><span>Organisation</span>
+        <select id="fOrg">
+          <option value="">— System (no org) —</option>
+        </select>
+      </label>
+      <label><span>Status</span>
+        <select id="fStatus"><option value="active">Active</option><option value="inactive">Inactive</option></select>
+      </label>
+      <label id="fPassRow"><span>Password</span>
+        <div style="position:relative">
+          <input id="fPass" type="password" placeholder="Min 8 characters" style="padding-right:38px"/>
+          <button type="button" id="toggleFPass" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#8ea0b8;cursor:pointer;padding:0"><i class="fa-solid fa-eye"></i></button>
+        </div>
+      </label>
+      <label id="fConfirmRow"><span>Confirm Password</span>
+        <div style="position:relative">
+          <input id="fConfirm" type="password" placeholder="Repeat password" style="padding-right:38px"/>
+          <button type="button" id="toggleFConfirm" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;color:#8ea0b8;cursor:pointer;padding:0"><i class="fa-solid fa-eye"></i></button>
+        </div>
+      </label>
+    </div>
+    <div id="umError" style="display:none;color:#ff6b6b;font-size:13px;padding:4px 0 8px;text-align:center"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="cancelUser">Cancel</button>
+      <button class="btn btn-primary" id="saveUser"><i class="fa-solid fa-check"></i> Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm Delete -->
+<div class="modal" id="delModal">
+  <div class="modal-card" style="max-width:440px">
+    <div class="modal-head">
+      <div class="modal-ico" style="background:rgba(255,107,107,.15);color:#ff6b6b"><i class="fa-solid fa-triangle-exclamation"></i></div>
+      <div><div class="modal-id">CONFIRM</div><h2>Delete User?</h2></div>
+    </div>
+    <p class="muted" style="font-size:14px">Are you sure you want to delete <strong id="delName">this user</strong>? This action cannot be undone.</p>
+    <div class="modal-actions">
+      <button class="btn btn-ghost" id="cancelDel">Cancel</button>
+      <button class="btn" id="confirmDel" style="background:#ff6b6b;color:white"><i class="fa-solid fa-trash"></i> Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="fa-solid fa-check-circle"></i> <span>Done</span></div>
+
+<script src="api.js"></script>
+<script src="users.js"></script>
+</body>
+</html>

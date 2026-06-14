@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Contact Support — AI Security Platform</title>
+<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="dashboard.css"/>
+<link rel="stylesheet" href="alerts.css"/>
+<link rel="stylesheet" href="incident.css"/>
+<link rel="stylesheet" href="users.css"/>
+<link rel="stylesheet" href="settings.css"/>
+<link rel="stylesheet" href="contact.css"/>
+<link rel="stylesheet" href="analysis.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+</head>
+<body class="dash-body">
+
+<div class="dash-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="side-brand">
+      <div class="brand-logo"><i class="fa-solid fa-shield-halved"></i></div>
+      <div><div class="side-title">AI Security</div><div class="side-sub">Incident Response</div></div>
+    </div>
+    <nav class="side-nav">
+      <a class="side-link" href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+      <a class="side-link" href="alerts.html"><i class="fa-solid fa-triangle-exclamation"></i> Alerts </a>
+      <a class="side-link" href="scan.html"><i class="fa-solid fa-magnifying-glass-chart"></i> Scan PCAP</a>
+      <a class="side-link" href="monitoring.html"><i class="fa-solid fa-wave-square"></i> Monitoring</a>
+      <a class="side-link" href="reports.html"><i class="fa-solid fa-file-lines"></i> Reports</a>
+      <a class="side-link" href="users.html"><i class="fa-solid fa-users"></i> Users</a>
+      <a class="side-link" href="audit.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-clipboard-list"></i> Audit Log</a>
+      <a class="side-link" href="webhooks.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-bell"></i> Webhooks</a>
+      <a class="side-link" href="firewall.html"><i class="fa-solid fa-ban"></i> Firewall</a>
+      <a class="side-link" href="analytics.html"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
+      <a class="side-link" href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+      <a class="side-link" href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications </a>
+      <a class="side-link active" href="contact.html"><i class="fa-solid fa-envelope"></i> Contact</a>
+    </nav>
+    <a href="index.html" class="side-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="dash-main">
+    <header class="dash-top">
+      <div>
+        <h1>Contact Support</h1>
+        <p class="muted">Get in touch with our security team</p>
+      </div>
+    </header>
+
+    <div class="inc-layout">
+      <!-- LEFT: Form -->
+      <div class="inc-left">
+        <section class="panel reveal">
+          <div class="panel-head"><h3><i class="fa-regular fa-comment-dots"></i> Send us a Message</h3></div>
+          <form id="contactForm" class="contact-form" novalidate>
+            <div class="row-2">
+              <label class="set-field">
+                <span>Full Name</span>
+                <input type="text" id="cName" value="Ahmed Hassan" required/>
+              </label>
+              <label class="set-field">
+                <span>Email Address</span>
+                <input type="email" id="cEmail" value="ahmed@example.com" required/>
+              </label>
+            </div>
+            <label class="set-field">
+              <span>Subject</span>
+              <div class="select-wrap">
+                <select id="cSubject">
+                  <option>Technical Support</option>
+                  <option>Billing Inquiry</option>
+                  <option>Feature Request</option>
+                  <option>Bug Report</option>
+                  <option>Security Concern</option>
+                  <option>General Inquiry</option>
+                </select>
+                <i class="fa-solid fa-chevron-down caret"></i>
+              </div>
+            </label>
+            <label class="set-field">
+              <span>Priority</span>
+              <div class="select-wrap">
+                <select id="cPriority">
+                  <option value="low">Low</option>
+                  <option value="medium">Medium</option>
+                  <option value="high">High</option>
+                  <option value="critical">Critical</option>
+                </select>
+                <i class="fa-solid fa-chevron-down caret"></i>
+              </div>
+            </label>
+            <label class="set-field">
+              <span>Message</span>
+              <textarea id="cMsg" rows="6" placeholder="Describe your issue or question..." required></textarea>
+            </label>
+            <label class="chk-line">
+              <input type="checkbox" id="cCopy"/>
+              <span class="chk-box"><i class="fa-solid fa-check"></i></span>
+              <span>Send me a copy of this message</span>
+            </label>
+            <button type="submit" class="send-btn"><i class="fa-solid fa-paper-plane"></i> Send Message</button>
+          </form>
+        </section>
+      </div>
+
+      <!-- RIGHT -->
+      <aside class="inc-right">
+        <section class="panel reveal">
+          <div class="panel-head"><h3><i class="fa-regular fa-address-card"></i> Contact Information</h3></div>
+          <div class="ci-row">
+            <div class="ci-ico cyan"><i class="fa-solid fa-envelope"></i></div>
+            <div>
+              <div class="ci-t">Email</div>
+              <a href="mailto:ai.security.support@gmail.com" class="ci-v">ai.security.support@gmail.com</a>
+            </div>
+          </div>
+          <div class="ci-row">
+            <div class="ci-ico green"><i class="fa-solid fa-phone"></i></div>
+            <div>
+              <div class="ci-t">Phone</div>
+              <div class="ci-v">+218 944 415 044</div>
+              <div class="ci-sub">24/7 Emergency Line</div>
+            </div>
+          </div>
+          <div class="ci-row">
+            <div class="ci-ico purple"><i class="fa-solid fa-location-dot"></i></div>
+            <div>
+              <div class="ci-t">Address</div>
+              <div class="ci-v">AISec Libya</div>
+              <div class="ci-sub">Tripoli, Libya</div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel reveal">
+          <div class="panel-head"><h3><i class="fa-regular fa-clock"></i> Support Hours</h3></div>
+          <div class="sh-list">
+            <div class="sh-row"><span>Critical Issues</span><strong class="green">24/7</strong></div>
+            <div class="sh-row"><span>Technical Support</span><strong>9 AM - 6 PM</strong></div>
+            <div class="sh-row"><span>General Inquiries</span><strong>9 AM - 5 PM</strong></div>
+          </div>
+        </section>
+
+        <section class="panel reveal">
+          <div class="panel-head"><h3><i class="fa-solid fa-link"></i> Quick Links</h3></div>
+          <ul class="quick-links">
+            <li><a href="#"><i class="fa-regular fa-file-lines"></i> Documentation <i class="fa-solid fa-arrow-right arr"></i></a></li>
+            <li><a href="#"><i class="fa-regular fa-circle-question"></i> FAQ <i class="fa-solid fa-arrow-right arr"></i></a></li>
+            <li><a href="#"><i class="fa-solid fa-heart-pulse"></i> System Status <i class="fa-solid fa-arrow-right arr"></i></a></li>
+            <li><a href="#"><i class="fa-solid fa-shield-halved"></i> Security Advisories <i class="fa-solid fa-arrow-right arr"></i></a></li>
+          </ul>
+        </section>
+
+        <!-- Emergency -->
+        <section class="emergency-card reveal">
+          <div class="em-bg"></div>
+          <div class="em-head"><i class="fa-solid fa-triangle-exclamation"></i> Security Emergency?</div>
+          <p>For critical security incidents, contact our emergency response team immediately.</p>
+          <button class="em-btn" id="emBtn"><i class="fa-brands fa-whatsapp"></i> WhatsApp Emergency Line</button>
+        </section>
+      </aside>
+    </div>
+  </main>
+</div>
+
+<!-- Success overlay -->
+<div class="deep-overlay" id="sentOverlay">
+  <div class="deep-card">
+    <div class="save-check"><i class="fa-solid fa-paper-plane"></i></div>
+    <h2>Message Sent</h2>
+    <p class="muted">Our team will respond within 24 hours</p>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="fa-solid fa-check-circle"></i> <span>Done</span></div>
+
+<script src="api.js"></script>
+<script src="contact.js"></script>
+</body>
+</html>

@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>AI Security Platform - Incident Response System</title>
+<link rel="stylesheet" href="styles.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<style>
+/* =============================================
+   PROFESSIONAL LANDING PAGE — AI SECURITY
+   ============================================= */
+:root {
+  --c1:#22b8cf; --c2:#4361ee; --c3:#7048e8;
+  --glow1:rgba(34,184,207,.22); --glow2:rgba(67,97,238,.18);
+}
+
+/* ── Base ── */
+#bgCanvas { position:fixed;inset:0;z-index:0;pointer-events:none; }
+.nav,.hero,.stats,.section,.how-section,.cta-section,.footer { position:relative;z-index:1; }
+
+/* ── NAV ── */
+.nav {
+  background:rgba(7,14,28,.82);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(255,255,255,.06);
+}
+.nav.scrolled { border-color:rgba(34,184,207,.15);box-shadow:0 1px 30px rgba(0,0,0,.4); }
+.nav-inner { height:70px; }
+.brand { gap:12px; }
+.brand-logo {
+  width:36px;height:36px;border-radius:9px;font-size:16px;
+  background:linear-gradient(135deg,rgba(34,184,207,.3),rgba(67,97,238,.2));
+  border:1px solid rgba(34,184,207,.5);color:var(--c1);
+  box-shadow:0 0 16px rgba(34,184,207,.15);
+}
+.brand-name { font-size:15px;font-weight:700;letter-spacing:-.01em; }
+.nav-links { gap:32px; }
+.nav-links a { font-size:13px;font-weight:500;color:rgba(230,237,247,.6);transition:color .2s; }
+.nav-links a:hover { color:#fff; }
+.btn-login {
+  color:#fff!important;font-size:13px!important;font-weight:600!important;
+  background:linear-gradient(135deg,var(--c1),var(--c2));
+  border:none;border-radius:8px;padding:9px 20px;
+  box-shadow:0 2px 16px rgba(34,184,207,.3);
+  transition:box-shadow .2s,transform .2s;
+}
+.btn-login:hover { box-shadow:0 4px 24px rgba(34,184,207,.5);transform:translateY(-1px); }
+
+/* ── HERO ── */
+.hero {
+  min-height:100vh;display:flex;align-items:center;
+  padding:120px 0 80px;overflow:hidden;
+}
+.hero-bg {
+  position:absolute;inset:0;
+  background:
+    radial-gradient(ellipse 60% 50% at 10% 60%,rgba(34,184,207,.07) 0%,transparent 60%),
+    radial-gradient(ellipse 50% 40% at 90% 20%,rgba(67,97,238,.08) 0%,transparent 55%),
+    radial-gradient(ellipse 70% 60% at 50% 100%,rgba(112,72,232,.05) 0%,transparent 60%);
+}
+/* mesh grid overlay */
+.hero-bg::after {
+  content:'';position:absolute;inset:0;
+  background-image:linear-gradient(rgba(34,184,207,.04) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(34,184,207,.04) 1px,transparent 1px);
+  background-size:60px 60px;
+  mask-image:radial-gradient(ellipse at center,black 30%,transparent 75%);
+}
+.hero-inner {
+  display:grid;grid-template-columns:1fr 1fr;
+  gap:60px;align-items:center;
+}
+.hero-text { max-width:520px; }
+.badge {
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(34,184,207,.09);border:1px solid rgba(34,184,207,.28);
+  color:var(--c1);border-radius:50px;padding:6px 16px;
+  font-size:12px;font-weight:600;margin-bottom:28px;letter-spacing:.02em;
+  box-shadow:0 0 20px rgba(34,184,207,.1);
+}
+.badge-dot { width:6px;height:6px;border-radius:50%;background:var(--c1);animation:blink 1.5s ease-in-out infinite; }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+.hero-title {
+  font-size:clamp(2.6rem,4.5vw,3.8rem);font-weight:900;
+  line-height:1.08;letter-spacing:-.035em;margin-bottom:20px;
+}
+.gradient-text {
+  background:linear-gradient(135deg,#22b8cf 0%,#4361ee 50%,#7048e8 100%);
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.hero-sub { font-size:1rem;color:rgba(180,200,230,.75);line-height:1.8;margin-bottom:36px;max-width:460px; }
+.hero-cta { display:flex;gap:12px;flex-wrap:wrap; }
+.btn-primary {
+  background:linear-gradient(135deg,#22b8cf,#4361ee);
+  color:#fff;border:none;padding:13px 26px;border-radius:10px;
+  font-weight:700;font-size:14px;
+  box-shadow:0 4px 24px rgba(34,184,207,.35);
+  transition:all .25s;
+}
+.btn-primary:hover { transform:translateY(-2px);box-shadow:0 8px 36px rgba(34,184,207,.5); }
+.btn-ghost {
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
+  color:rgba(230,237,247,.85);padding:13px 26px;border-radius:10px;
+  font-weight:600;font-size:14px;transition:all .25s;
+}
+.btn-ghost:hover { background:rgba(255,255,255,.09);border-color:rgba(34,184,207,.35); }
+.hero-trust { display:flex;align-items:center;gap:14px;margin-top:32px; }
+.trust-avatars { display:flex; }
+.trust-avatars span {
+  width:32px;height:32px;border-radius:50%;border:2px solid rgba(11,22,40,1);
+  background:linear-gradient(135deg,#22b8cf,#4361ee);
+  display:inline-flex;align-items:center;justify-content:center;
+  font-size:11px;font-weight:700;color:#fff;margin-left:-8px;
+}
+.trust-avatars span:first-child { margin-left:0; }
+.trust-text { font-size:12px;color:rgba(180,200,230,.6); }
+.trust-text strong { color:rgba(230,237,247,.9); }
+
+/* Dashboard mockup */
+.hero-mockup {
+  position:relative;
+  animation:floatY 5s ease-in-out infinite;
+}
+@keyframes floatY { 0%,100%{transform:translateY(0) rotate(-1deg)} 50%{transform:translateY(-16px) rotate(0deg)} }
+.mockup-card {
+  background:rgba(15,25,50,.9);border:1px solid rgba(255,255,255,.09);
+  border-radius:18px;padding:22px;backdrop-filter:blur(16px);
+  box-shadow:0 30px 80px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.05),
+             inset 0 1px 0 rgba(255,255,255,.08);
+  overflow:hidden;position:relative;
+}
+.mockup-card::before {
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(34,184,207,.5),rgba(67,97,238,.5),transparent);
+}
+.mock-bar { display:flex;align-items:center;gap:6px;margin-bottom:18px; }
+.mock-dot { width:10px;height:10px;border-radius:50%; }
+.mock-dot:nth-child(1){background:#ff5f57} .mock-dot:nth-child(2){background:#febc2e} .mock-dot:nth-child(3){background:#28c840}
+.mock-title { margin-left:8px;font-size:11px;color:rgba(180,200,230,.5);font-weight:500;letter-spacing:.05em;text-transform:uppercase; }
+.mock-stats { display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px; }
+.mock-stat {
+  background:rgba(22,36,61,.8);border:1px solid rgba(255,255,255,.06);
+  border-radius:10px;padding:12px 10px;text-align:center;
+}
+.mock-stat-num { font-size:18px;font-weight:800;color:var(--c1);line-height:1; }
+.mock-stat-num.warn { color:#ffa94d; }
+.mock-stat-num.ok { color:#51cf66; }
+.mock-stat-lbl { font-size:9px;color:rgba(142,160,184,.7);margin-top:4px;text-transform:uppercase;letter-spacing:.04em; }
+.mock-alerts { display:flex;flex-direction:column;gap:7px; }
+.mock-alert {
+  display:flex;align-items:center;gap:10px;
+  background:rgba(22,36,61,.6);border:1px solid rgba(255,255,255,.05);
+  border-radius:8px;padding:9px 12px;font-size:11px;
+}
+.mock-sev { width:6px;height:6px;border-radius:50%;flex-shrink:0; }
+.sev-c { background:#ff5f57;box-shadow:0 0 6px rgba(255,95,87,.6); }
+.sev-h { background:#ffa94d;box-shadow:0 0 6px rgba(255,169,77,.6); }
+.sev-m { background:#ffd43b;box-shadow:0 0 6px rgba(255,212,59,.5); }
+.mock-alert-t { color:rgba(210,225,245,.9);font-weight:500; flex:1; }
+.mock-alert-tag {
+  font-size:9px;padding:2px 7px;border-radius:4px;font-weight:600;
+  background:rgba(34,184,207,.12);color:var(--c1);border:1px solid rgba(34,184,207,.2);
+  white-space:nowrap;
+}
+/* Floating cards */
+.mock-badge-float {
+  position:absolute;top:-18px;right:-18px;
+  background:linear-gradient(135deg,rgba(34,184,207,.95),rgba(67,97,238,.95));
+  border-radius:12px;padding:10px 14px;font-size:11px;font-weight:700;color:#fff;
+  box-shadow:0 8px 24px rgba(34,184,207,.4);white-space:nowrap;
+  border:1px solid rgba(255,255,255,.2);
+}
+.mock-badge-float i { margin-right:5px; }
+.mock-shield-float {
+  position:absolute;bottom:-14px;left:-18px;
+  background:rgba(15,25,50,.95);border:1px solid rgba(34,184,207,.3);
+  border-radius:12px;padding:10px 14px;font-size:11px;font-weight:600;
+  color:var(--c1);box-shadow:0 8px 24px rgba(0,0,0,.4);
+  display:flex;align-items:center;gap:8px;white-space:nowrap;
+}
+.pulse-ring {
+  width:10px;height:10px;border-radius:50%;background:var(--c1);
+  box-shadow:0 0 0 0 rgba(34,184,207,.4);
+  animation:pulse 1.8s infinite;
+}
+@keyframes pulse { 0%{box-shadow:0 0 0 0 rgba(34,184,207,.5)} 70%{box-shadow:0 0 0 8px rgba(34,184,207,0)} 100%{box-shadow:0 0 0 0 rgba(34,184,207,0)} }
+
+/* ── STATS ── */
+.stats {
+  padding:0;border-top:1px solid rgba(255,255,255,.05);
+  background:rgba(8,16,32,.6);
+}
+.stats-grid { display:grid;grid-template-columns:repeat(4,1fr); }
+.stat {
+  padding:38px 24px;text-align:center;position:relative;
+  border-right:1px solid rgba(255,255,255,.05);
+}
+.stat:last-child { border-right:none; }
+.stat-icon { font-size:22px;color:var(--c1);margin-bottom:10px;opacity:.7; }
+.stat-num {
+  font-size:2.6rem;font-weight:900;letter-spacing:-.03em;line-height:1;
+  background:linear-gradient(135deg,#e6edf7,var(--c1));
+  -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+}
+.stat-label { font-size:12px;color:rgba(142,160,184,.8);margin-top:8px;font-weight:500;text-transform:uppercase;letter-spacing:.05em; }
+.stat::after {
+  content:'';position:absolute;bottom:0;left:20%;right:20%;height:2px;
+  background:linear-gradient(90deg,transparent,var(--c1),transparent);
+  opacity:0;transition:opacity .3s;
+}
+.stat:hover::after { opacity:1; }
+
+/* ── SECTION commons ── */
+.section { padding:110px 0; }
+.section-head { text-align:center;margin-bottom:70px; }
+.section-head h2 { font-size:clamp(2rem,3.5vw,2.8rem);font-weight:800;letter-spacing:-.025em;margin-bottom:14px; }
+.section-head p { color:rgba(180,200,230,.7);font-size:1rem;max-width:500px;margin:0 auto; }
+.section-tag {
+  display:inline-flex;align-items:center;gap:6px;
+  padding:5px 14px;border-radius:20px;
+  background:rgba(34,184,207,.08);color:var(--c1);
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.1em;
+  margin-bottom:16px;border:1px solid rgba(34,184,207,.2);
+}
+
+/* ── FEATURES ── */
+.features-grid { display:grid;grid-template-columns:repeat(3,1fr);gap:18px; }
+.feature {
+  background:rgba(12,22,44,.7);
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:18px;padding:30px;
+  transition:all .35s cubic-bezier(.2,.8,.2,1);
+  position:relative;overflow:hidden;
+  backdrop-filter:blur(10px);
+}
+.feature::after {
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(34,184,207,.0),transparent);
+  transition:background .35s;
+}
+.feature:hover { transform:translateY(-8px);border-color:rgba(34,184,207,.25);
+  box-shadow:0 24px 60px rgba(0,0,0,.4),0 0 40px rgba(34,184,207,.06); }
+.feature:hover::after { background:linear-gradient(90deg,transparent,rgba(34,184,207,.6),transparent); }
+.feat-icon {
+  width:52px;height:52px;border-radius:14px;
+  background:linear-gradient(135deg,rgba(34,184,207,.15),rgba(67,97,238,.1));
+  color:var(--c1);display:grid;place-items:center;font-size:20px;
+  margin-bottom:20px;border:1px solid rgba(34,184,207,.2);
+  transition:all .35s;
+}
+.feature:hover .feat-icon { box-shadow:0 0 24px rgba(34,184,207,.3);background:linear-gradient(135deg,rgba(34,184,207,.22),rgba(67,97,238,.16)); }
+.feature h3 { font-size:15.5px;font-weight:700;margin-bottom:10px;letter-spacing:-.01em; }
+.feature p { font-size:13.5px;color:rgba(180,200,230,.65);line-height:1.65; }
+
+/* ── HOW IT WORKS ── */
+.how-section { background:rgba(7,13,26,.7);padding:110px 0; }
+.steps-grid { display:grid;grid-template-columns:repeat(3,1fr);position:relative;margin-top:70px;gap:10px; }
+.steps-connector {
+  position:absolute;top:52px;left:calc(16.66%);right:calc(16.66%);height:1px;
+  background:linear-gradient(90deg,transparent,rgba(34,184,207,.3) 20%,var(--c1) 50%,rgba(34,184,207,.3) 80%,transparent);
+}
+.steps-connector::before,.steps-connector::after {
+  content:'';position:absolute;top:-3px;width:7px;height:7px;border-radius:50%;background:var(--c1);
+  box-shadow:0 0 8px var(--c1);
+}
+.steps-connector::before { left:0; }
+.steps-connector::after  { right:0; }
+.step { text-align:center;padding:0 24px;position:relative; }
+.step-num {
+  width:104px;height:104px;border-radius:50%;margin:0 auto 26px;
+  position:relative;z-index:1;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(12,22,44,.9);
+  border:1px solid rgba(34,184,207,.3);
+  box-shadow:0 0 0 8px rgba(34,184,207,.05),0 0 40px rgba(34,184,207,.1);
+}
+.step-num-inner {
+  width:72px;height:72px;border-radius:50%;
+  background:linear-gradient(135deg,rgba(34,184,207,.2),rgba(67,97,238,.15));
+  display:flex;align-items:center;justify-content:center;
+  font-size:26px;color:var(--c1);
+  border:1px solid rgba(34,184,207,.2);
+}
+.step-badge {
+  position:absolute;top:-4px;right:-4px;
+  width:26px;height:26px;border-radius:50%;
+  background:linear-gradient(135deg,var(--c1),var(--c2));
+  color:#fff;font-size:10px;font-weight:800;
+  display:flex;align-items:center;justify-content:center;
+  border:2px solid rgba(7,14,28,1);
+}
+.step h3 { font-size:17px;font-weight:700;margin-bottom:12px;letter-spacing:-.01em; }
+.step p { font-size:13.5px;color:rgba(180,200,230,.65);line-height:1.7; }
+
+/* ── MITRE ── */
+.mitre-section { overflow:hidden; }
+.mitre-grid { display:grid;grid-template-columns:1fr 1fr;gap:70px;align-items:center; }
+.mitre-grid h2 { font-size:clamp(1.8rem,3vw,2.5rem);font-weight:800;letter-spacing:-.025em;margin:14px 0 16px; }
+.check-list { list-style:none;margin-top:22px;display:flex;flex-direction:column;gap:13px; }
+.check-list li { display:flex;align-items:center;gap:12px;font-size:14px;color:rgba(200,215,235,.8); }
+.check-list li i { color:var(--c1);font-size:13px;flex-shrink:0;
+  background:rgba(34,184,207,.1);width:22px;height:22px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center; }
+.mitre-card {
+  background:rgba(10,20,42,.9);
+  border:1px solid rgba(255,255,255,.07);
+  border-radius:20px;padding:28px;
+  box-shadow:0 30px 80px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.06);
+  position:relative;overflow:hidden;
+}
+.mitre-card::before {
+  content:'';position:absolute;top:0;left:0;right:0;height:1px;
+  background:linear-gradient(90deg,transparent,rgba(34,184,207,.5),rgba(67,97,238,.5),transparent);
+}
+.mitre-header { font-size:11px;color:rgba(142,160,184,.6);font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:18px; display:flex;align-items:center;justify-content:space-between; }
+.mitre-live { display:flex;align-items:center;gap:6px;font-size:10px;color:#51cf66; }
+.mitre-live-dot { width:6px;height:6px;border-radius:50%;background:#51cf66;animation:blink 1.5s infinite; }
+.mitre-row {
+  display:flex;align-items:center;gap:12px;
+  padding:12px 14px;border-radius:10px;margin-bottom:8px;
+  background:rgba(18,30,60,.6);border:1px solid rgba(255,255,255,.04);
+  font-size:13.5px;font-weight:500;transition:all .2s;cursor:default;
+}
+.mitre-row:hover { background:rgba(34,184,207,.08);border-color:rgba(34,184,207,.2);padding-left:20px; }
+.mitre-row:last-child { margin-bottom:0; }
+.dot { width:8px;height:8px;border-radius:50%;flex-shrink:0; }
+.dot.red    { background:#ff5f57;box-shadow:0 0 7px rgba(255,95,87,.6); }
+.dot.orange { background:#ffa94d;box-shadow:0 0 7px rgba(255,169,77,.6); }
+.dot.yellow { background:#ffd43b;box-shadow:0 0 7px rgba(255,212,59,.5); }
+.dot.blue   { background:#74c0fc;box-shadow:0 0 7px rgba(116,192,252,.6); }
+.dot.green  { background:#51cf66;box-shadow:0 0 7px rgba(81,207,102,.5); }
+.dot.purple { background:#cc5de8;box-shadow:0 0 7px rgba(204,93,232,.6); }
+.mitre-label { font-size:10px;margin-left:auto;color:rgba(142,160,184,.6);font-family:'Courier New',monospace;background:rgba(0,0,0,.25);padding:2px 7px;border-radius:4px;letter-spacing:.02em; }
+
+/* ── ABOUT ── */
+.about-section { background:rgba(7,13,26,.5); }
+.about-grid { display:grid;grid-template-columns:1.3fr 1fr;gap:70px;align-items:start; }
+.about-text h3 { font-size:1.3rem;font-weight:700;margin-bottom:14px;letter-spacing:-.01em; }
+.about-text p { font-size:14px;line-height:1.85;color:rgba(180,200,230,.75); }
+.about-cards { display:flex;flex-direction:column;gap:14px; }
+.about-card {
+  background:rgba(12,22,44,.7);border:1px solid rgba(255,255,255,.06);
+  border-radius:15px;padding:20px;display:flex;gap:16px;align-items:flex-start;
+  transition:all .25s;backdrop-filter:blur(8px);
+}
+.about-card:hover { border-color:rgba(34,184,207,.22);transform:translateX(4px); }
+.about-card .feat-icon { width:42px;height:42px;border-radius:10px;flex-shrink:0;font-size:17px;margin-bottom:0; }
+.about-card h4 { font-size:14px;font-weight:700;margin-bottom:6px;letter-spacing:-.01em; }
+.about-card p { font-size:12.5px;color:rgba(180,200,230,.65);line-height:1.6; }
+
+/* ── TECH STACK ── */
+.tech-section { background:rgba(8,16,32,.6);padding:90px 0; }
+.tech-grid { display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-top:54px; }
+.tech-card {
+  background:rgba(12,22,44,.8);border:1px solid rgba(255,255,255,.06);
+  border-radius:14px;padding:22px 12px;text-align:center;
+  transition:all .3s;position:relative;overflow:hidden;
+}
+.tech-card::before {
+  content:'';position:absolute;bottom:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--c1),var(--c2));
+  opacity:0;transition:opacity .3s;
+}
+.tech-card:hover { border-color:rgba(34,184,207,.2);transform:translateY(-5px);box-shadow:0 16px 40px rgba(0,0,0,.3); }
+.tech-card:hover::before { opacity:1; }
+.tech-card i { font-size:30px;margin-bottom:10px;display:block; }
+.tech-card span { font-size:11px;color:rgba(142,160,184,.8);font-weight:600;letter-spacing:.02em; }
+.tc-java{color:#f89820} .tc-spring{color:#6db33f} .tc-python{color:#4584b6}
+.tc-pg{color:#336791} .tc-html{color:#e44d26} .tc-ai{color:var(--c1)}
+
+/* ── CTA ── */
+.cta-section {
+  padding:120px 0;position:relative;overflow:hidden;
+  background:linear-gradient(180deg,transparent,rgba(8,16,32,.8));
+}
+.cta-section::before {
+  content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 70% at 50% 50%,rgba(34,184,207,.07) 0%,rgba(67,97,238,.05) 50%,transparent 70%);
+}
+.cta-inner { text-align:center;max-width:640px;margin:0 auto;position:relative;z-index:1; }
+.cta-inner h2 { font-size:clamp(2.2rem,4vw,3.2rem);font-weight:900;letter-spacing:-.03em;margin:16px 0 18px;line-height:1.1; }
+.cta-inner p { color:rgba(180,200,230,.7);font-size:.98rem;margin-bottom:40px;line-height:1.75; }
+.cta-btns { display:flex;gap:14px;justify-content:center;flex-wrap:wrap; }
+
+/* ── FOOTER ── */
+.footer { background:rgba(5,10,22,1);border-top:1px solid rgba(255,255,255,.06);padding:64px 0 0; }
+.footer-grid { display:grid;grid-template-columns:1.8fr 1fr 1fr 1.5fr;gap:48px; }
+.footer h4 { font-size:13px;font-weight:700;margin-bottom:18px;color:rgba(230,237,247,.9);letter-spacing:.02em; }
+.contact-list,.link-list { list-style:none;display:flex;flex-direction:column;gap:11px; }
+.contact-list li { font-size:13px;color:rgba(142,160,184,.8);display:flex;align-items:center;gap:9px; }
+.contact-list a { color:rgba(142,160,184,.8);transition:color .2s; }
+.contact-list a:hover { color:var(--c1); }
+.contact-list i { font-size:11px;color:var(--c1);width:14px;text-align:center; }
+.link-list li a { font-size:13px;color:rgba(142,160,184,.8);display:block;padding:2px 0;transition:color .2s; }
+.link-list li a:hover { color:rgba(230,237,247,.95); }
+.socials { display:flex;gap:8px;margin-top:20px; }
+.socials a {
+  width:34px;height:34px;border-radius:9px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);
+  display:grid;place-items:center;font-size:13px;color:rgba(142,160,184,.7);
+  transition:all .2s;
+}
+.socials a:hover { background:rgba(34,184,207,.12);border-color:rgba(34,184,207,.3);color:var(--c1);transform:translateY(-2px); }
+.newsletter { display:flex;gap:8px;margin-top:16px; }
+.newsletter input {
+  flex:1;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);
+  border-radius:8px;padding:10px 13px;font-size:13px;color:rgba(230,237,247,.9);
+  outline:none;font-family:inherit;transition:border-color .2s;
+}
+.newsletter input:focus { border-color:rgba(34,184,207,.4);background:rgba(34,184,207,.04); }
+.newsletter .btn { padding:10px 16px;font-size:12px;font-weight:700;border-radius:8px;white-space:nowrap;background:linear-gradient(135deg,var(--c1),var(--c2));color:#fff;border:none; }
+.footer-bottom {
+  border-top:1px solid rgba(255,255,255,.05);padding:22px 0;margin-top:54px;
+  text-align:center;color:rgba(142,160,184,.5);font-size:12px;
+  display:flex;align-items:center;justify-content:center;gap:8px;
+}
+.footer-bottom i { color:var(--c1);font-size:10px; }
+
+/* ── To Top ── */
+#toTop {
+  position:fixed;bottom:28px;right:28px;z-index:99;
+  width:42px;height:42px;border-radius:10px;
+  background:linear-gradient(135deg,rgba(34,184,207,.2),rgba(67,97,238,.2));
+  border:1px solid rgba(34,184,207,.35);color:var(--c1);
+  cursor:pointer;display:none;align-items:center;justify-content:center;
+  font-size:14px;transition:all .2s;backdrop-filter:blur(8px);
+}
+#toTop:hover { transform:translateY(-3px);box-shadow:0 8px 24px rgba(34,184,207,.3); }
+#toTop.show { display:flex; }
+
+/* ── Reveal ── */
+.reveal { opacity:0;transform:translateY(30px);transition:opacity .7s cubic-bezier(.2,.8,.2,1),transform .7s cubic-bezier(.2,.8,.2,1); }
+.reveal.visible { opacity:1;transform:none; }
+
+/* ── Responsive ── */
+@media(max-width:1024px) {
+  .hero-inner { grid-template-columns:1fr; }
+  .hero-text { max-width:580px;margin:0 auto;text-align:center; }
+  .hero-sub,.hero-cta,.hero-trust { max-width:100%;justify-content:center; }
+  .hero-mockup { max-width:480px;margin:40px auto 0; }
+}
+@media(max-width:900px) {
+  .features-grid,.about-grid,.mitre-grid { grid-template-columns:1fr; }
+  .tech-grid { grid-template-columns:repeat(3,1fr); }
+  .stats-grid { grid-template-columns:repeat(2,1fr); }
+  .stat { border-right:none;border-bottom:1px solid rgba(255,255,255,.05); }
+  .steps-grid { grid-template-columns:1fr;gap:50px; }
+  .steps-connector { display:none; }
+  .footer-grid { grid-template-columns:1fr 1fr; }
+}
+@media(max-width:600px) {
+  .nav-links li:not(:last-child) { display:none; }
+  .footer-grid { grid-template-columns:1fr; }
+  .tech-grid { grid-template-columns:repeat(3,1fr); }
+  .stats-grid { grid-template-columns:1fr 1fr; }
+}
+</style>
+</head>
+<body>
+<canvas id="bgCanvas"></canvas>
+
+<!-- NAV -->
+<nav class="nav" id="navbar">
+  <div class="container nav-inner">
+    <div class="brand">
+      <span class="brand-logo"><i class="fa-solid fa-shield-halved"></i></span>
+      <span class="brand-name">AI Security Platform</span>
+    </div>
+    <ul class="nav-links">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how">How It Works</a></li>
+      <li><a href="#mitre">MITRE</a></li>
+      <li><a href="#about">About</a></li>
+      <li><a href="login.html" class="btn btn-login"><i class="fa-solid fa-right-to-bracket"></i> Login</a></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- HERO -->
+<header class="hero">
+  <div class="hero-bg"></div>
+  <div class="container hero-inner">
+    <!-- Left: Text -->
+    <div class="hero-text reveal">
+      <span class="badge"><span class="badge-dot"></span> AI-Powered Incident Response</span>
+      <h1 class="hero-title">
+        Protect Your Network<br/>
+        <span class="gradient-text">With AI Intelligence</span>
+      </h1>
+      <p class="hero-sub">
+        Real-time threat detection, automated response, and comprehensive
+        incident analysis powered by advanced artificial intelligence.
+      </p>
+      <div class="hero-cta">
+        <a href="login.html" class="btn btn-primary">Launch Platform <i class="fa-solid fa-arrow-right"></i></a>
+        <a href="#features" class="btn btn-ghost">Explore Features</a>
+      </div>
+      <div class="hero-trust">
+        <div class="trust-avatars">
+          <span>SA</span><span>JD</span><span>MK</span><span>RL</span>
+        </div>
+        <div class="trust-text"><strong>500+</strong> security analysts trust this platform</div>
+      </div>
+    </div>
+    <!-- Right: Dashboard mockup -->
+    <div class="hero-mockup reveal">
+      <div class="mock-badge-float">
+        <i class="fa-solid fa-shield-halved"></i> Threat Blocked
+      </div>
+      <div class="mockup-card">
+        <div class="mock-bar">
+          <span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span>
+          <span class="mock-title">AI Security Dashboard</span>
+        </div>
+        <div class="mock-stats">
+          <div class="mock-stat">
+            <div class="mock-stat-num warn">14</div>
+            <div class="mock-stat-lbl">Active Alerts</div>
+          </div>
+          <div class="mock-stat">
+            <div class="mock-stat-num ok">99.9%</div>
+            <div class="mock-stat-lbl">Detection Rate</div>
+          </div>
+          <div class="mock-stat">
+            <div class="mock-stat-num">&lt;5s</div>
+            <div class="mock-stat-lbl">Response</div>
+          </div>
+        </div>
+        <div class="mock-alerts">
+          <div class="mock-alert">
+            <span class="mock-sev sev-c"></span>
+            <span class="mock-alert-t">SQL Injection Attempt</span>
+            <span class="mock-alert-tag">TA0001</span>
+          </div>
+          <div class="mock-alert">
+            <span class="mock-sev sev-h"></span>
+            <span class="mock-alert-t">Port Scan Detected</span>
+            <span class="mock-alert-tag">TA0007</span>
+          </div>
+          <div class="mock-alert">
+            <span class="mock-sev sev-m"></span>
+            <span class="mock-alert-t">Brute Force — SSH</span>
+            <span class="mock-alert-tag">TA0006</span>
+          </div>
+          <div class="mock-alert">
+            <span class="mock-sev sev-c"></span>
+            <span class="mock-alert-t">Data Exfiltration Blocked</span>
+            <span class="mock-alert-tag">TA0010</span>
+          </div>
+        </div>
+      </div>
+      <div class="mock-shield-float">
+        <div class="pulse-ring"></div>
+        AI Engine Active
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- STATS -->
+<section class="stats">
+  <div class="container stats-grid">
+    <div class="stat reveal"><div class="stat-icon"><i class="fa-solid fa-crosshairs"></i></div><div class="stat-num" data-target="99.9" data-suffix="%">0%</div><div class="stat-label">Threat Detection Rate</div></div>
+    <div class="stat reveal"><div class="stat-icon"><i class="fa-solid fa-bolt"></i></div><div class="stat-num">&lt;5 min</div><div class="stat-label">Average Response Time</div></div>
+    <div class="stat reveal"><div class="stat-icon"><i class="fa-solid fa-shield-halved"></i></div><div class="stat-num" data-target="10000" data-suffix="+">0+</div><div class="stat-label">Incidents Handled</div></div>
+    <div class="stat reveal"><div class="stat-icon"><i class="fa-solid fa-eye"></i></div><div class="stat-num">24/7</div><div class="stat-label">Active Monitoring</div></div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section class="section" id="features">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="section-tag">Core Capabilities</div>
+      <h2>Powerful Features</h2>
+      <p>Everything you need to secure your infrastructure</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature reveal">
+        <div class="feat-icon"><i class="fa-solid fa-brain"></i></div>
+        <h3>AI-Powered Detection</h3>
+        <p>Advanced machine learning algorithms detect threats and anomalies in real-time with high precision.</p>
+      </div>
+      <div class="feature reveal">
+        <div class="feat-icon"><i class="fa-solid fa-bolt"></i></div>
+        <h3>Instant Response</h3>
+        <p>Automated response mechanisms neutralize threats immediately, minimizing damage and downtime.</p>
+      </div>
+      <div class="feature reveal">
+        <div class="feat-icon"><i class="fa-solid fa-shield-halved"></i></div>
+        <h3>MITRE ATT&amp;CK</h3>
+        <p>Comprehensive mapping to industry-standard threat tactics, techniques, and procedures.</p>
+      </div>
+      <div class="feature reveal">
+        <div class="feat-icon"><i class="fa-solid fa-wave-square"></i></div>
+        <h3>24/7 Monitoring</h3>
+        <p>Continuous surveillance of network traffic, endpoints, and services with low-latency alerts.</p>
+      </div>
+      <div class="feature reveal">
+        <div class="feat-icon"><i class="fa-solid fa-chart-column"></i></div>
+        <h3>Advanced Analytics</h3>
+        <p>Deep insights into security patterns, threat trends, and infrastructure vulnerabilities.</p>
+      </div>
+      <div class="feature reveal">
+        <div class="feat-icon"><i class="fa-solid fa-file-shield"></i></div>
+        <h3>Incident Reports</h3>
+        <p>Automated PDF and CSV reports with full incident timeline, severity, and remediation steps.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section" id="how">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="section-tag">Process</div>
+      <h2>How It Works</h2>
+      <p>From detection to response in three intelligent steps</p>
+    </div>
+    <div class="steps-grid">
+      <div class="steps-connector"></div>
+      <div class="step reveal">
+        <div class="step-num"><div class="step-badge">01</div><div class="step-num-inner"><i class="fa-solid fa-network-wired"></i></div></div>
+        <h3>Collect &amp; Monitor</h3>
+        <p>Continuously collects network logs, PCAP files, and endpoint telemetry for real-time analysis.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num"><div class="step-badge">02</div><div class="step-num-inner"><i class="fa-solid fa-brain"></i></div></div>
+        <h3>AI Analysis</h3>
+        <p>Machine learning models classify traffic, detect anomalies, and map threats to MITRE ATT&amp;CK tactics.</p>
+      </div>
+      <div class="step reveal">
+        <div class="step-num"><div class="step-badge">03</div><div class="step-num-inner"><i class="fa-solid fa-bolt"></i></div></div>
+        <h3>Respond &amp; Report</h3>
+        <p>Automated playbooks execute responses instantly and generate detailed incident reports for your team.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- MITRE -->
+<section class="section mitre-section" id="mitre">
+  <div class="container mitre-grid">
+    <div class="reveal">
+      <div class="section-tag">Threat Intelligence</div>
+      <h2>MITRE ATT&amp;CK<br/>Integration</h2>
+      <p class="muted" style="margin-top:14px;line-height:1.75">Our platform maps every detected threat to the MITRE ATT&amp;CK framework, providing industry-standard threat intelligence and proven response strategies.</p>
+      <ul class="check-list">
+        <li><i class="fa-solid fa-circle-check"></i> Automated tactic and technique mapping</li>
+        <li><i class="fa-solid fa-circle-check"></i> Real-time threat intelligence updates</li>
+        <li><i class="fa-solid fa-circle-check"></i> Comprehensive attack pattern analysis</li>
+        <li><i class="fa-solid fa-circle-check"></i> Proven mitigation strategies</li>
+        <li><i class="fa-solid fa-circle-check"></i> Full kill-chain visibility</li>
+      </ul>
+    </div>
+    <div class="mitre-card reveal">
+      <div class="mitre-header">Live Threat Matrix<span class="mitre-live"><span class="mitre-live-dot"></span> Live</span></div>
+      <div class="mitre-row"><span class="dot red"></span> Initial Access <span class="mitre-label">TA0001</span></div>
+      <div class="mitre-row"><span class="dot orange"></span> Execution <span class="mitre-label">TA0002</span></div>
+      <div class="mitre-row"><span class="dot yellow"></span> Persistence <span class="mitre-label">TA0003</span></div>
+      <div class="mitre-row"><span class="dot blue"></span> Discovery <span class="mitre-label">TA0007</span></div>
+      <div class="mitre-row"><span class="dot green"></span> Lateral Movement <span class="mitre-label">TA0008</span></div>
+      <div class="mitre-row"><span class="dot purple"></span> Exfiltration <span class="mitre-label">TA0010</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section class="section about-section" id="about">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="section-tag">About</div>
+      <h2>About The Project</h2>
+      <p>An intelligent platform built to defend modern networks</p>
+    </div>
+    <div class="about-grid">
+      <div class="about-text reveal">
+        <h3>What is AI Security Platform?</h3>
+        <p class="muted">
+          AI Security Platform is an <strong style="color:var(--text)">AI-powered Incident Response System</strong> designed to help organizations detect, analyze, and respond to cyber threats in real time. It combines machine learning models, threat intelligence feeds, and the <strong style="color:var(--primary)">MITRE ATT&amp;CK</strong> framework to give security teams full visibility over attacks targeting their infrastructure.
+        </p>
+        <h3 style="margin-top:28px">What does it do?</h3>
+        <ul class="check-list" style="margin-top:14px">
+          <li><i class="fa-solid fa-circle-check"></i> Detects intrusions and suspicious behavior automatically using AI models</li>
+          <li><i class="fa-solid fa-circle-check"></i> Classifies threats and maps them to MITRE ATT&amp;CK tactics and techniques</li>
+          <li><i class="fa-solid fa-circle-check"></i> Triggers automated response actions to contain incidents instantly</li>
+          <li><i class="fa-solid fa-circle-check"></i> Generates detailed incident reports and analytics dashboards</li>
+          <li><i class="fa-solid fa-circle-check"></i> Monitors network traffic and endpoints 24/7 with low-latency alerts</li>
+        </ul>
+      </div>
+      <div class="about-cards">
+        <div class="about-card reveal">
+          <div class="feat-icon"><i class="fa-solid fa-bullseye"></i></div>
+          <div>
+            <h4>Our Mission</h4>
+            <p class="muted">Make advanced cybersecurity accessible by automating threat detection and response with AI.</p>
+          </div>
+        </div>
+        <div class="about-card reveal">
+          <div class="feat-icon"><i class="fa-solid fa-layer-group"></i></div>
+          <div>
+            <h4>How It Works</h4>
+            <p class="muted">Collects logs &amp; network data → AI analyzes patterns → maps to MITRE ATT&amp;CK → executes response playbooks.</p>
+          </div>
+        </div>
+        <div class="about-card reveal">
+          <div class="feat-icon"><i class="fa-solid fa-users"></i></div>
+          <div>
+            <h4>Who It's For</h4>
+            <p class="muted">Enterprises, SOC teams, and security analysts who need faster, smarter incident response.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- TECH STACK -->
+<section class="tech-section section">
+  <div class="container">
+    <div class="section-head reveal">
+      <div class="section-tag">Technology</div>
+      <h2>Built With Modern Tech</h2>
+      <p>Powered by a robust, production-ready technology stack</p>
+    </div>
+    <div class="tech-grid">
+      <div class="tech-card reveal"><i class="fa-brands fa-java tc-java"></i><span>Java 17</span></div>
+      <div class="tech-card reveal"><i class="fa-solid fa-leaf tc-spring"></i><span>Spring Boot</span></div>
+      <div class="tech-card reveal"><i class="fa-brands fa-python tc-python"></i><span>Python AI</span></div>
+      <div class="tech-card reveal"><i class="fa-solid fa-database tc-pg"></i><span>PostgreSQL</span></div>
+      <div class="tech-card reveal"><i class="fa-brands fa-html5 tc-html"></i><span>HTML / JS</span></div>
+      <div class="tech-card reveal"><i class="fa-solid fa-brain tc-ai"></i><span>ML Models</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="container cta-inner reveal">
+    <div class="section-tag">Get Started</div>
+    <h2>Ready to Secure<br/>Your Network?</h2>
+    <p>Join organizations protecting their infrastructure with AI-powered security intelligence.</p>
+    <div class="cta-btns">
+      <a href="login.html" class="btn btn-primary btn-lg">Launch Dashboard <i class="fa-solid fa-arrow-right"></i></a>
+      <a href="#features" class="btn btn-ghost btn-lg">Learn More</a>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer" id="contact">
+  <div class="container footer-grid">
+    <div class="reveal">
+      <div class="brand">
+        <span class="brand-logo"><i class="fa-solid fa-shield-halved"></i></span>
+        <span class="brand-name">AI Security Platform</span>
+      </div>
+      <p class="muted" style="margin-top:14px;font-size:13px;line-height:1.7">Next-generation AI-powered incident response system, built to protect your infrastructure 24/7.</p>
+      <div class="socials">
+        <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
+        <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
+        <a href="#" aria-label="LinkedIn"><i class="fa-brands fa-linkedin-in"></i></a>
+        <a href="https://wa.me/218944415044" aria-label="WhatsApp" target="_blank"><i class="fa-brands fa-whatsapp"></i></a>
+        <a href="mailto:ai.security.support@gmail.com" aria-label="Email"><i class="fa-solid fa-envelope"></i></a>
+      </div>
+    </div>
+    <div class="reveal">
+      <h4>Contact Us</h4>
+      <ul class="contact-list">
+        <li><i class="fa-solid fa-phone"></i><a href="https://wa.me/218944415044" target="_blank">+218 944 415 044</a></li>
+        <li><i class="fa-solid fa-envelope"></i><a href="mailto:ai.security.support@gmail.com">ai.security.support@gmail.com</a></li>
+        <li><i class="fa-solid fa-location-dot"></i> Tripoli, Libya</li>
+      </ul>
+    </div>
+    <div class="reveal">
+      <h4>Quick Links</h4>
+      <ul class="link-list">
+        <li><a href="#features">Features</a></li>
+        <li><a href="#how">How It Works</a></li>
+        <li><a href="#mitre">MITRE ATT&amp;CK</a></li>
+        <li><a href="#about">About</a></li>
+        <li><a href="login.html">Login</a></li>
+      </ul>
+    </div>
+    <div class="reveal">
+      <h4>Stay Updated</h4>
+      <p class="muted" style="font-size:13px;margin-bottom:4px">Get security updates and threat intelligence straight to your inbox.</p>
+      <form class="newsletter" onsubmit="event.preventDefault();this.querySelector('button').innerHTML='<i class=\'fa-solid fa-check\'></i> Done';">
+        <input type="email" placeholder="your@email.com" required/>
+        <button class="btn btn-primary" type="submit">Subscribe</button>
+      </form>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="container">© 2026 AI Security Platform — AISec Libya <i class="fa-solid fa-circle"></i> All rights reserved.</div>
+  </div>
+</footer>
+
+<button id="toTop" aria-label="Back to top"><i class="fa-solid fa-arrow-up"></i></button>
+
+<script>
+// ===== Animated canvas background =====
+(function(){
+  const canvas = document.getElementById('bgCanvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, pts = [], animId;
+
+  function resize(){
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  for(let i = 0; i < 80; i++){
+    pts.push({
+      x: Math.random()*W, y: Math.random()*H,
+      vx:(Math.random()-.5)*.35, vy:(Math.random()-.5)*.35,
+      r: Math.random()*1.4+.4
+    });
+  }
+
+  const mouse = {x:-9999,y:-9999};
+  window.addEventListener('mousemove', e=>{mouse.x=e.clientX;mouse.y=e.clientY;});
+
+  function draw(){
+    ctx.clearRect(0,0,W,H);
+    pts.forEach(p=>{
+      p.x+=p.vx; p.y+=p.vy;
+      if(p.x<0||p.x>W) p.vx*=-1;
+      if(p.y<0||p.y>H) p.vy*=-1;
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+      ctx.fillStyle='rgba(34,184,207,.5)';
+      ctx.fill();
+    });
+    for(let i=0;i<pts.length;i++){
+      for(let j=i+1;j<pts.length;j++){
+        const a=pts[i],b=pts[j];
+        const d=Math.hypot(a.x-b.x,a.y-b.y);
+        if(d<120){
+          ctx.strokeStyle=`rgba(34,184,207,${(1-d/120)*.18})`;
+          ctx.lineWidth=1;
+          ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+        }
+      }
+      const dm=Math.hypot(pts[i].x-mouse.x,pts[i].y-mouse.y);
+      if(dm<160){
+        ctx.strokeStyle=`rgba(34,184,207,${(1-dm/160)*.45})`;
+        ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(pts[i].x,pts[i].y);ctx.lineTo(mouse.x,mouse.y);ctx.stroke();
+      }
+    }
+    animId=requestAnimationFrame(draw);
+  }
+  draw();
+})();
+
+// ===== Reveal on scroll =====
+const io = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('visible'); io.unobserve(e.target); }});
+},{threshold:.1});
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el));
+
+// ===== Nav scroll style =====
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll',()=>{ navbar.classList.toggle('scrolled',scrollY>60); });
+
+// ===== To Top =====
+const toTop = document.getElementById('toTop');
+window.addEventListener('scroll',()=>{ toTop.classList.toggle('show',scrollY>400); });
+toTop.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+
+// ===== Animated counters =====
+document.querySelectorAll('.stat-num[data-target]').forEach(el=>{
+  const target = parseFloat(el.dataset.target);
+  const suffix = el.dataset.suffix||'';
+  const isFloat = String(target).includes('.');
+  let start = null;
+  const step = ts=>{
+    if(!start) start=ts;
+    const p = Math.min((ts-start)/1800,1);
+    const ease = 1-Math.pow(1-p,3);
+    const val = target*ease;
+    el.textContent = (isFloat ? val.toFixed(1) : Math.floor(val)) + suffix;
+    if(p<1) requestAnimationFrame(step);
+  };
+  const obs = new IntersectionObserver(([e])=>{ if(e.isIntersecting){ requestAnimationFrame(step); obs.disconnect(); }},{threshold:.5});
+  obs.observe(el.closest('.stat'));
+});
+</script>
+</body>
+</html>

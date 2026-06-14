@@ -1,0 +1,153 @@
+/* === MITRE MAPPING === */
+.mitre-head{display:flex;align-items:center;gap:12px}
+.mitre-logo{
+  width:42px;height:42px;border-radius:10px;
+  background:linear-gradient(135deg,#22b8cf,#4dd4e8);
+  color:#0b1628;display:grid;place-items:center;font-size:18px;
+  box-shadow:0 6px 18px rgba(34,184,207,.4);
+}
+.btn-action.export-mitre{
+  background:linear-gradient(135deg,#22b8cf,#4dd4e8);
+  color:#0b1628;box-shadow:0 6px 18px rgba(34,184,207,.4);
+  position:relative;overflow:hidden;
+}
+.btn-action.export-mitre::after{
+  content:"";position:absolute;top:0;left:-100%;width:100%;height:100%;
+  background:linear-gradient(90deg,transparent,rgba(255,255,255,.4),transparent);
+  transition:left .6s;
+}
+.btn-action.export-mitre:hover::after{left:100%}
+.btn-action.export-mitre:hover{transform:translateY(-2px);box-shadow:0 12px 30px rgba(34,184,207,.55)}
+
+/* Attack Chain */
+.chain{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  padding:16px 10px 4px;flex-wrap:wrap;
+}
+.chain-step{
+  position:relative;text-align:center;
+  animation:chainIn .6s cubic-bezier(.2,.8,.2,1) both;
+}
+.chain-step:nth-child(1){animation-delay:.05s}
+.chain-step:nth-child(3){animation-delay:.15s}
+.chain-step:nth-child(5){animation-delay:.25s}
+.chain-step:nth-child(7){animation-delay:.35s}
+.chain-step:nth-child(9){animation-delay:.45s}
+@keyframes chainIn{from{opacity:0;transform:translateY(12px) scale(.9)}to{opacity:1;transform:translateY(0) scale(1)}}
+.chain-tile{
+  width:110px;height:78px;border-radius:12px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;line-height:1.25;
+  color:white;padding:8px;text-align:center;
+  box-shadow:0 8px 20px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.18);
+  cursor:pointer;transition:transform .25s, box-shadow .25s;
+  position:relative;
+}
+.chain-tile:hover{transform:translateY(-4px)}
+.chain-tile.red{background:linear-gradient(135deg,#ff6b6b,#f06595)}
+.chain-tile.orange{background:linear-gradient(135deg,#ffa94d,#ff922b)}
+.chain-tile.yellow{background:linear-gradient(135deg,#ffd43b,#fab005);color:#5c3d00}
+.chain-tile.green{background:linear-gradient(135deg,#51cf66,#37b24d)}
+.chain-tile.blue{background:linear-gradient(135deg,#4dabf7,#22b8cf)}
+.chain-tile .ch-dot{
+  position:absolute;top:-6px;right:-6px;
+  width:18px;height:18px;border-radius:50%;
+  background:#ff6b6b;border:2px solid var(--bg);
+  display:grid;place-items:center;font-size:8px;color:white;
+  box-shadow:0 0 10px rgba(255,107,107,.6);
+  animation:pulseDot 1.6s infinite;
+}
+.chain-id{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-top:6px}
+.chain-arrow{color:var(--muted);font-size:12px;align-self:center;padding:0 2px;opacity:.5}
+
+/* Tactic sections */
+.tactic-block{margin-bottom:18px}
+.tactic-title{
+  display:flex;align-items:center;gap:10px;
+  font-size:16px;font-weight:700;margin-bottom:14px;
+}
+.tactic-dot{width:10px;height:10px;border-radius:50%;box-shadow:0 0 10px currentColor}
+.tactic-dot.red{background:#ff6b6b;color:#ff6b6b}
+.tactic-dot.orange{background:#ffa94d;color:#ffa94d}
+.tactic-dot.yellow{background:#ffd43b;color:#ffd43b}
+.tactic-dot.green{background:#51cf66;color:#51cf66}
+.tactic-dot.blue{background:#4dabf7;color:#4dabf7}
+.tactic-code{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);margin-left:auto;font-weight:500}
+
+.tech-item{
+  background:rgba(11,22,40,.4);
+  border:1px solid var(--border);
+  border-radius:10px;padding:14px 16px;
+  margin-bottom:10px;
+  display:flex;align-items:center;gap:14px;flex-wrap:wrap;
+  cursor:pointer;transition:all .25s;
+  animation:rowIn .5s ease-out both;
+}
+.tech-item.detected{
+  background:linear-gradient(90deg, rgba(255,107,107,.07), rgba(11,22,40,.4));
+  border-color:rgba(255,107,107,.25);
+}
+.tech-item:hover{transform:translateX(4px);border-color:rgba(34,184,207,.4)}
+.tech-id{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--muted);min-width:60px;font-weight:600}
+.tech-name{flex:1;min-width:200px;font-size:14px;font-weight:500}
+.det-badge{
+  font-size:10px;font-weight:800;letter-spacing:.4px;
+  padding:3px 10px;border-radius:5px;
+  background:rgba(255,107,107,.15);color:#ff6b6b;
+  border:1px solid rgba(255,107,107,.3);
+}
+.tech-conf{display:flex;align-items:center;gap:10px;min-width:140px}
+.tech-bar{flex:1;height:6px;background:rgba(255,255,255,.06);border-radius:999px;overflow:hidden}
+.tech-bar span{
+  display:block;height:100%;width:0;
+  background:linear-gradient(90deg,#ff8787,#ff6b6b);
+  border-radius:999px;
+  box-shadow:0 0 8px rgba(255,107,107,.5);
+  animation:growBar 1.4s cubic-bezier(.2,.8,.2,1);
+}
+.tech-pct{font-size:12px;font-weight:700;color:#ff6b6b;min-width:36px;text-align:right}
+
+/* Mitigations */
+.mitigations{display:flex;flex-direction:column;gap:10px}
+.mit-item{
+  display:flex;gap:14px;align-items:center;flex-wrap:wrap;
+  background:rgba(11,22,40,.4);border:1px solid var(--border);
+  border-radius:10px;padding:14px 16px;
+  border-left:3px solid;
+  transition:all .25s;cursor:pointer;
+  animation:rowIn .5s ease-out both;
+}
+.mit-item:hover{transform:translateX(4px);background:rgba(34,184,207,.04)}
+.mit-item.critical{border-left-color:#ff6b6b}
+.mit-item.high{border-left-color:#ffa94d}
+.mit-item.medium{border-left-color:#ffd43b}
+.mit-item.low{border-left-color:#4dabf7}
+.mit-id{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);min-width:50px;font-weight:600}
+.mit-body{flex:1;min-width:220px}
+.mit-title-row{display:flex;align-items:center;gap:8px;margin-bottom:4px}
+.mit-name{font-size:14px;font-weight:600}
+.mit-desc{font-size:12px;color:var(--muted)}
+.status-tag{
+  font-size:10px;font-weight:800;letter-spacing:.3px;
+  padding:3px 9px;border-radius:4px;border:1px solid;
+}
+.status-tag.recommended{background:rgba(34,184,207,.1);color:var(--primary);border-color:rgba(34,184,207,.3)}
+.status-tag.implemented{background:rgba(81,207,102,.1);color:#51cf66;border-color:rgba(81,207,102,.3)}
+.status-tag.in-progress{background:rgba(255,212,59,.1);color:#ffd43b;border-color:rgba(255,212,59,.3)}
+.mit-sev{
+  font-size:10px;font-weight:800;padding:3px 10px;border-radius:4px;
+  border:1px solid;align-self:flex-start;
+}
+.mit-sev.critical{background:rgba(255,107,107,.1);color:#ff6b6b;border-color:rgba(255,107,107,.3)}
+.mit-sev.high{background:rgba(255,169,77,.1);color:#ffa94d;border-color:rgba(255,169,77,.3)}
+.mit-sev.medium{background:rgba(255,212,59,.1);color:#ffd43b;border-color:rgba(255,212,59,.3)}
+.mit-sev.low{background:rgba(77,171,247,.1);color:#4dabf7;border-color:rgba(77,171,247,.3)}
+
+/* Detection Summary */
+.ds-row{margin-bottom:14px}
+.ds-row:last-child{margin-bottom:0}
+.ds-head{display:flex;justify-content:space-between;margin-bottom:8px;font-size:13px}
+.ds-val{font-size:16px;font-weight:800}
+.ds-val.red{color:#ff6b6b}
+.ds-val.orange{color:#ffa94d}
+.ds-val.cyan{color:var(--primary)}

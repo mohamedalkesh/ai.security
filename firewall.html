@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Firewall — AI Security Platform</title>
+<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="dashboard.css"/>
+<link rel="stylesheet" href="alerts.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<style>
+.fw-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:18px}
+.fw-stat{background:#16243d;border:1px solid #1e3557;border-radius:12px;padding:18px}
+.fw-stat .v{font-size:28px;font-weight:700;color:#e6edf7}
+.fw-stat .l{font-size:11px;color:#8ea0b8;text-transform:uppercase;letter-spacing:.06em;margin-top:4px}
+.fw-stat .v.danger{color:#fca5a5}
+
+.fw-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap}
+.fw-toolbar input[type=search]{flex:1;min-width:240px;background:#0b1628;border:1px solid #1e3557;color:#e6edf7;padding:9px 14px;border-radius:8px;font-family:inherit}
+.fw-toolbar input[type=search]:focus{outline:none;border-color:#22b8cf}
+
+.fw-table{width:100%;border-collapse:collapse;background:#16243d;border:1px solid #1e3557;border-radius:12px;overflow:hidden}
+.fw-table th,.fw-table td{padding:12px 16px;text-align:left;border-bottom:1px solid #1e3557;font-size:13px}
+.fw-table th{background:#0f1d33;color:#8ea0b8;font-weight:600;text-transform:uppercase;letter-spacing:.05em;font-size:11px}
+.fw-table tr:last-child td{border-bottom:none}
+.fw-table .ip{font-family:'JetBrains Mono',monospace;font-weight:600;color:#fca5a5}
+.fw-table .reason{color:#cbd5e1;max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fw-table .src-pill{display:inline-block;padding:2px 9px;border-radius:10px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.04em}
+.src-MANUAL{background:rgba(96,165,250,.15);color:#93c5fd}
+.src-INCIDENT_RESPONSE{background:rgba(251,146,60,.15);color:#fdba74}
+.src-AUTO_RULE{background:rgba(168,85,247,.15);color:#d8b4fe}
+.fw-table .when{color:#8ea0b8;font-size:12px;white-space:nowrap}
+.fw-table .actor{color:#cbd5e1;font-size:12px}
+
+/* Reputation badge — colour-coded by AbuseIPDB-style 0-100 score. */
+.rep-badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;border:1px solid transparent;white-space:nowrap}
+.rep-badge .rep-cc{font-size:10px;font-weight:700;letter-spacing:.04em;opacity:.75}
+.rep-stale{font-size:10px;opacity:.6;cursor:help}
+.rep-good   {background:rgba(34,197,94,.12); color:#86efac; border-color:rgba(34,197,94,.3)}
+.rep-warn   {background:rgba(251,191,36,.12);color:#fcd34d; border-color:rgba(251,191,36,.3)}
+.rep-bad    {background:rgba(239,68,68,.15); color:#fca5a5; border-color:rgba(239,68,68,.4)}
+.rep-unknown{background:#0f1d33;color:#8ea0b8;border-color:#1e3557;cursor:pointer;font-weight:600}
+.rep-unknown:hover{background:#1e3557;color:#cbd5e1}
+.fw-empty{padding:60px 24px;text-align:center;color:#8ea0b8;background:#16243d;border:1px solid #1e3557;border-radius:12px}
+.fw-empty i{font-size:48px;color:#1e3557;margin-bottom:14px}
+
+.fw-btn-del{background:transparent;border:1px solid #b91c1c;color:#fca5a5;padding:6px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s}
+.fw-btn-del:hover{background:#b91c1c;color:#fff}
+
+.fw-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:100}
+.fw-modal-bg.show{display:flex}
+.fw-modal{background:#16243d;border:1px solid #1e3557;border-radius:14px;padding:28px;width:480px;max-width:90vw}
+.fw-modal h3{margin:0 0 18px;color:#e6edf7;display:flex;align-items:center;gap:10px}
+.fw-modal label{display:block;font-size:11px;color:#8ea0b8;margin:12px 0 5px;text-transform:uppercase;letter-spacing:.06em}
+.fw-modal input,.fw-modal textarea{width:100%;background:#0b1628;border:1px solid #1e3557;color:#e6edf7;padding:9px 12px;border-radius:8px;font-family:inherit;font-size:14px;box-sizing:border-box}
+.fw-modal input:focus,.fw-modal textarea:focus{outline:none;border-color:#22b8cf}
+.fw-modal textarea{resize:vertical;min-height:60px}
+.fw-modal-hint{font-size:11px;color:#8ea0b8;margin-top:4px}
+.fw-modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}
+.btn-primary.danger{background:#b91c1c}
+.btn-primary.danger:hover{background:#dc2626}
+</style>
+</head>
+<body class="dash-body">
+
+<div class="dash-layout">
+  <aside class="sidebar">
+    <div class="side-brand">
+      <div class="brand-logo"><i class="fa-solid fa-shield-halved"></i></div>
+      <div>
+        <div class="side-title">AI Security</div>
+        <div class="side-sub">Firewall Blocklist</div>
+      </div>
+    </div>
+    <nav class="side-nav">
+      <a class="side-link" href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+      <a class="side-link" href="alerts.html"><i class="fa-solid fa-triangle-exclamation"></i> Alerts</a>
+      <a class="side-link" href="scan.html"><i class="fa-solid fa-magnifying-glass-chart"></i> Scan PCAP</a>
+      <a class="side-link" href="monitoring.html"><i class="fa-solid fa-wave-square"></i> Monitoring</a>
+      <a class="side-link" href="reports.html"><i class="fa-solid fa-file-lines"></i> Reports</a>
+      <a class="side-link" href="users.html"><i class="fa-solid fa-users"></i> Users</a>
+      <a class="side-link" href="audit.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-clipboard-list"></i> Audit Log</a>
+      <a class="side-link" href="webhooks.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-bell"></i> Webhooks</a>
+      <a class="side-link active" href="firewall.html"><i class="fa-solid fa-ban"></i> Firewall</a>
+      <a class="side-link" href="analytics.html"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
+      <a class="side-link" href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+      <a class="side-link" href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications</a>
+      <a class="side-link" href="contact.html"><i class="fa-solid fa-envelope"></i> Contact</a>
+    </nav>
+    <a href="index.html" class="side-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <main class="dash-main">
+    <header class="dash-top alerts-top">
+      <div>
+        <h1><i class="fa-solid fa-ban" style="color:#fca5a5"></i> Firewall Blocklist</h1>
+        <p class="muted">Manually block any source IP, or review IPs auto-blocked from incidents.</p>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn-secondary" id="fwBackfillBtn" title="Apply auto-block rule to existing open HIGH/CRITICAL alerts">
+          <i class="fa-solid fa-robot"></i> Apply AI Rule
+        </button>
+        <button class="btn-primary" id="fwNewBtn"><i class="fa-solid fa-plus"></i> Block IP</button>
+      </div>
+    </header>
+
+    <div class="fw-stats">
+      <div class="fw-stat">
+        <div class="v danger" id="fwActiveCount">0</div>
+        <div class="l">Active blocks</div>
+      </div>
+      <div class="fw-stat">
+        <div class="v" id="fwManualCount">0</div>
+        <div class="l">Manual entries</div>
+      </div>
+      <div class="fw-stat">
+        <div class="v" id="fwAutoCount">0</div>
+        <div class="l">Auto / response</div>
+      </div>
+    </div>
+
+    <div class="fw-toolbar">
+      <input type="search" id="fwSearch" placeholder="Search IP, reason, or actor..." />
+    </div>
+
+    <div id="fwListWrap"></div>
+  </main>
+</div>
+
+<!-- Modal: block new IP -->
+<div class="fw-modal-bg" id="fwModalBg">
+  <div class="fw-modal">
+    <h3><i class="fa-solid fa-ban" style="color:#fca5a5"></i> Block an IP address</h3>
+
+    <label>IP address or CIDR</label>
+    <input id="fwIp" placeholder="e.g. 203.0.113.42 or 2001:db8::/32" autocomplete="off"/>
+    <div class="fw-modal-hint">IPv4, IPv6, or CIDR notation accepted.</div>
+
+    <label>Reason (optional)</label>
+    <textarea id="fwReason" placeholder="Why is this IP being blocked?"></textarea>
+
+    <label>Expires at (optional, ISO 8601 UTC)</label>
+    <input id="fwExpires" placeholder="2026-12-31T00:00:00Z"/>
+    <div class="fw-modal-hint">Leave empty for a permanent block.</div>
+
+    <div class="fw-modal-actions">
+      <button class="btn-ghost" id="fwCancelBtn">Cancel</button>
+      <button class="btn-primary danger" id="fwSaveBtn"><i class="fa-solid fa-ban"></i> Block</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"><i class="fa-solid fa-check-circle"></i> <span>—</span></div>
+
+<script src="api.js"></script>
+<script src="firewall.js"></script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+# Example dataset manifest consumed by AI/tools/prepare_dataset.py
+# Copy this file to manifest.yaml and update the paths once the raw archives
+# are downloaded under /home/mohamed/Desktop/datasets/.
+
+label_map: ./label_map.yaml
+output_dir: ../data/processed
+format: csv
+
+# Each dataset entry describes how to expand one or more PCAP files into
+# the CICIDS-style feature matrix expected by the model.
+datasets:
+  - name: cicids2017-friday
+    description: "CICIDS2017 Friday Working Hours (ICMP + DDoS mix)"
+    pcap_glob: /home/mohamed/Desktop/datasets/cicids2017/raw/Friday-*.pcap
+    label_map_key: cicids2017
+    output: cicids2017_friday.csv
+    label_strategy:
+      type: csv
+      path: /home/mohamed/Desktop/datasets/cicids2017/labels/Friday-WorkingHours-Afternoon.csv
+      column: Label
+      match_on: [src_ip, dst_ip, src_port, dst_port, protocol]
+      timestamp_column: Timestamp
+    metadata:
+      capture_date: 2017-02-17
+      notes: "Full PCAP with ground-truth labels provided by CIC."
+
+  - name: unsw-nb15-batch1
+    description: "UNSW-NB15 pcap split 1"
+    pcap_glob: /home/mohamed/Desktop/datasets/unsw-nb15/raw/UNSW-NB15*.pcap
+    label_map_key: unsw-nb15
+    default_label: Generic
+    metadata:
+      capture_date: 2015-02-21
+      notes: "Labels supplied separately via UNSW CSVs."

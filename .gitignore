@@ -1,0 +1,81 @@
+# =========================
+# Python Virtual Environment
+# =========================
+AI/.venv/
+.venv/
+venv/
+
+# =========================
+# Python Cache
+# =========================
+__pycache__/
+*.pyc
+
+# =========================
+# AI Training Datasets
+# =========================
+AI/data/
+
+# =========================
+# AI Trained Models
+# =========================
+AI/model_artifacts/
+AI/model_artifacts_v2/
+AI/model_artifacts_v3/
+AI/model_artifacts_v4/
+
+# =========================
+# Temporary Uploads
+# =========================
+ml-service/storage/uploads/
+
+# =========================
+# Java Build Files
+# =========================
+backend/target/
+target/
+*.jar
+
+# =========================
+# Environment Variables
+# =========================
+.env
+*.env
+*.pem
+*.key
+
+# =========================
+# Network Capture Files
+# =========================
+*.pcap
+*.pcapng
+
+# =========================
+# Python Model Files
+# =========================
+*.pkl
+*.joblib
+*.h5
+*.pt
+*.pth
+*.onnx
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# Generated Files
+# =========================
+AI/confusion_matrix.png
+AI/feature_importance.png
+AI/pcap_results.csv
+AI/help.txt
+AI/storage/retrain_queue.jsonl
+
+# =========================
+# Documentation
+# =========================
+دليل_الواجهات.pdf
+

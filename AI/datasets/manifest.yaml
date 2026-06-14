@@ -1,0 +1,71 @@
+# Dataset manifest for locally downloaded PCAPs.
+# Generated for AI/tools/prepare_dataset.py so we can convert the curated
+# captures under AI/data/ into CICIDS-style feature matrices.
+
+label_map: ./label_map.yaml
+output_dir: ../data/processed
+format: csv
+
+datasets:
+  - name: wireshark-udp-amplification
+    description: "Wireshark sample amplification floods (ISAKMP + SNMP reflection)."
+    pcap_glob: ../data/ddos/amp.UDP.*.pcap*
+    label_map_key: wireshark-ddos
+    default_label: DDoS
+    metadata:
+      source: wireshark-sample-captures
+      attack_family: udp_amplification
+
+  - name: wireshark-icmp-flood
+    description: "Wireshark ICMP large-empty flood sample."
+    pcap_glob: ../data/ddos/pkt.ICMP*.pcap
+    label_map_key: wireshark-ddos
+    default_label: "ICMP Flood"
+    metadata:
+      source: wireshark-sample-captures
+      attack_family: icmp_flood
+
+  - name: wireshark-tcp-synflood
+    description: "Wireshark SYN flood trace with spoofed sources."
+    pcap_glob: ../data/ddos/pkt.TCP.synflood*.pcap
+    label_map_key: wireshark-ddos
+    default_label: DDoS
+    metadata:
+      source: wireshark-sample-captures
+      attack_family: tcp_syn
+
+  - name: wireshark-udp-null
+    description: "Wireshark UDP null flood trace."
+    pcap_glob: ../data/ddos/pkt.UDP.null*.pcapng
+    label_map_key: wireshark-ddos
+    default_label: DDoS
+    metadata:
+      source: wireshark-sample-captures
+      attack_family: udp_null
+
+  - name: wireshark-nmap-scans
+    description: "Wireshark nmap scan modes (SS/SF/ST/SU/SV/SX)."
+    pcap_glob: ../data/nmap_scans/*.pcapng
+    label_map_key: wireshark-recon
+    default_label: "Port Scan"
+    metadata:
+      source: wireshark-sample-captures
+      attack_family: nmap
+
+  - name: honeypot-seven-day-webserver
+    description: "Seven days of probes hitting exposed web server (Rapid7 honeypot)."
+    pcap_glob: ../data/2026-02-01-seven-days-of-scans-and-probes-and-web-traffic-hitting-my-web-server.pcap
+    label_map_key: honeypot-week
+    default_label: Unknown
+    metadata:
+      source: rapid7-honeypot
+      notes: "Mixed real-world noise; inspect labels post-extraction."
+
+  - name: mawi-2009-backbone
+    description: "MAWI/WIDE backbone traces (Nov–Dec 2009) from Netresec."
+    pcap_glob: ../data/net-2009-*.pcap*
+    label_map_key: mawi
+    default_label: Unknown
+    metadata:
+      source: mawi-wide
+      notes: "Requires manual relabeling or clustering before training."

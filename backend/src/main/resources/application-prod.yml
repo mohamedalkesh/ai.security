@@ -1,0 +1,35 @@
+# ============================================================
+# Production profile  — activate with: --spring.profiles.active=prod
+# or env: SPRING_PROFILES_ACTIVE=prod
+# ============================================================
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: none          # NEVER auto-mutate schema in production
+    show-sql: false
+
+  mail:
+    password: ${MAIL_PASSWORD}  # must be set as env var — no fallback allowed in prod
+
+management:
+  endpoint:
+    health:
+      show-details: when-authorized
+  endpoints:
+    web:
+      exposure:
+        include: health         # do NOT expose /actuator/info in prod
+
+app:
+  seed:
+    enabled: false              # never seed default users in production
+  jwt:
+    expiration-ms: 28800000     # 8h in prod (shorter window)
+
+logging:
+  level:
+    com.aisec.backend: WARN
+    org.hibernate.SQL: OFF
+    org.hibernate.orm.jdbc.bind: OFF
+    org.springframework.security: WARN

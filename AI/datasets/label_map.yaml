@@ -1,0 +1,109 @@
+# Canonical label taxonomy shared across ingestion + training.
+# Extend this file whenever new datasets or attack families are introduced.
+
+canonical:
+  Benign:
+    - benign
+    - BENIGN
+    - Normal
+  DDoS:
+    - ddos
+    - "DDoS Hulk"
+    - "DDoS GoldenEye"
+    - "DDoS LOIC"
+  DoS:
+    - dos
+    - "DoS Hulk"
+    - "DoS Slowhttptest"
+    - "DoS slowloris"
+    - Heartbleed
+  "Port Scan":
+    - portscan
+    - "Port Scan"
+    - Reconnaissance
+  "Brute Force":
+    - "FTP-Patator"
+    - "SSH-Patator"
+    - "Brute Force"
+  Bot:
+    - bot
+    - "Botnet"
+    - "Worms"
+  "Web Attack":
+    - "Web Attack"
+    - "Web Attack - Brute Force"
+    - "Web Attack - XSS"
+    - "Web Attack - SQL Injection"
+    - Exploits
+  Infiltration:
+    - Infiltration
+    - Backdoor
+    - Shellcode
+  "ICMP Flood":
+    - "ICMP-Flood"
+    - "Ping Flood"
+  "ICMP Sweep":
+    - "ICMP-Sweep"
+    - "Ping Sweep"
+  Unknown:
+    - Unknown
+
+default_label: Unknown
+
+# Dataset-specific overrides. Keys must match the manifest's label_map_key values.
+datasets:
+  cicids2017:
+    BENIGN: Benign
+    "DDoS": DDoS
+    "DDoS Hulk": DDoS
+    "DoS Hulk": DoS
+    "DoS GoldenEye": DoS
+    "DoS slowloris": DoS
+    "DoS Slowhttptest": DoS
+    Heartbleed: DoS
+    PortScan: "Port Scan"
+    Bot: Bot
+    "FTP-Patator": "Brute Force"
+    "SSH-Patator": "Brute Force"
+    "Web Attack - Brute Force": "Web Attack"
+    "Web Attack - XSS": "Web Attack"
+    "Web Attack - SQL Injection": "Web Attack"
+    Infiltration: Infiltration
+  unsw-nb15:
+    Normal: Benign
+    Fuzzers: DoS
+    Analysis: Benign
+    Backdoor: Infiltration
+    DoS: DoS
+    Exploits: "Web Attack"
+    Generic: DDoS
+    Reconnaissance: "Port Scan"
+    Shellcode: Infiltration
+    Worms: Bot
+    "Generic Attack": DDoS
+  bot-iot:
+    Normal: Benign
+    DDoS: DDoS
+    DoS: DoS
+    Recon: "Port Scan"
+    Theft: Bot
+    "C&C": Bot
+  toniot:
+    Benign: Benign
+    DoS: DoS
+    DDoS: DDoS
+    Injection: Infiltration
+    Man_in_the_middle: Infiltration
+    Password: "Brute Force"
+    Reverse_shell: Infiltration
+    Scanning: "Port Scan"
+  iscx-vpn:
+    NonVPN: Benign
+    VPN: Benign
+    Tor: Infiltration
+    Malicious: Infiltration
+  ctu-13:
+    Normal: Benign
+    Background: Benign
+    Botnet: Bot
+    Malware: Bot

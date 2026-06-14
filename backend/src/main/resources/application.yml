@@ -1,0 +1,85 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ai-security-backend
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:5432/ai_ids
+    username: ${DB_USER:aisec}
+    password: ${DB_PASSWORD:aisec_pass}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      # SECURITY: change to 'validate' or 'none' in production — use Flyway/Liquibase for schema migrations
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: false
+    show-sql: false
+    open-in-view: false
+  servlet:
+    multipart:
+      max-file-size: 1024MB
+      max-request-size: 1050MB
+  jackson:
+    property-naming-strategy: SNAKE_CASE
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:ai.security.support@gmail.com}
+    password: ${MAIL_PASSWORD:iywfdfudrtcmmoyf}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+        debug: false
+
+app:
+  cors:
+    allowed-origins: "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5500,http://127.0.0.1:5500,http://localhost:3000,null"
+  ml:
+    base-url: "http://127.0.0.1:8001"
+    connect-timeout-ms: 5000
+    read-timeout-ms: 1200000
+  jwt:
+    # SECURITY: MUST set JWT_SECRET env var in production. Default is insecure demo key.
+    # Generate with: openssl rand -base64 32
+    secret: ${JWT_SECRET:Y2hhbmdlLW1lLXBsZWFzZS10aGlzLWlzLWEtZGVtby1zZWNyZXQtMTIzNA==}
+    expiration-ms: 604800000  # 7 days
+  seed:
+    enabled: true
+  frontend-url: ${FRONTEND_URL:http://127.0.0.1:5500}
+  firewall:
+    # auto = use nftables if `nft` is on PATH and exec is permitted, else NoOp.
+    # Override to "nftables" to force-fail loud, or "noop" to disable enforcement entirely.
+    enforcer: ${FIREWALL_ENFORCER:auto}
+    nft-path: ${FIREWALL_NFT_PATH:}
+    use-sudo: ${FIREWALL_USE_SUDO:true}
+  threat-intel:
+    # auto = AbuseIPDB if key set, else deterministic mock for dev/demo.
+    provider: ${THREAT_INTEL_PROVIDER:auto}
+    abuseipdb-key: ${ABUSEIPDB_KEY:}
+    abuseipdb-base-url: https://api.abuseipdb.com/api/v2
+    cache-ttl-hours: 24
+    request-timeout-ms: 5000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: when-authorized
+
+logging:
+  level:
+    com.aisec.backend: INFO
+    org.hibernate.SQL: WARN
+    # SECURITY: never log SQL values in production — set to WARN or OFF
+    org.hibernate.orm.jdbc.bind: WARN

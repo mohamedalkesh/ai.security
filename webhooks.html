@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Webhooks — AI Security Platform</title>
+<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="dashboard.css"/>
+<link rel="stylesheet" href="alerts.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<style>
+.wh-card{background:#16243d;border:1px solid #1e3557;border-radius:12px;padding:18px 22px;margin-bottom:14px}
+.wh-row{display:flex;justify-content:space-between;align-items:center;gap:18px;flex-wrap:wrap}
+.wh-name{font-weight:700;color:#e6edf7;font-size:15px}
+.wh-url{font-family:'JetBrains Mono',monospace;font-size:12px;color:#8ea0b8;word-break:break-all}
+.wh-meta{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;font-size:12px;color:#8ea0b8}
+.wh-meta span strong{color:#cbd5e1}
+.wh-status{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:14px;font-size:11px;font-weight:600}
+.wh-on{background:rgba(34,197,94,.15);color:#86efac}
+.wh-off{background:rgba(150,160,180,.15);color:#cbd5e1}
+.wh-fail{background:rgba(239,68,68,.15);color:#fca5a5}
+.wh-actions{display:flex;gap:8px}
+.wh-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:100}
+.wh-modal{background:#16243d;border:1px solid #1e3557;border-radius:14px;padding:28px;width:480px;max-width:90vw}
+.wh-modal h3{margin:0 0 18px;color:#e6edf7}
+.wh-modal label{display:block;font-size:12px;color:#8ea0b8;margin:10px 0 4px;text-transform:uppercase;letter-spacing:.05em}
+.wh-modal input,.wh-modal select{width:100%;background:#0b1628;border:1px solid #1e3557;color:#e6edf7;padding:9px 12px;border-radius:8px;font-family:inherit;font-size:14px;box-sizing:border-box}
+.wh-modal input:focus,.wh-modal select:focus{outline:none;border-color:#22b8cf}
+.wh-modal-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:22px}
+.secret-box{background:#0b1628;border:2px solid #fcd34d;border-radius:10px;padding:14px;margin-top:14px}
+.secret-box code{font-family:'JetBrains Mono',monospace;font-size:13px;color:#fcd34d;word-break:break-all}
+</style>
+</head>
+<body class="dash-body">
+
+<div class="dash-layout">
+  <aside class="sidebar">
+    <div class="side-brand">
+      <div class="brand-logo"><i class="fa-solid fa-shield-halved"></i></div>
+      <div>
+        <div class="side-title">AI Security</div>
+        <div class="side-sub">Webhooks &amp; Integrations</div>
+      </div>
+    </div>
+    <nav class="side-nav">
+      <a class="side-link" href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+      <a class="side-link" href="alerts.html"><i class="fa-solid fa-triangle-exclamation"></i> Alerts</a>
+      <a class="side-link" href="incidents.html"><i class="fa-solid fa-layer-group"></i> Incidents</a>
+      <a class="side-link" href="analytics.html"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
+      <a class="side-link" href="scan.html"><i class="fa-solid fa-magnifying-glass-chart"></i> Scan PCAP</a>
+      <a class="side-link" href="monitoring.html"><i class="fa-solid fa-wave-square"></i> Monitoring</a>
+      <a class="side-link" href="reports.html"><i class="fa-solid fa-file-lines"></i> Reports</a>
+      <a class="side-link" href="users.html"><i class="fa-solid fa-users"></i> Users</a>
+      <a class="side-link" href="audit.html"><i class="fa-solid fa-clipboard-list"></i> Audit Log</a>
+      <a class="side-link active" href="webhooks.html"><i class="fa-solid fa-bell"></i> Webhooks</a>
+      <a class="side-link" href="firewall.html"><i class="fa-solid fa-ban"></i> Firewall</a>
+      <a class="side-link" href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+      <a class="side-link" href="contact.html"><i class="fa-solid fa-envelope"></i> Contact</a>
+    </nav>
+    <a href="index.html" class="side-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <main class="dash-main">
+    <header class="dash-top alerts-top">
+      <div>
+        <h1>Outbound Webhooks</h1>
+        <p class="muted">Push real-time alerts to Slack, Discord, or any HTTPS endpoint. Payloads are HMAC-SHA256 signed.</p>
+      </div>
+      <button class="btn-primary" id="newWhBtn"><i class="fa-solid fa-plus"></i> New Webhook</button>
+    </header>
+
+    <section id="whList"></section>
+  </main>
+</div>
+
+<!-- Modal: create / edit -->
+<div class="wh-modal-bg" id="whModalBg">
+  <div class="wh-modal">
+    <h3 id="whModalTitle">New Webhook</h3>
+    <input type="hidden" id="whEditId"/>
+
+    <label>Name</label>
+    <input id="whName" placeholder="SOC Slack channel"/>
+
+    <label>Endpoint URL</label>
+    <input id="whUrl" placeholder="https://hooks.slack.com/services/..."/>
+
+    <label>Preset</label>
+    <select id="whPreset">
+      <option value="generic">Generic JSON</option>
+      <option value="slack">Slack</option>
+      <option value="discord">Discord</option>
+    </select>
+
+    <label>Minimum Severity</label>
+    <select id="whMinSev">
+      <option value="LOW">Low</option>
+      <option value="MEDIUM">Medium</option>
+      <option value="HIGH" selected>High</option>
+      <option value="CRITICAL">Critical</option>
+    </select>
+
+    <label style="display:flex;align-items:center;gap:8px;margin-top:14px">
+      <input type="checkbox" id="whEnabled" checked style="width:auto"/>
+      <span style="text-transform:none;letter-spacing:0;color:#cbd5e1">Enabled</span>
+    </label>
+
+    <div id="whSecretBox" class="secret-box" style="display:none">
+      <div style="font-size:11px;color:#8ea0b8;margin-bottom:6px;text-transform:uppercase;letter-spacing:.05em">⚠️ Save this secret — shown only once</div>
+      <code id="whSecretValue"></code>
+    </div>
+
+    <div class="wh-modal-actions">
+      <button class="btn-ghost" id="whCancelBtn">Cancel</button>
+      <button class="btn-primary" id="whSaveBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<script src="api.js"></script>
+<script src="webhooks.js"></script>
+</body>
+</html>
