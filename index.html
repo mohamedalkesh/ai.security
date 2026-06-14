@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>AI Security Platform - Incident Response System</title>
+<title>MADRS: MITRE ATT&CK Detection and Response System</title>
 <link rel="stylesheet" href="styles.css"/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
 <style>
 /* =============================================
-   PROFESSIONAL LANDING PAGE — AI SECURITY
+   PROFESSIONAL LANDING PAGE — MADRS
    ============================================= */
 :root {
   --c1:#22b8cf; --c2:#4361ee; --c3:#7048e8;
@@ -27,13 +27,27 @@
 }
 .nav.scrolled { border-color:rgba(34,184,207,.15);box-shadow:0 1px 30px rgba(0,0,0,.4); }
 .nav-inner { height:70px; }
-.brand { gap:12px; }
-.brand-logo {
-  width:36px;height:36px;border-radius:9px;font-size:16px;
-  background:linear-gradient(135deg,rgba(34,184,207,.3),rgba(67,97,238,.2));
-  border:1px solid rgba(34,184,207,.5);color:var(--c1);
-  box-shadow:0 0 16px rgba(34,184,207,.15);
+.brand { gap:12px; position:relative; }
+.brand::before{
+  content:"";
+  position:absolute;
+  left:-12px;top:-16px;
+  width:64px;height:64px;
+  background:url('assets/madrs-badge.svg') no-repeat center/90%;
+  opacity:0.14;
+  filter:drop-shadow(0 0 18px rgba(34,184,207,.28));
+  pointer-events:none;
 }
+.brand-logo {
+  width:36px;height:36px;border-radius:9px;
+  display:grid;place-items:center;
+  background:linear-gradient(135deg,rgba(34,184,207,.22),rgba(67,97,238,.14));
+  border:1px solid rgba(34,184,207,.5);
+  box-shadow:0 0 16px rgba(34,184,207,.2);
+  overflow:visible;
+}
+.brand-logo svg{filter:drop-shadow(0 0 6px rgba(46,232,255,.55));}
+.brand-logo img,.brand-logo i{display:none;}
 .brand-name { font-size:15px;font-weight:700;letter-spacing:-.01em; }
 .nav-links { gap:32px; }
 .nav-links a { font-size:13px;font-weight:500;color:rgba(230,237,247,.6);transition:color .2s; }
@@ -464,8 +478,8 @@
 <nav class="nav" id="navbar">
   <div class="container nav-inner">
     <div class="brand">
-      <span class="brand-logo"><i class="fa-solid fa-shield-halved"></i></span>
-      <span class="brand-name">AI Security Platform</span>
+      <span class="brand-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" style="width:78%;height:78%"><defs><linearGradient id="iA" x1="20" y1="10" x2="80" y2="90" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2EE8FF"/><stop offset="1" stop-color="#1560FF"/></linearGradient><radialGradient id="iB" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#0A1E35"/><stop offset="100%" stop-color="#020C1A"/></radialGradient></defs><polygon points="50,4 91,27 91,73 50,96 9,73 9,27" fill="url(#iB)" stroke="url(#iA)" stroke-width="2.2"/><polygon points="50,16 80,33 80,67 50,84 20,67 20,33" fill="none" stroke="#22d4ff" stroke-width="1.2" stroke-opacity="0.5"/><circle cx="50" cy="50" r="15" stroke="#22d4ff" stroke-width="1" stroke-opacity="0.65"/><path d="M28 50 Q50 30 72 50 Q50 70 28 50Z" stroke="#2EE8FF" stroke-width="2" fill="#071624"/><circle cx="50" cy="50" r="10" fill="#0d2640" stroke="#2EE8FF" stroke-width="1.8"/><circle cx="50" cy="50" r="5" fill="#2EE8FF"/><circle cx="50" cy="50" r="2.2" fill="#020C1A"/><circle cx="68" cy="43" r="2.5" fill="#FFB347"/><circle cx="36" cy="58" r="2.5" fill="#FF4D6D"/></svg></span>
+      <span class="brand-name">MADRS</span>
     </div>
     <ul class="nav-links">
       <li><a href="#features">Features</a></li>
@@ -483,14 +497,14 @@
   <div class="container hero-inner">
     <!-- Left: Text -->
     <div class="hero-text reveal">
-      <span class="badge"><span class="badge-dot"></span> AI-Powered Incident Response</span>
+      <span class="badge"><span class="badge-dot"></span> MADRS: MITRE ATT&CK Detection and Response System</span>
       <h1 class="hero-title">
         Protect Your Network<br/>
-        <span class="gradient-text">With AI Intelligence</span>
+        <span class="gradient-text">with MADRS Intelligence</span>
       </h1>
       <p class="hero-sub">
-        Real-time threat detection, automated response, and comprehensive
-        incident analysis powered by advanced artificial intelligence.
+        MADRS delivers real-time threat detection, automated response, and comprehensive
+        incident analysis aligned with the MITRE ATT&CK framework.
       </p>
       <div class="hero-cta">
         <a href="login.html" class="btn btn-primary">Launch Platform <i class="fa-solid fa-arrow-right"></i></a>
@@ -511,7 +525,7 @@
       <div class="mockup-card">
         <div class="mock-bar">
           <span class="mock-dot"></span><span class="mock-dot"></span><span class="mock-dot"></span>
-          <span class="mock-title">AI Security Dashboard</span>
+          <span class="mock-title">MADRS Dashboard</span>
         </div>
         <div class="mock-stats">
           <div class="mock-stat">
@@ -677,9 +691,9 @@
     </div>
     <div class="about-grid">
       <div class="about-text reveal">
-        <h3>What is AI Security Platform?</h3>
+        <h3>What is MADRS?</h3>
         <p class="muted">
-          AI Security Platform is an <strong style="color:var(--text)">AI-powered Incident Response System</strong> designed to help organizations detect, analyze, and respond to cyber threats in real time. It combines machine learning models, threat intelligence feeds, and the <strong style="color:var(--primary)">MITRE ATT&amp;CK</strong> framework to give security teams full visibility over attacks targeting their infrastructure.
+          <strong style="color:var(--text)">MADRS (MITRE ATT&amp;CK Detection and Response System)</strong> is an AI-powered incident response platform designed to help organizations detect, analyze, and contain cyber threats in real time. It combines machine learning models, threat intelligence feeds, and the <strong style="color:var(--primary)">MITRE ATT&amp;CK</strong> framework to give security teams full visibility over attacks targeting their infrastructure.
         </p>
         <h3 style="margin-top:28px">What does it do?</h3>
         <ul class="check-list" style="margin-top:14px">
@@ -754,10 +768,10 @@
   <div class="container footer-grid">
     <div class="reveal">
       <div class="brand">
-        <span class="brand-logo"><i class="fa-solid fa-shield-halved"></i></span>
-        <span class="brand-name">AI Security Platform</span>
+        <span class="brand-logo"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" style="width:78%;height:78%"><defs><linearGradient id="fA" x1="20" y1="10" x2="80" y2="90" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2EE8FF"/><stop offset="1" stop-color="#1560FF"/></linearGradient><radialGradient id="fB" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="#0A1E35"/><stop offset="100%" stop-color="#020C1A"/></radialGradient></defs><polygon points="50,4 91,27 91,73 50,96 9,73 9,27" fill="url(#fB)" stroke="url(#fA)" stroke-width="2.2"/><polygon points="50,16 80,33 80,67 50,84 20,67 20,33" fill="none" stroke="#22d4ff" stroke-width="1.2" stroke-opacity="0.5"/><circle cx="50" cy="50" r="15" stroke="#22d4ff" stroke-width="1" stroke-opacity="0.65"/><path d="M28 50 Q50 30 72 50 Q50 70 28 50Z" stroke="#2EE8FF" stroke-width="2" fill="#071624"/><circle cx="50" cy="50" r="10" fill="#0d2640" stroke="#2EE8FF" stroke-width="1.8"/><circle cx="50" cy="50" r="5" fill="#2EE8FF"/><circle cx="50" cy="50" r="2.2" fill="#020C1A"/><circle cx="68" cy="43" r="2.5" fill="#FFB347"/><circle cx="36" cy="58" r="2.5" fill="#FF4D6D"/></svg></span>
+        <span class="brand-name">MADRS</span>
       </div>
-      <p class="muted" style="margin-top:14px;font-size:13px;line-height:1.7">Next-generation AI-powered incident response system, built to protect your infrastructure 24/7.</p>
+      <p class="muted" style="margin-top:14px;font-size:13px;line-height:1.7">Next-generation MITRE ATT&amp;CK detection and response system, built to protect your infrastructure 24/7.</p>
       <div class="socials">
         <a href="#" aria-label="Facebook"><i class="fa-brands fa-facebook-f"></i></a>
         <a href="#" aria-label="Instagram"><i class="fa-brands fa-instagram"></i></a>
@@ -794,7 +808,7 @@
     </div>
   </div>
   <div class="footer-bottom">
-    <div class="container">© 2026 AI Security Platform — AISec Libya <i class="fa-solid fa-circle"></i> All rights reserved.</div>
+    <div class="container">© 2026 MADRS — AISec Libya <i class="fa-solid fa-circle"></i> All rights reserved.</div>
   </div>
 </footer>
 

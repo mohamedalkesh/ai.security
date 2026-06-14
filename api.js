@@ -1,4 +1,4 @@
-// Shared API client for AI Security Platform frontend
+// Shared API client for MADRS frontend
 // Talks to the Java Spring Boot backend on http://localhost:8080
 (function (global) {
   // Auto-detect host: if page is loaded from 127.0.0.1 use 127.0.0.1 for backend too
@@ -153,7 +153,6 @@
   const api = {
     base: API_BASE,
     wsBase: WS_BASE,
-
     // session
     getSession, setSession, clearSession, isAuthenticated, logout, requireAuth,
 
@@ -315,7 +314,11 @@
     // rbac
     getRole, hasRole, applyRbac, isAdmin,
     // org helpers
-    isOrgUser, getOrgId, getOrgName
+    isOrgUser, getOrgId, getOrgName,
+    assets: {
+      logo: 'assets/madrs-badge.svg',
+      icon: 'assets/madrs-icon.svg'
+    }
   };
 
   global.AisecAPI = api;
@@ -381,6 +384,57 @@
 
     // Hide sidebar links the user can't access
     try { enforceSidebarAccess(); } catch {}
+
+    // Ensure any cached legacy branding is updated to MADRS
+    try {
+      const replaceLegacy = (selector, replacement) => {
+        document.querySelectorAll(selector).forEach(el => {
+          const txt = (el.textContent || "").trim();
+          if (/ai\s*security/i.test(txt) || /ai\s*security\s*platform/i.test(txt)) {
+            el.textContent = replacement;
+          }
+        });
+      };
+      replaceLegacy('.side-title', 'MADRS');
+      replaceLegacy('.brand-name', 'MADRS');
+      document.querySelectorAll('.brand-sub, .side-sub').forEach(el => {
+        const txt = (el.textContent || "").trim();
+        if (/ai\s*security/i.test(txt)) {
+          el.textContent = 'MITRE ATT&CK Detection & Response';
+        }
+      });
+
+      const MADRS_SVG = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" style="width:78%;height:78%;filter:drop-shadow(0 0 7px rgba(46,232,255,.5))">
+        <defs>
+          <linearGradient id="mA" x1="20" y1="10" x2="80" y2="90" gradientUnits="userSpaceOnUse">
+            <stop offset="0" stop-color="#2EE8FF"/><stop offset="1" stop-color="#1560FF"/>
+          </linearGradient>
+          <radialGradient id="mB" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#0A1E35"/><stop offset="100%" stop-color="#020C1A"/>
+          </radialGradient>
+        </defs>
+        <polygon points="50,4 91,27 91,73 50,96 9,73 9,27" fill="url(#mB)" stroke="url(#mA)" stroke-width="2.2"/>
+        <polygon points="50,16 80,33 80,67 50,84 20,67 20,33" fill="none" stroke="#22d4ff" stroke-width="1.2" stroke-opacity="0.5"/>
+        <circle cx="50" cy="50" r="24" stroke="#22d4ff" stroke-width="1" stroke-dasharray="6 5" stroke-opacity="0.4"/>
+        <circle cx="50" cy="50" r="15" stroke="#22d4ff" stroke-width="1" stroke-opacity="0.65"/>
+        <path d="M28 50 Q50 30 72 50 Q50 70 28 50Z" stroke="#2EE8FF" stroke-width="2" fill="#071624"/>
+        <circle cx="50" cy="50" r="10" fill="#0d2640" stroke="#2EE8FF" stroke-width="1.8"/>
+        <circle cx="50" cy="50" r="5" fill="#2EE8FF"/>
+        <circle cx="50" cy="50" r="2.2" fill="#020C1A"/>
+        <circle cx="68" cy="43" r="2.8" fill="#FFB347"/>
+        <circle cx="36" cy="58" r="2.8" fill="#FF4D6D"/>
+        <line x1="50" y1="18" x2="50" y2="12" stroke="#2EE8FF" stroke-width="1.4" stroke-linecap="round" stroke-opacity="0.7"/>
+        <line x1="50" y1="88" x2="50" y2="82" stroke="#2EE8FF" stroke-width="1.4" stroke-linecap="round" stroke-opacity="0.7"/>
+        <line x1="12" y1="50" x2="18" y2="50" stroke="#2EE8FF" stroke-width="1.4" stroke-linecap="round" stroke-opacity="0.7"/>
+        <line x1="88" y1="50" x2="82" y2="50" stroke="#2EE8FF" stroke-width="1.4" stroke-linecap="round" stroke-opacity="0.7"/>
+      </svg>`;
+      document.querySelectorAll('.brand-logo').forEach(el => {
+        if (el.classList.contains('brand-logo--madrs')) return;
+        el.classList.add('brand-logo--madrs');
+        el.querySelectorAll('i, img').forEach(node => node.remove());
+        el.innerHTML = MADRS_SVG;
+      });
+    } catch {}
 
     // Apply role-based UI restrictions (data-requires-role)
     try { applyRbac(); } catch {}

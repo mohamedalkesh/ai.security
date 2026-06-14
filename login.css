@@ -68,12 +68,17 @@
 .auth-brand { text-align:center;margin-bottom:28px; }
 .auth-logo {
   position:relative;display:inline-grid;place-items:center;
-  width:62px;height:62px;border-radius:16px;
-  background:linear-gradient(135deg,rgba(34,184,207,.18),rgba(67,97,238,.12));
-  border:1px solid rgba(34,184,207,.4);
-  color:var(--c1);font-size:26px;margin-bottom:16px;
-  box-shadow:0 0 28px rgba(34,184,207,.18);
+  width:80px;height:80px;border-radius:20px;
+  background:linear-gradient(135deg,rgba(34,184,207,.12),rgba(67,97,238,.08));
+  border:1px solid rgba(34,184,207,.35);
+  color:var(--c1);font-size:26px;margin-bottom:18px;
+  box-shadow:0 0 40px rgba(34,184,207,.2),0 0 80px rgba(34,184,207,.08);
 }
+.madrs-svg-icon {
+  width:64px;height:64px;
+  filter:drop-shadow(0 0 8px rgba(46,232,255,.5));
+}
+.auth-logo i { display:none; }
 .pulse-ring {
   position:absolute;inset:-5px;border-radius:19px;
   border:1.5px solid var(--c1);
