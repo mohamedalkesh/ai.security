@@ -5,7 +5,6 @@ RUN apt-get update && \
         libpcap-dev gcc g++ libffi-dev && \
     rm -rf /var/lib/apt/lists/*
 
-ENV PYTHONOPTIMIZE=2
 ENV MALLOC_TRIM_THRESHOLD_=100000
 ENV MODEL_ARTIFACTS_DIR=/app/AI/model_artifacts_v4
 ENV AI_PACKAGE_DIR=/app/AI
