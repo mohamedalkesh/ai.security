@@ -1,7 +1,7 @@
 # Firewall enforcement & Threat Intelligence
 
 This document describes how to enable kernel-level blocking (nftables) and
-external reputation lookups (AbuseIPDB) for the AI Security Platform.
+external reputation lookups (AbuseIPDB) for the MADRS.
 
 ## 1. nftables enforcement
 

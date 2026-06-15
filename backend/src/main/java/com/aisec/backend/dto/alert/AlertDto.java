@@ -1,6 +1,7 @@
 package com.aisec.backend.dto.alert;
 
 import com.aisec.backend.entity.Alert;
+import com.aisec.backend.entity.ScanResult;
 
 import java.time.Instant;
 
@@ -25,9 +26,16 @@ public record AlertDto(
         String assignedToUsername,
         Long incidentId,
         Instant createdAt,
-        Instant resolvedAt
+        Instant resolvedAt,
+        Long scanId,
+        String scanSummaryJson,
+        String scanMetadataQualityJson,
+        Boolean scanSampled,
+        Integer scanOriginalRows,
+        Integer scanSampledRows
 ) {
     public static AlertDto from(Alert a) {
+        ScanResult scan = a.getScan();
         return new AlertDto(
                 a.getId(), a.getAttackType(),
                 a.getSeverity().name(), a.getStatus().name(),
@@ -40,7 +48,13 @@ public record AlertDto(
                 a.getAssignedTo() != null ? a.getAssignedTo().getId() : null,
                 a.getAssignedTo() != null ? a.getAssignedTo().getUsername() : null,
                 a.getIncident() != null ? a.getIncident().getId() : null,
-                a.getCreatedAt(), a.getResolvedAt()
+                a.getCreatedAt(), a.getResolvedAt(),
+                scan != null ? scan.getId() : null,
+                scan != null ? scan.getSummaryJson() : null,
+                scan != null ? scan.getMetadataQualityJson() : null,
+                scan != null ? scan.getSampled() : null,
+                scan != null ? scan.getOriginalRows() : null,
+                scan != null ? scan.getSampledRows() : null
         );
     }
 }

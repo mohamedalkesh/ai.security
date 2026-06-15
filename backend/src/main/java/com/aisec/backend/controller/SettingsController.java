@@ -67,7 +67,7 @@ public class SettingsController {
         ObjectNode d = mapper.createObjectNode();
 
         ObjectNode general = d.putObject("general");
-        general.put("systemName",   "AI Security Platform");
+        general.put("systemName",   "MADRS");
         general.put("organization", "AISec Libya");
         general.put("timezone",     "UTC+02:00 - Libya");
 

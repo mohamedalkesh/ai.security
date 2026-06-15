@@ -61,7 +61,7 @@ document.querySelector('.mt-name').textContent = inc.mitre.name;
 document.querySelector('.mitre-tag .muted.sm').textContent = inc.mitre.tactic;
 
 // Document title
-document.title = `${id} · ${inc.type} — AI Security Platform`;
+document.title = `${id} · ${inc.type} — MADRS`;
 
 // ===== Helpers =====
 function animateNum(el, target, dur){
@@ -269,7 +269,7 @@ function ensureRepStyles() {
     if (tiBar) tiBar.style.width = score + '%';
     if (tiVal) tiVal.innerHTML   = score + '<span class="ti-max">/100</span>';
 
-    document.title = `${idStr} · ${a.attack_type} — AI Security Platform`;
+    document.title = `${idStr} · ${a.attack_type} — MADRS`;
 
     // Wire the "Mark Resolved" / Respond buttons to backend
     const respondBtn = document.querySelector('.btn-action.respond');

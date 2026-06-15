@@ -164,6 +164,37 @@
 .m-desc h4{font-size:13px;margin-bottom:6px}
 .m-desc p{font-size:13px;line-height:1.6}
 
+.scan-meta-chips{
+  display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;
+}
+.scan-meta-chips .chip{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:6px 10px;border-radius:999px;font-size:12px;font-weight:500;
+  background:rgba(34,184,207,.12);border:1px solid rgba(34,184,207,.28);
+  color:#a5f3fc;
+}
+.scan-meta-chips .chip.warn{
+  background:rgba(239,68,68,.12);border-color:rgba(239,68,68,.3);color:#fecaca;
+}
+.scan-meta-chips .chip.info{
+  background:rgba(59,130,246,.12);border-color:rgba(59,130,246,.25);color:#bfdbfe;
+}
+
+.scan-top-list{
+  margin-top:14px;padding:12px 14px;
+  background:rgba(11,22,40,.45);border:1px solid var(--border);
+  border-radius:10px;
+}
+.scan-top-list ul{
+  list-style:none;margin:8px 0 0;padding:0;
+  display:flex;flex-direction:column;gap:6px;
+}
+.scan-top-list li{
+  display:flex;justify-content:space-between;align-items:center;
+  font-size:12px;color:#e2e8f0;
+}
+.scan-top-list li span{font-family:monospace;color:#a5f3fc;}
+
 .modal-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap}
 .modal-actions .btn{padding:10px 16px;font-size:13px}
 

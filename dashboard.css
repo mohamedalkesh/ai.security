@@ -10,8 +10,18 @@
   display:flex;flex-direction:column;
   position:sticky;top:0;height:100vh;
 }
-.side-brand{display:flex;align-items:center;gap:12px;padding:6px 8px 22px;border-bottom:1px solid var(--border);margin-bottom:16px}
-.side-brand .brand-logo{width:40px;height:40px;border-radius:10px;font-size:16px}
+.side-brand{display:flex;align-items:center;gap:12px;padding:6px 8px 22px;border-bottom:1px solid var(--border);margin-bottom:16px;position:relative;overflow:hidden}
+.side-brand > *{position:relative;z-index:1;}
+.side-brand .brand-logo{
+  width:44px;height:44px;border-radius:12px;
+  display:grid;place-items:center;
+  background:linear-gradient(135deg, rgba(34,184,207,.18), rgba(67,97,238,.12));
+  border:1px solid rgba(34,184,207,.35);
+  box-shadow:0 0 14px rgba(34,184,207,.18);
+  overflow:hidden;
+}
+.side-brand .brand-logo i{display:none;}
+.side-brand .brand-logo img{width:78%;height:78%;object-fit:contain;filter:drop-shadow(0 0 12px rgba(34,184,207,.45));}
 .side-title{font-weight:700;font-size:16px}
 .side-sub{font-size:11px;color:var(--muted)}
 

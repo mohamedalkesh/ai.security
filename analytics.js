@@ -23,7 +23,7 @@
       renderSeverity(data.severity_trend || data.severityTrend || []);
       renderAttackers(data.top_attackers || data.topAttackers || []);
     } catch (e) {
-      console.error("Analytics load failed:", e);
+      console.debug('Analytics load failed:', e);
       $("kMttr").textContent = "—";
     }
   }

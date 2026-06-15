@@ -34,14 +34,29 @@ a{color:inherit;text-decoration:none}
 }
 .nav.scrolled{border-color:var(--border)}
 .nav-inner{display:flex;align-items:center;justify-content:space-between;height:68px}
-.brand{display:flex;align-items:center;gap:10px;font-weight:700}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;position:relative}
+.brand::before{
+  content:"";
+  position:absolute;
+  left:-14px;top:-18px;
+  width:60px;height:60px;
+  background:url('assets/madrs-badge.svg') no-repeat center/88%;
+  opacity:0.14;
+  filter:drop-shadow(0 0 16px rgba(34,184,207,.28));
+  pointer-events:none;
+}
+.brand > *{position:relative;z-index:1;}
 .brand-logo{
   width:32px;height:32px;border-radius:8px;
   display:grid;place-items:center;
-  background:rgba(34,184,207,.12);
-  color:var(--primary);
-  border:1px solid rgba(34,184,207,.3);
+  position:relative;
+  background:radial-gradient(circle at 30% 30%, rgba(34,184,207,.28), rgba(34,184,207,.08));
+  border:1px solid rgba(34,184,207,.35);
+  box-shadow:0 0 12px rgba(34,184,207,.18);
+  overflow:hidden;
 }
+.brand-logo img{width:76%;height:76%;object-fit:contain;filter:drop-shadow(0 0 10px rgba(34,184,207,.4));}
+.brand-logo i{display:none;}
 .nav-links{display:flex;align-items:center;gap:28px;list-style:none}
 .nav-links a{color:var(--muted);font-size:14px;transition:color .2s}
 .nav-links a:hover{color:var(--text)}

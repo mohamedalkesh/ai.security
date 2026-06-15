@@ -14,7 +14,6 @@ public class AppSetting {
     @Id
     private Long id = 1L;
 
-    @Lob
     @Column(columnDefinition = "TEXT", nullable = false)
     private String payload = "{}";
 

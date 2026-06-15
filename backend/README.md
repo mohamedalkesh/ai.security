@@ -1,6 +1,6 @@
 # Java Spring Boot Backend
 
-Main backend for the AI Security Platform. Talks to the Python `ml-service`
+Main backend for the MADRS. Talks to the Python `ml-service`
 (running on `:8001`) for all model predictions.
 
 ## Run

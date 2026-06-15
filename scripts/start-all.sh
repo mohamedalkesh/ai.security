@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # ============================================================
-# AI Security Platform  — single-command bootstrap.
+# MADRS — single-command bootstrap.
 #
 # Starts (or skips if already running):
 #   1. ML service        (uvicorn, port 8001)
@@ -107,7 +107,7 @@ start_frontend() {
 # main
 # -------------------------------------------------------------
 echo "============================================================"
-echo " AI Security Platform — bootstrap"
+echo " MADRS — bootstrap"
 echo " Project: $PROJECT_ROOT"
 echo "============================================================"
 

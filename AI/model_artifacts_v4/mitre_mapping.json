@@ -1,0 +1,56 @@
+{
+  "Benign": {
+    "technique": "N/A",
+    "tactic": "N/A",
+    "severity": "Informational",
+    "description": "Normal network traffic with no malicious behavior detected."
+  },
+  "DDoS": {
+    "technique": "T1498",
+    "tactic": "Impact",
+    "severity": "High",
+    "description": "Volumetric flood attack degrading service availability."
+  },
+  "DoS": {
+    "technique": "T1499",
+    "tactic": "Impact",
+    "severity": "High",
+    "description": "Application-layer denial of service exhausting target resources."
+  },
+  "Port Scan": {
+    "technique": "T1046",
+    "tactic": "Discovery",
+    "severity": "Medium",
+    "description": "Adversary enumerates network services and open ports."
+  },
+  "Bot": {
+    "technique": "T1071",
+    "tactic": "Command and Control",
+    "severity": "High",
+    "description": "Compromised host communicating with botnet C2 infrastructure."
+  },
+  "Brute Force": {
+    "technique": "T1110",
+    "tactic": "Credential Access",
+    "severity": "High",
+    "description": "Repeated credential guessing against authentication services."
+  },
+  "Web Attack": {
+    "technique": "T1190",
+    "tactic": "Initial Access",
+    "severity": "High",
+    "description": "Exploitation attempt against a public-facing web application."
+  },
+  "Infiltration": {
+    "technique": "T1133",
+    "tactic": "Initial Access",
+    "severity": "Critical",
+    "description": "Adversary established a foothold and is moving laterally."
+  },
+  "Unknown": {
+    "technique": "Unknown",
+    "tactic": "Unknown",
+    "severity": "Low",
+    "description": "Out-of-distribution traffic \u2014 analyst review required."
+  }
+}

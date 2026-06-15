@@ -145,14 +145,14 @@ public class CompanyRequestService {
             "<tr><td style='background:linear-gradient(135deg,#0f3460,#16243d);padding:32px 40px;text-align:center'>" +
             "<div style='display:inline-block;width:56px;height:56px;background:rgba(34,184,207,.15);" +
             "border-radius:14px;line-height:56px;font-size:28px;margin-bottom:14px'>🛡️</div>" +
-            "<h1 style='color:#e6edf7;font-size:22px;font-weight:700;margin:0'>AI Security Platform</h1>" +
+            "<h1 style='color:#e6edf7;font-size:22px;font-weight:700;margin:0'>MADRS</h1>" +
             "<p style='color:#8ea0b8;font-size:13px;margin:6px 0 0'>Your Organisation Account is Ready</p>" +
             "</td></tr>" +
             "<tr><td style='padding:36px 40px'>" +
             "<p style='color:#cbd5e1;font-size:15px;margin:0 0 8px'>Hello <strong style='color:#e6edf7'>" + contactName + "</strong> 👋</p>" +
             "<p style='color:#8ea0b8;font-size:14px;line-height:1.7;margin:0 0 24px'>" +
             "Your organisation <strong style='color:#e6edf7'>" + companyName + "</strong> has been registered on the " +
-            "<strong style='color:#22b8cf'>AI Security Platform</strong>. Here are your admin credentials:</p>" +
+            "<strong style='color:#22b8cf'>MADRS</strong>. Here are your admin credentials:</p>" +
             "<div style='background:#0b1628;border:1px solid #1e3557;border-radius:12px;padding:20px 24px;margin:0 0 24px'>" +
             "<table width='100%' cellpadding='0' cellspacing='0'>" +
             "<tr><td style='padding:7px 0;color:#8ea0b8;font-size:13px;width:40%'>🌐 Platform URL</td>" +
@@ -171,7 +171,7 @@ public class CompanyRequestService {
             "Need help? Contact us at <a href='mailto:" + supportEmail + "' style='color:#22b8cf;text-decoration:none'>" + supportEmail + "</a>.</p>" +
             "</td></tr>" +
             "<tr><td style='background:#0f1d35;padding:20px 40px;text-align:center;border-top:1px solid #1e3557'>" +
-            "<p style='color:#4a6080;font-size:12px;margin:0'>© 2025 AI Security Platform — Do not share your credentials.</p>" +
+            "<p style='color:#4a6080;font-size:12px;margin:0'>© 2025 MADRS — Do not share your credentials.</p>" +
             "</td></tr>" +
             "</table></td></tr></table></body></html>";
         try {
@@ -179,7 +179,7 @@ public class CompanyRequestService {
             MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
             helper.setFrom(supportEmail);
             helper.setTo(toEmail);
-            helper.setSubject("Welcome to AI Security Platform — Your Organisation Account");
+            helper.setSubject("Welcome to MADRS — Your Organisation Account");
             helper.setText(html, true);
             mailSender.send(msg);
             log.info("Welcome email sent to org admin: {}", toEmail);

@@ -117,6 +117,12 @@ const autoMinConfidence = document.getElementById('autoMinConfidence');
 const autoLimit = document.getElementById('autoLimit');
 const autoReason = document.getElementById('autoReason');
 const autoPreview = document.getElementById('autoPreview');
+const scanBlock = document.getElementById('mScanBlock');
+const scanIdLabel = document.getElementById('mScanId');
+const scanSampleLabel = document.getElementById('mScanSample');
+const scanMetaChips = document.getElementById('mScanMetaChips');
+const scanTopSourcesWrap = document.getElementById('mScanTopSources');
+const scanTopSourcesList = document.getElementById('mScanTopSourcesList');
 
 // ===== Loader / status =====
 function setStatusBanner(text, kind) {
@@ -136,6 +142,103 @@ function setStatusBanner(text, kind) {
   };
   bar.style.cssText = 'padding:10px 14px;border-radius:8px;margin:0 0 14px;font-size:13px;font-weight:500;' + (colors[kind] || colors.info);
   bar.textContent = text;
+}
+
+function safeJsonParse(value) {
+  if (!value) return null;
+  if (typeof value === 'object') return value;
+  try {
+    return JSON.parse(value);
+  } catch (err) {
+    console.debug('[alerts] failed to parse metadata JSON', err);
+    return null;
+  }
+}
+
+function formatNumber(num) {
+  if (num === null || num === undefined) return null;
+  const n = Number(num);
+  return Number.isFinite(n) ? n.toLocaleString() : String(num);
+}
+
+function renderScanContext(alert) {
+  if (!scanBlock) return;
+  const scanId = alert.scan_id ?? alert.scanId;
+  const sampled = alert.scan_sampled ?? alert.scanSampled;
+  const originalRows = alert.scan_original_rows ?? alert.scanOriginalRows;
+  const sampledRows = alert.scan_sampled_rows ?? alert.scanSampledRows;
+  const meta = safeJsonParse(alert.scan_metadata_quality_json ?? alert.scanMetadataQualityJson);
+  const hasMeta = meta && Object.keys(meta).length > 1;
+  const hasSampleInfo = sampled && sampledRows && originalRows;
+  const shouldShow = hasMeta || hasSampleInfo || scanId;
+
+  if (!shouldShow) {
+    scanBlock.style.display = 'none';
+    return;
+  }
+
+  scanBlock.style.display = '';
+  if (scanIdLabel) {
+    scanIdLabel.textContent = scanId ? `Scan #${scanId}` : '';
+    scanIdLabel.style.display = scanId ? '' : 'none';
+  }
+
+  if (scanSampleLabel) {
+    if (hasSampleInfo) {
+      const analysed = formatNumber(sampledRows);
+      const total = formatNumber(originalRows);
+      scanSampleLabel.textContent = `⚠️ Large capture sampled: analysed ${analysed} of ${total} flows`;
+      scanSampleLabel.style.display = '';
+    } else {
+      scanSampleLabel.textContent = '';
+      scanSampleLabel.style.display = 'none';
+    }
+  }
+
+  if (scanMetaChips) {
+    const chips = [];
+    if (meta) {
+      const totals = formatNumber(meta.total_flows ?? meta.totalFlows);
+      if (totals) chips.push({ label: 'Total flows', value: totals, tone: 'info' });
+      const missingSrc = meta.missing_src_ip ?? meta.missingSrcIp;
+      if (missingSrc > 0) chips.push({ label: 'Missing source IP', value: formatNumber(missingSrc), tone: 'warn' });
+      const missingDst = meta.missing_dst_ip ?? meta.missingDstIp;
+      if (missingDst > 0) chips.push({ label: 'Missing dest IP', value: formatNumber(missingDst), tone: 'warn' });
+      const mulSrc = meta.multiple_source_flows ?? meta.multipleSourceFlows;
+      if (mulSrc > 0) chips.push({ label: 'Multi-source flows', value: formatNumber(mulSrc), tone: 'info' });
+      const ipv6 = meta.ipv6_flows ?? meta.ipv6Flows;
+      if (ipv6 > 0) chips.push({ label: 'IPv6 flows', value: formatNumber(ipv6), tone: 'info' });
+      const icmp = meta.icmp_like_flows ?? meta.icmpLikeFlows;
+      if (icmp > 0) chips.push({ label: 'ICMP-like traffic', value: formatNumber(icmp), tone: 'info' });
+      const missSrcPort = meta.flows_missing_src_port ?? meta.flowsMissingSrcPort;
+      if (missSrcPort > 0) chips.push({ label: 'Missing src port', value: formatNumber(missSrcPort), tone: 'info' });
+      const missDstPort = meta.flows_missing_dst_port ?? meta.flowsMissingDstPort;
+      if (missDstPort > 0) chips.push({ label: 'Missing dst port', value: formatNumber(missDstPort), tone: 'info' });
+    }
+    scanMetaChips.innerHTML = chips.length
+      ? chips.map(c => `<span class="chip ${c.tone ?? ''}">${c.label}: <strong>${c.value}</strong></span>`).join('')
+      : '<span class="muted xs">No data quality warnings detected for this scan.</span>';
+  }
+
+  if (scanTopSourcesWrap && scanTopSourcesList) {
+    const sources = meta && Array.isArray(meta.top_source_candidates)
+      ? meta.top_source_candidates
+      : meta && Array.isArray(meta.top_sources)
+        ? meta.top_sources
+        : [];
+    if (sources && sources.length) {
+      const slice = sources.slice(0, 5);
+      scanTopSourcesList.innerHTML = slice.map(item => {
+        const ip = item.ip || item.address || '—';
+        const count = formatNumber(item.count ?? item.flows ?? 0) || '0';
+        return `<li><div>${ip}</div><span>${count}</span></li>`;
+      }).join('');
+      scanTopSourcesWrap.style.display = '';
+    } else {
+      scanTopSourcesList.innerHTML = '';
+      scanTopSourcesWrap.style.display = 'none';
+    }
+  }
 }
 
 // ===== Render =====
@@ -360,6 +463,7 @@ async function openModal(id){
   document.getElementById('mMitre').textContent = a.mitre_technique || '—';
   document.getElementById('mDesc').textContent = a.description || '—';
   renderExplanation(a.explanation);
+  renderScanContext(a);
   const icoWrap = document.querySelector('.modal-ico');
   icoWrap.innerHTML = `<i class="fa-solid ${iconFor(a.attack_type)}"></i>`;
 
@@ -495,7 +599,7 @@ async function reload() {
     alertsData = await fetchAllAlerts();
     render();
   } catch (err) {
-    console.warn('reload failed:', err.message);
+    console.debug('[alerts] reload failed:', err);
   }
 }
 
@@ -516,7 +620,7 @@ async function load() {
     setTimeout(() => setStatusBanner(''), 3000);
     render();
   } catch (err) {
-    console.error(err);
+    console.debug('[alerts] initial load failed:', err);
     setStatusBanner('Failed to load alerts: ' + err.message, 'error');
   }
 
@@ -547,10 +651,15 @@ async function load() {
           scheduleFullReload(`Scan complete: ${d.attack_count || 0} new attacks · ${d.total_flows || 0} flows`);
         }
       },
-      onClose: () => console.warn('Alerts WS disconnected')
+      onClose: () => {
+        setStatusBanner('Live updates disconnected — retrying via polling…', 'error');
+        setTimeout(() => setStatusBanner(''), 4000);
+        console.debug('[alerts] websocket disconnected');
+      }
     });
   } catch (e) {
-    console.warn('WS init failed:', e);
+    console.debug('[alerts] websocket init failed:', e);
+    setStatusBanner('Live updates unavailable — polling every few seconds.', 'error');
   }
 }
 

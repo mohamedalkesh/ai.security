@@ -139,6 +139,6 @@ class SettingsControllerIntegrationTest {
         // Reset
         mvc.perform(post("/api/settings/reset").header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.settings.general.systemName").value("AI Security Platform"));
+                .andExpect(jsonPath("$.settings.general.systemName").value("MADRS"));
     }
 }

@@ -109,13 +109,13 @@ public class PasswordResetService {
             "<tr><td style='background:linear-gradient(135deg,#0f3460,#16243d);padding:32px 40px;text-align:center'>" +
             "<div style='display:inline-block;width:56px;height:56px;background:rgba(34,184,207,.15);" +
             "border-radius:14px;line-height:56px;font-size:28px;margin-bottom:14px'>🛡️</div>" +
-            "<h1 style='color:#e6edf7;font-size:22px;font-weight:700;margin:0'>AI Security Platform</h1>" +
+            "<h1 style='color:#e6edf7;font-size:22px;font-weight:700;margin:0'>MADRS</h1>" +
             "<p style='color:#8ea0b8;font-size:13px;margin:6px 0 0'>Welcome to the Team!</p>" +
             "</td></tr>" +
             "<tr><td style='padding:36px 40px'>" +
             "<p style='color:#cbd5e1;font-size:15px;margin:0 0 8px'>Hello <strong style='color:#e6edf7'>" + fullName + "</strong> 👋</p>" +
             "<p style='color:#8ea0b8;font-size:14px;line-height:1.7;margin:0 0 28px'>" +
-            "Your account has been created on the AI Security Platform. " +
+            "Your account has been created on the MADRS. " +
             "Here are your login credentials:</p>" +
             "<div style='background:#0b1628;border:1px solid #1e3557;border-radius:12px;padding:20px 24px;margin:0 0 24px'>" +
             "<table width='100%' cellpadding='0' cellspacing='0'>" +
@@ -131,7 +131,7 @@ public class PasswordResetService {
             "⚠️ For security, please change your password immediately after your first login.</p>" +
             "</td></tr>" +
             "<tr><td style='background:#0f1d35;padding:20px 40px;text-align:center;border-top:1px solid #1e3557'>" +
-            "<p style='color:#4a6080;font-size:12px;margin:0'>© 2025 AI Security Platform — Do not share your credentials.</p>" +
+            "<p style='color:#4a6080;font-size:12px;margin:0'>© 2025 MADRS — Do not share your credentials.</p>" +
             "</td></tr>" +
             "</table></td></tr></table></body></html>";
         try {
@@ -139,7 +139,7 @@ public class PasswordResetService {
             MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
             helper.setFrom(fromEmail);
             helper.setTo(toEmail);
-            helper.setSubject("Welcome to AI Security Platform — Your Account Details");
+            helper.setSubject("Welcome to MADRS — Your Account Details");
             helper.setText(html, true);
             mailSender.send(msg);
             log.info("Welcome email sent to: {}", toEmail);
@@ -165,7 +165,7 @@ public class PasswordResetService {
             "padding:32px 40px;text-align:center'>" +
             "<div style='display:inline-block;width:56px;height:56px;background:rgba(34,184,207,.15);" +
             "border-radius:14px;line-height:56px;font-size:26px;margin-bottom:14px'>🔐</div>" +
-            "<h1 style='color:#e6edf7;font-size:22px;font-weight:700;margin:0'>AI Security Platform</h1>" +
+            "<h1 style='color:#e6edf7;font-size:22px;font-weight:700;margin:0'>MADRS</h1>" +
             "<p style='color:#8ea0b8;font-size:13px;margin:6px 0 0'>Password Reset Request</p>" +
             "</td></tr>" +
             // Body
@@ -188,7 +188,7 @@ public class PasswordResetService {
             // Footer
             "<tr><td style='background:#0f1d35;padding:20px 40px;text-align:center;" +
             "border-top:1px solid #1e3557'>" +
-            "<p style='color:#4a6080;font-size:12px;margin:0'>© 2025 AI Security Platform — " +
+            "<p style='color:#4a6080;font-size:12px;margin:0'>© 2025 MADRS — " +
             "This is an automated message, please do not reply.</p>" +
             "</td></tr>" +
             "</table></td></tr></table></body></html>";
@@ -198,7 +198,7 @@ public class PasswordResetService {
             MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");
             helper.setFrom(fromEmail);
             helper.setTo(toEmail);
-            helper.setSubject("AI Security Platform — Your Reset Code: " + displayCode);
+            helper.setSubject("MADRS — Your Reset Code: " + displayCode);
             helper.setText(html, true);
             mailSender.send(msg);
             log.info("Reset code email sent to: {}", toEmail);

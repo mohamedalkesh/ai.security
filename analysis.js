@@ -198,7 +198,7 @@ document.querySelectorAll('.ra-btn').forEach(b => {
     setMeter('barSucc', 'mSucc', succPct, '');
 
   } catch (err) {
-    console.warn('[analysis] backend load failed, using static data:', err.message);
+    console.debug('[analysis] backend load failed, using static data:', err);
   }
 })();
 

@@ -1,5 +1,5 @@
 server:
-  port: ${PORT:8080} 
+  port: ${PORT:8080}
 
 spring:
   application:
@@ -41,7 +41,7 @@ spring:
 
 app:
   cors:
-    allowed-origins: "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5500,http://127.0.0.1:5500,http://localhost:3000,null"
+    allowed-origins: "http://localhost:5173,http://127.0.0.1:5173,http://localhost:5500,http://127.0.0.1:5500,http://localhost:3000,null,https://madrs-demo.loca.lt,https://spotty-elephant-93.loca.lt"
   ml:
     base-url: "http://127.0.0.1:8001"
     connect-timeout-ms: 5000
@@ -67,6 +67,8 @@ app:
     abuseipdb-base-url: https://api.abuseipdb.com/api/v2
     cache-ttl-hours: 24
     request-timeout-ms: 5000
+  security:
+    allow-self-register: ${ALLOW_SELF_REGISTER:false}
 
 management:
   endpoints:

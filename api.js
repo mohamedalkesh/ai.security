@@ -5,8 +5,11 @@
   // (avoids CORS edge-cases between localhost / 127.0.0.1 in some browsers).
   const _host = (location.hostname && location.hostname !== "" && location.hostname !== "null")
                 ? location.hostname : "127.0.0.1";
-  const API_BASE = (global.AISEC_API_BASE) || ("http://" + _host + ":8080/api");
-  const WS_BASE  = (global.AISEC_WS_BASE)  || ("ws://"   + _host + ":8080/ws");
+  const _isTunnel = _host.includes("loca.lt") || _host.includes("ngrok") || _host.includes("ngrok-free.app");
+  const API_BASE = (global.AISEC_API_BASE) ||
+                   (_isTunnel ? "https://spotty-elephant-93.loca.lt/api" : "http://" + _host + ":8080/api");
+  const WS_BASE  = (global.AISEC_WS_BASE)  ||
+                   (_isTunnel ? "wss://spotty-elephant-93.loca.lt/ws"    : "ws://"   + _host + ":8080/ws");
   const STORAGE_KEY = "aisec_session";
 
   // ---------- key-case helper ----------

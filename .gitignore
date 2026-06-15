@@ -22,7 +22,7 @@ AI/data/
 AI/model_artifacts/
 AI/model_artifacts_v2/
 AI/model_artifacts_v3/
-AI/model_artifacts_v4/
+# model_artifacts_v4 is tracked for deployment
 
 # =========================
 # Temporary Uploads
@@ -51,14 +51,16 @@ target/
 *.pcapng
 
 # =========================
-# Python Model Files
+# Python Model Files (v4 excluded from ignore for deployment)
 # =========================
-*.pkl
 *.joblib
 *.h5
 *.pt
 *.pth
 *.onnx
+AI/model_artifacts/*.pkl
+AI/model_artifacts_v2/*.pkl
+AI/model_artifacts_v3/*.pkl
 
 # =========================
 # Logs

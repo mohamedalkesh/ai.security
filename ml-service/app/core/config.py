@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     )
 
     # App
-    app_name: str = "AI Security ML Service"
+    app_name: str = "MADRS ML Service"
     host: str = "127.0.0.1"
     port: int = 8001
     debug: bool = True

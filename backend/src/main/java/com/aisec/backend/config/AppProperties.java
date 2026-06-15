@@ -9,12 +9,14 @@ public class AppProperties {
     private final Ml ml = new Ml();
     private final Firewall firewall = new Firewall();
     private final ThreatIntel threatIntel = new ThreatIntel();
+    private final Security security = new Security();
     private String supportEmail = "ai.security.support@gmail.com";
 
     public Cors getCors() { return cors; }
     public Ml getMl() { return ml; }
     public Firewall getFirewall() { return firewall; }
     public ThreatIntel getThreatIntel() { return threatIntel; }
+    public Security getSecurity() { return security; }
     public String getSupportEmail() { return supportEmail; }
     public void setSupportEmail(String supportEmail) { this.supportEmail = supportEmail; }
 
@@ -77,5 +79,15 @@ public class AppProperties {
         public void setCacheTtlHours(int cacheTtlHours) { this.cacheTtlHours = cacheTtlHours; }
         public int getRequestTimeoutMs() { return requestTimeoutMs; }
         public void setRequestTimeoutMs(int requestTimeoutMs) { this.requestTimeoutMs = requestTimeoutMs; }
+    }
+
+    public static class Security {
+        /** Allow unauthenticated self-registration via /api/auth/register. */
+        private boolean allowSelfRegister = false;
+
+        public boolean isAllowSelfRegister() { return allowSelfRegister; }
+        public void setAllowSelfRegister(boolean allowSelfRegister) {
+            this.allowSelfRegister = allowSelfRegister;
+        }
     }
 }

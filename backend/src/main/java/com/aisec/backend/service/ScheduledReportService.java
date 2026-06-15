@@ -83,7 +83,7 @@ public class ScheduledReportService {
         }
         try {
             byte[] pdf = exportService.buildPdf(orgId);
-            String subject = "AI Security — Weekly Report (" + tenantName + ") "
+            String subject = "MADRS — Weekly Report (" + tenantName + ") "
                     + DATE_FMT.format(Instant.now());
             String filename = "security-report-" + DATE_FMT.format(Instant.now()) + ".pdf";
 
@@ -135,7 +135,7 @@ public class ScheduledReportService {
              + "<p style='margin:0 0 16px;line-height:1.6'>Attached is the weekly security report for "
              + "<strong>" + tenantName + "</strong>. It summarises new alerts, "
              + "severity distribution, and the top recent incidents.</p>"
-             + "<p style='font-size:12px;color:#8ea0b8;margin:24px 0 0'>Generated automatically by AI Security Platform — "
+             + "<p style='font-size:12px;color:#8ea0b8;margin:24px 0 0'>Generated automatically by MADRS — "
              + "do not reply.</p></div></body></html>";
     }
 }

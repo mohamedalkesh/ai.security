@@ -1,5 +1,6 @@
 package com.aisec.backend.service;
 
+import com.aisec.backend.config.AppProperties;
 import com.aisec.backend.dto.auth.AuthResponse;
 import com.aisec.backend.dto.auth.LoginRequest;
 import com.aisec.backend.dto.auth.RegisterRequest;
@@ -26,19 +27,27 @@ public class AuthService {
     private final AuthenticationManager authManager;
     private final JwtService jwt;
     private final AuditService audit;
+    private final AppProperties appProperties;
 
     public AuthService(UserRepository users, PasswordEncoder encoder,
                        AuthenticationManager authManager, JwtService jwt,
-                       AuditService audit) {
+                       AuditService audit, AppProperties appProperties) {
         this.users = users;
         this.encoder = encoder;
         this.authManager = authManager;
         this.jwt = jwt;
         this.audit = audit;
+        this.appProperties = appProperties;
     }
 
     @Transactional
     public AuthResponse register(RegisterRequest req) {
+        if (!appProperties.getSecurity().isAllowSelfRegister()) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Self-registration is disabled. Ask an administrator to invite you."
+            );
+        }
         if (users.existsByUsername(req.username()))
             throw new ResponseStatusException(HttpStatus.CONFLICT, "Username already taken");
         if (users.existsByEmail(req.email()))

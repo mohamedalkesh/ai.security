@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Security Alerts — AI Security Platform</title>
+<title>Security Alerts — MADRS</title>
 <link rel="stylesheet" href="styles.css"/>
 <link rel="stylesheet" href="dashboard.css"/>
 <link rel="stylesheet" href="alerts.css"/>
@@ -42,7 +42,7 @@
     <div class="side-brand">
       <div class="brand-logo"><i class="fa-solid fa-shield-halved"></i></div>
       <div>
-        <div class="side-title">AI Security</div>
+        <div class="side-title">MADRS</div>
         <div class="side-sub">Incident Response</div>
       </div>
     </div>
@@ -202,6 +202,19 @@
         <div id="mExplainPayloadNote" class="muted xs" style="margin-top:6px"></div>
       </div>
       <div id="mExplainTop" style="display:flex;flex-direction:column;gap:6px;margin-top:8px"></div>
+    </div>
+
+    <div class="m-desc" id="mScanBlock" style="display:none">
+      <h4 style="display:flex;align-items:center;gap:8px">
+        <i class="fa-solid fa-database"></i> Scan Context
+      </h4>
+      <div id="mScanId" class="muted xs" style="margin-bottom:4px"></div>
+      <div id="mScanSample" class="muted sm" style="display:none"></div>
+      <div id="mScanMetaChips" class="scan-meta-chips"></div>
+      <div id="mScanTopSources" class="scan-top-list" style="display:none">
+        <div class="muted xs">Top contributing source IPs</div>
+        <ul id="mScanTopSourcesList"></ul>
+      </div>
     </div>
 
     <!-- Assignment + ML feedback row -->
