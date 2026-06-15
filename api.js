@@ -5,11 +5,15 @@
   // (avoids CORS edge-cases between localhost / 127.0.0.1 in some browsers).
   const _host = (location.hostname && location.hostname !== "" && location.hostname !== "null")
                 ? location.hostname : "127.0.0.1";
-  const _isTunnel = _host.includes("loca.lt") || _host.includes("ngrok") || _host.includes("ngrok-free.app");
-  const API_BASE = (global.AISEC_API_BASE) ||
-                   (_isTunnel ? "https://spotty-elephant-93.loca.lt/api" : "http://" + _host + ":8080/api");
-  const WS_BASE  = (global.AISEC_WS_BASE)  ||
-                   (_isTunnel ? "wss://spotty-elephant-93.loca.lt/ws"    : "ws://"   + _host + ":8080/ws");
+  const _isTunnel  = _host.includes("loca.lt") || _host.includes("ngrok") || _host.includes("ngrok-free.app");
+  const _isRailway = _host.includes("railway.app");
+  const _backendRailway = "https://backend-production-04542.up.railway.app";
+  const API_BASE = (global.AISEC_API_BASE && global.AISEC_API_BASE !== "") ? global.AISEC_API_BASE :
+                   (_isRailway ? _backendRailway + "/api" :
+                   (_isTunnel  ? "https://spotty-elephant-93.loca.lt/api" : "http://" + _host + ":8080/api"));
+  const WS_BASE  = (global.AISEC_WS_BASE  && global.AISEC_WS_BASE  !== "") ? global.AISEC_WS_BASE  :
+                   (_isRailway ? _backendRailway.replace("https://","wss://") + "/ws" :
+                   (_isTunnel  ? "wss://spotty-elephant-93.loca.lt/ws"    : "ws://"   + _host + ":8080/ws"));
   const STORAGE_KEY = "aisec_session";
 
   // ---------- key-case helper ----------
