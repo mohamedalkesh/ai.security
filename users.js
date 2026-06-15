@@ -273,7 +273,7 @@ document.getElementById('saveUser').addEventListener('click', async () => {
       await AisecAPI.createUser({
         username, email, full_name: name, password,
         role: feToBe(role),
-        organizationId
+        organization_id: organizationId
       });
       await load();
       // Send welcome email
