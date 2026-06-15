@@ -186,13 +186,54 @@ function showToast(msg){
   clearTimeout(showToast._t);
   showToast._t = setTimeout(() => toast.classList.remove('show'), 1800);
 }
-document.querySelectorAll('.ns-btn, .btn-action.export-mitre').forEach(b => {
-  b.addEventListener('click', () => {
-    const txt = b.textContent.trim();
-    if (txt.includes('Generate Response Plan')){ window.location.href = 'response.html?id=' + id; return; }
-    showToast(txt + ' triggered');
+
+const responseBtn = document.getElementById('mitreResponse');
+if (responseBtn) {
+  responseBtn.addEventListener('click', () => window.location.href = 'response.html?id=' + id);
+}
+
+const viewMatrixBtn = document.getElementById('mitreViewMatrix');
+if (viewMatrixBtn) {
+  viewMatrixBtn.addEventListener('click', () => {
+    window.open('https://attack.mitre.org/matrices/enterprise/', '_blank', 'noopener');
   });
-});
+}
+
+const downloadBtn = document.getElementById('mitreDownload');
+if (downloadBtn) {
+  downloadBtn.addEventListener('click', async () => {
+    if (!window.AisecAPI) { showToast('API unavailable'); return; }
+    const m = id.match(/(\d+)/);
+    const alertId = m ? parseInt(m[1]) : null;
+    if (!alertId) { showToast('Unable to determine incident'); return; }
+    try {
+      const { name } = await AisecAPI.downloadMitreReport(alertId);
+      showToast(`MITRE report downloaded: ${name}`);
+    } catch (err) {
+      const msg = err?.status === 401 ? 'Session expired — please log in again'
+                : 'Download failed: ' + (err?.message || 'unknown error');
+      showToast(msg);
+    }
+  });
+}
+
+const exportMappingBtn = document.querySelector('.btn-action.export-mitre');
+if (exportMappingBtn) {
+  exportMappingBtn.addEventListener('click', async () => {
+    if (!window.AisecAPI) { showToast('API unavailable'); return; }
+    const m = id.match(/(\d+)/);
+    const alertId = m ? parseInt(m[1]) : null;
+    if (!alertId) { showToast('Unable to determine incident'); return; }
+    try {
+      const { name } = await AisecAPI.downloadMitreReport(alertId);
+      showToast(`MITRE report downloaded: ${name}`);
+    } catch (err) {
+      const msg = err?.status === 401 ? 'Session expired — please log in again'
+                : 'Download failed: ' + (err?.message || 'unknown error');
+      showToast(msg);
+    }
+  });
+}
 
 // ===== Backend integration: map real alert to MITRE ATT&CK =====
 (async function loadFromBackend(){
@@ -234,7 +275,7 @@ document.querySelectorAll('.ns-btn, .btn-action.export-mitre').forEach(b => {
     const mitreInfo = {
       tech:   a.mitre_technique || (mitreMatch ? mitreMatch[1].tech : 'T1190'),
       tactic: a.mitre_tactic    || (mitreMatch ? mitreMatch[1].tactic : 'Initial Access'),
-      name:   mitreMatch ? mitreMatch[1].name : type,
+      name:   a.mitre_technique != null ? (MITRE_MAP[Object.keys(MITRE_MAP).find(k => (mitreMatch && mitreMatch[0] === k))] || { name: type }).name : (mitreMatch ? mitreMatch[1].name : type),
     };
 
     // Build dynamic kill chain based on the detected tactic

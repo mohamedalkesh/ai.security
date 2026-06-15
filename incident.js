@@ -44,7 +44,10 @@ document.getElementById('dPort').textContent = inc.port;
 document.getElementById('dAsn').textContent = inc.asn;
 document.getElementById('dCountry').textContent = inc.country;
 document.getElementById('dDesc').textContent = inc.desc;
-document.getElementById('payload').innerHTML = inc.payload;
+const payloadEl = document.getElementById('payload');
+if (payloadEl) payloadEl.textContent = stripMarkup(inc.payload || '—');
+renderAiExplanation(null, inc.type);
+renderTimeline(getStaticTimeline());
 
 // Threat intel
 const tiBar = document.getElementById('tiBar');
@@ -77,6 +80,227 @@ function animateNum(el, target, dur){
   requestAnimationFrame(tick);
 }
 
+function renderTimeline(events){
+  const host = document.getElementById('timeline');
+  if (!host) return;
+  if (!events.length) {
+    host.innerHTML = `<li class="timeline-empty">لا توجد أحداث مسجلة لمسار هذا التنبيه بعد.</li>`;
+    return;
+  }
+  host.innerHTML = events.map((evt, i) => {
+    const color = evt.color || '';
+    const tag = evt.tag || 'info';
+    return `
+      <li class="tl-item ${color}" style="animation-delay:${i * 0.06}s">
+        <span class="tl-time">${evt.time || '—'}</span>
+        <span class="tl-text">${evt.text || ''}</span>
+        <span class="tl-tag ${tag}">${(evt.tag_label || tag).toUpperCase()}</span>
+      </li>`;
+  }).join('');
+}
+
+function getStaticTimeline(){
+  return [
+    { time:'14:32:12', text:'التقاط تدفق الشبكة بواسطة المستشعر', tag:'info' },
+    { time:'14:32:13', text:'تحويل التدفّق إلى ميزات وتحليلها بالذكاء الاصطناعي', tag:'info' },
+    { time:'14:32:14', text:'النموذج صنّف النشاط كهجوم عالي الخطورة', tag:'critical', color:'red' },
+    { time:'14:32:15', text:'تطبيق قاعدة الحماية (WAF / Firewall)', tag:'warning', color:'yellow' },
+    { time:'14:32:16', text:'توليد التنبيه وربطه بالحادث الحالي', tag:'critical', color:'red' },
+    { time:'14:32:18', text:'إرسال إشعارات SOC وتحديث لوحة المعلومات', tag:'success', color:'green' },
+  ];
+}
+
+function renderTimelineFromBackend(trace, createdAt, attackType){
+  if (!Array.isArray(trace) || !trace.length) {
+    const base = buildTimelineFromBase(createdAt, attackType);
+    renderTimeline(base);
+    return;
+  }
+  const events = trace.map((step, idx) => ({
+    time: step.timestamp ? new Date(step.timestamp).toLocaleTimeString() : `+${idx}s`,
+    text: step.description || step.stage || '—',
+    tag: mapStageToTag(step.stage),
+    color: mapStageToColor(step.stage),
+    tag_label: localizedStage(step.stage, step.status),
+  }));
+  renderTimeline(events);
+}
+
+function buildTimelineFromBase(createdAt, attackType){
+  const baseTime = createdAt ? new Date(createdAt) : new Date();
+  const fmt = (offsetMs) => new Date(baseTime.getTime() + offsetMs).toLocaleTimeString();
+  return [
+    { time: fmt(0),     text: `${attackType || 'الهجوم'} بدأ من المصدر`, tag:'info' },
+    { time: fmt(1000),  text: 'تم تحليل التدفّق بواسطة الذكاء الاصطناعي', tag:'info' },
+    { time: fmt(2000),  text: 'تم تأكيد توقيع الهجوم وتحديد الشدة', tag:'critical', color:'red' },
+    { time: fmt(3000),  text: 'تطبيق سياسات الدفاع المسبق (WAF/IPS)', tag:'warning', color:'yellow' },
+    { time: fmt(4000),  text: 'توليد التنبيه وربطه بالحادث', tag:'critical', color:'red' },
+    { time: fmt(5000),  text: 'إخطار فريق العمليات وتسجيل الحدث', tag:'success', color:'green' },
+  ];
+}
+
+function mapStageToTag(stage){
+  if (!stage) return 'info';
+  const s = stage.toLowerCase();
+  if (s.includes('detected') || s.includes('classified')) return 'critical';
+  if (s.includes('mitigation') || s.includes('firewall')) return 'warning';
+  if (s.includes('notified') || s.includes('resolved')) return 'success';
+  return 'info';
+}
+
+function mapStageToColor(stage){
+  const tag = mapStageToTag(stage);
+  return tag === 'critical' ? 'red' : tag === 'warning' ? 'yellow' : tag === 'success' ? 'green' : '';
+}
+
+function localizedStage(stage, status){
+  if (!stage) return status || 'INFO';
+  const s = stage.toLowerCase();
+  if (s.includes('ingest')) return 'INGEST';
+  if (s.includes('classify')) return 'CLASSIFY';
+  if (s.includes('mitigation')) return 'DEFENSE';
+  if (s.includes('notify')) return 'NOTIFY';
+  if (s.includes('resolve')) return 'RESOLVE';
+  return stage.toUpperCase();
+}
+
+function renderPayloadPreview(explanation, attackType){
+  const host = document.getElementById('payload');
+  if (!host) return;
+
+  let parsed;
+  if (explanation) {
+    try { parsed = typeof explanation === 'string' ? JSON.parse(explanation) : explanation; }
+    catch { parsed = null; }
+  }
+
+  const sample = parsed && typeof parsed === 'object' ? parsed.payload_sample : null;
+  if (sample && (sample.ascii || sample.hex)) {
+    const ascii = (sample.ascii || '').trim();
+    const hex = (sample.hex || '').trim();
+    const size = sample.size_bytes;
+    const note = sample.note;
+    const meta = [];
+    if (size) meta.push(`${size} bytes captured`);
+    if (sample.preview_bytes && size && sample.preview_bytes < size) {
+      meta.push(`showing first ${sample.preview_bytes} bytes`);
+    }
+    if (note) meta.push(note);
+
+    if (ascii) {
+      host.textContent = ascii;
+    } else if (hex) {
+      host.textContent = formatHex(hex);
+    } else {
+      host.textContent = '—';
+    }
+
+    if (meta.length) {
+      host.textContent += `\n\n# ${meta.join(' — ')}`;
+    }
+    return;
+  }
+
+  if (parsed && typeof parsed === 'object') {
+    const summary = parsed.summary || null;
+    const details = Array.isArray(parsed.details) ? parsed.details.filter(Boolean) : [];
+    const lines = [];
+    if (summary) lines.push(summary);
+    if (details.length) {
+      lines.push('', ...details.map((d, i) => `${i + 1}. ${d}`));
+    }
+    if (lines.length) {
+      host.textContent = lines.join('\n');
+      return;
+    }
+  }
+
+  const fallback = attackType ? `No captured payload available for ${attackType}.` : 'No captured payload available.';
+  host.textContent = fallback;
+}
+
+function renderAiExplanation(explanation, attackType){
+  const summaryEl = document.getElementById('expSummary');
+  const detailsEl = document.getElementById('expDetails');
+  const signalsEl = document.getElementById('expSignals');
+  const emptyEl = document.getElementById('expEmpty');
+  if (!summaryEl || !detailsEl || !signalsEl || !emptyEl) return;
+
+  let parsed;
+  if (explanation) {
+    try { parsed = typeof explanation === 'string' ? JSON.parse(explanation) : explanation; }
+    catch { parsed = null; }
+  }
+
+  const summary = parsed?.summary || buildFallbackSummary(attackType);
+  const details = Array.isArray(parsed?.details) ? parsed.details.filter(Boolean) : [];
+  const features = Array.isArray(parsed?.top_features) ? parsed.top_features : [];
+
+  summaryEl.textContent = summary || 'تم اكتشاف نشاط مشبوه من قبل النظام.';
+  detailsEl.innerHTML = '';
+  signalsEl.innerHTML = '';
+
+  if (details.length) {
+    details.forEach((line) => {
+      const li = document.createElement('li');
+      li.textContent = line;
+      detailsEl.appendChild(li);
+    });
+  }
+
+  if (features.length) {
+    features.slice(0, 4).forEach((feat) => {
+      const chip = document.createElement('div');
+      chip.className = 'exp-chip';
+      const title = document.createElement('strong');
+      title.textContent = localizedFeature(feat.feature || 'ميزة');
+      const meta = document.createElement('span');
+      const value = feat.value != null ? feat.value : '—';
+      const impact = feat.impact != null ? Number(feat.impact).toFixed(2) : null;
+      meta.textContent = impact ? `القيمة: ${value} · الأثر: ${impact}` : `القيمة: ${value}`;
+      chip.appendChild(title);
+      chip.appendChild(meta);
+      signalsEl.appendChild(chip);
+    });
+  }
+
+  const hasContent = (summary && summary !== '—') || details.length || features.length;
+  emptyEl.style.display = hasContent ? 'none' : '';
+  detailsEl.style.display = details.length ? '' : 'none';
+  signalsEl.style.display = features.length ? '' : 'none';
+}
+
+function buildFallbackSummary(attackType){
+  if (!attackType) return '';
+  const map = {
+    'ICMP Flood': 'تم رصد عدد كبير من رسائل ICMP المتتابعة مما يشير إلى هجوم إغراق.',
+    'Port Scan': 'تم اكتشاف محاولات مسح منافذ متتالية من نفس المصدر.',
+    'SQL Injection': 'تم ملاحظة أنماط استعلامات تسبب حقن SQL داخل الطلبات.',
+    'Web Attack': 'اكتشف النظام شذوذًا في حركة الويب يشير إلى هجوم تطبيقات.',
+    'DDoS': 'الكثافة العالية للاتصالات المتزامنة تلمّح إلى هجوم حرمان من الخدمة.',
+    'Brute Force': 'تكرار محاولات الدخول بكلمات مرور مختلفة يوحي بهجوم تخمين.',
+  };
+  return map[attackType] || `تم تصنيف النشاط كهجوم ${attackType}.`;
+}
+
+function localizedFeature(name){
+  if (!name) return 'ميزة';
+  const map = {
+    'Total Fwd Packets': 'إجمالي الحزم الصادرة',
+    'Total Backward Packets': 'إجمالي الحزم الواردة',
+    'Flow Duration': 'زمن التدفّق',
+    'Fwd Packet Length Mean': 'متوسط حجم الحزم الصادرة',
+    'Bwd Packet Length Mean': 'متوسط حجم الحزم الواردة',
+    'Packet Length Variance': 'تباين حجم الحزم',
+  };
+  return map[name] || name;
+}
+
+function formatHex(hex){
+  if (!hex) return '';
+  return hex.match(/.{1,32}/g)?.join('\n') || hex;
+}
+
 // ===== Copy actions =====
 const toast = document.getElementById('toast');
 function showToast(msg = 'Copied to clipboard'){
@@ -85,14 +309,22 @@ function showToast(msg = 'Copied to clipboard'){
   clearTimeout(showToast._t);
   showToast._t = setTimeout(() => toast.classList.remove('show'), 1800);
 }
+
+function stripMarkup(str){
+  if (!str) return '';
+  const tmp = document.createElement('div');
+  tmp.innerHTML = str;
+  return tmp.textContent || tmp.innerText || '';
+}
 document.querySelectorAll('.copy').forEach(el => {
   el.addEventListener('click', () => {
     navigator.clipboard.writeText(el.textContent.trim()).then(() => showToast());
   });
 });
 document.getElementById('copyPayload').addEventListener('click', () => {
-  const txt = document.getElementById('payload').innerText;
-  navigator.clipboard.writeText(txt).then(() => showToast('Payload copied'));
+  const node = document.getElementById('payload');
+  const txt = node ? node.textContent || '' : '';
+  navigator.clipboard.writeText(txt.trim()).then(() => showToast('Payload copied'));
 });
 
 // ===== Action buttons =====
@@ -104,6 +336,22 @@ document.querySelectorAll('.qa-btn').forEach(b => {
     const t = b.querySelector('.qa-t').textContent;
     if (t === 'AI Classification'){ window.location.href = 'classification.html?id=' + id; return; }
     if (t === 'MITRE ATT&CK'){ window.location.href = 'mitre.html?id=' + id; return; }
+    if (t === 'Export Report') {
+      if (!window.AisecAPI) { showToast('API unavailable'); return; }
+      const idParam = (new URLSearchParams(location.search)).get('id');
+      const mId = idParam?.match(/(\d+)/);
+      const alertId = mId ? parseInt(mId[1]) : null;
+      if (!alertId) { showToast('Unable to determine incident'); return; }
+      try {
+        const { name } = await AisecAPI.downloadAnalysisReport(alertId);
+        showToast(`Analysis downloaded: ${name}`);
+      } catch (err) {
+        const msg = err?.status === 401 ? 'Session expired — please log in again'
+                  : 'Export failed: ' + (err?.message || 'unknown error');
+        showToast(msg);
+      }
+      return;
+    }
     showToast(t + ' triggered');
   });
 });
@@ -246,6 +494,10 @@ function ensureRepStyles() {
     set('dProto',   a.protocol  || '—');
     set('dPort',    a.dest_port || '—');
     set('dDesc',    a.description || 'No description available.');
+
+    renderPayloadPreview(a.explanation, a.attack_type);
+    renderAiExplanation(a.explanation, a.attack_type);
+    renderTimelineFromBackend(a.alert_trace || [], a.created_at, a.attack_type);
 
     // Fire-and-forget reputation enrichment for the source IP. Renders a
     // coloured pill inline next to dSrc once the verdict comes back so the

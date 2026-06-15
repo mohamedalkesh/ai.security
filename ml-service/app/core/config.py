@@ -47,7 +47,7 @@ class Settings(BaseSettings):
     # are skipped. Set to 0 to disable SHAP entirely.
     shap_max_flows: int = 0
     scan_flow_detail_limit: int = 200
-    enable_payload_sampling: bool = False
+    enable_payload_sampling: bool = True
 
     # ----- helpers -----
     @property

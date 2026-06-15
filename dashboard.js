@@ -205,13 +205,19 @@ legend.innerHTML = types.map(t => `
 `).join('');
 
 // ===== Helpers =====
-function timeAgoShort(iso){
+function timeAgoShort(iso, arabic = false){
   if (!iso) return '';
   const d = (Date.now() - new Date(iso).getTime()) / 1000;
-  if (d < 60)    return Math.floor(d) + 's ago';
-  if (d < 3600)  return Math.floor(d/60) + 'm ago';
-  if (d < 86400) return Math.floor(d/3600) + 'h ago';
-  return Math.floor(d/86400) + 'd ago';
+  if (!arabic) {
+    if (d < 60)    return Math.floor(d) + 's ago';
+    if (d < 3600)  return Math.floor(d/60) + 'm ago';
+    if (d < 86400) return Math.floor(d/3600) + 'h ago';
+    return Math.floor(d/86400) + 'd ago';
+  }
+  if (d < 60)    return `منذ ${Math.floor(d)} ثانية`;
+  if (d < 3600)  return `منذ ${Math.floor(d/60)} دقيقة`;
+  if (d < 86400) return `منذ ${Math.floor(d/3600)} ساعة`;
+  return `منذ ${Math.floor(d/86400)} يوم`;
 }
 
 // ===== Notifications panel =====
@@ -241,7 +247,7 @@ document.getElementById('notifMarkAll').addEventListener('click', () => {
 
 function renderNotifPanel(){
   if (!notifData.length){
-    notifList.innerHTML = '<li class="notif-empty">No new notifications</li>';
+    notifList.innerHTML = '<li class="notif-empty">لا توجد إشعارات جديدة</li>';
     return;
   }
   notifList.innerHTML = notifData.map((a, i) => {
@@ -249,8 +255,8 @@ function renderNotifPanel(){
     return `<li class="notif-item unread" onclick="location.href='incident.html?id=${a.id}'">
       <span class="notif-ico ${sevClass}"><i class="fa-solid fa-triangle-exclamation"></i></span>
       <div class="notif-body">
-        <div class="notif-title">${a.attack_type || 'Unknown Attack'} <span class="badge-sev ${sevClass}" style="font-size:9px;padding:1px 5px">${a.severity||''}</span></div>
-        <div class="notif-sub">Source: ${a.source_ip || '—'} · ${timeAgoShort(a.created_at)}</div>
+        <div class="notif-title">${a.attack_type || 'هجوم غير معروف'} <span class="badge-sev ${sevClass}" style="font-size:9px;padding:1px 5px">${a.severity||''}</span></div>
+        <div class="notif-sub">المصدر: ${a.source_ip || '—'} · ${timeAgoShort(a.created_at, true)}</div>
       </div>
     </li>`;
   }).join('');
@@ -263,7 +269,7 @@ async function loadNotifications(){
     notifData = page.content || [];
     if (notifData.length > 0){
       notifDot.style.display = '';
-      notifBtn.setAttribute('title', `${notifData.length} new alert${notifData.length > 1 ? 's' : ''}`);
+      notifBtn.setAttribute('title', `${notifData.length} تنبيه جديد`);
     } else {
       notifDot.style.display = 'none';
     }
@@ -350,6 +356,15 @@ async function loadNotifications(){
       // Donut center
       const dNum = document.getElementById('totalThreats');
       if (dNum) dNum.textContent = (total).toLocaleString();
+
+      const vol = document.getElementById('live24h');
+      if (vol) animateNum(vol, stats.last24h ?? 0);
+      const trends = document.getElementById('liveTrends');
+      if (trends) trends.textContent = stats.last24h
+        ? `آخر 24 ساعة: ${stats.last24h} تنبيه جديد.`
+        : 'لا توجد تنبيهات جديدة خلال آخر 24 ساعة.';
+      const critBox = document.getElementById('liveCrit');
+      if (critBox) critBox.textContent = `حرج: ${stats.critical ?? 0} · عالي: ${stats.high ?? 0}`;
     } catch (err) { console.warn('[KPIs]', err.message); }
   }
 
@@ -376,6 +391,20 @@ async function loadNotifications(){
       if (legend) legend.innerHTML = dist.map(d =>
         `<li><span class="swatch" style="background:${d.color}"></span><span>${d.label}</span><span class="pct">${d.pct}%</span></li>`
       ).join('');
+
+      const top = dist[0];
+      const typeEl = document.getElementById('liveType');
+      const shareEl = document.getElementById('liveTypeShare');
+      const trendEl = document.getElementById('liveTypeTrend');
+      if (top && typeEl && shareEl && trendEl) {
+        typeEl.textContent = top.label;
+        shareEl.textContent = `يمثل ${top.pct}% من إجمالي الهجمات.`;
+        trendEl.textContent = top.pct > 40 ? 'نوصي بزيادة المراقبة لهذا النوع.' : 'الحجم تحت السيطرة حاليًا.';
+      } else if (typeEl && shareEl && trendEl) {
+        typeEl.textContent = '—';
+        shareEl.textContent = 'لا تتوفر بيانات توزيع بعد.';
+        trendEl.textContent = 'Stay vigilant.';
+      }
     } catch (err) { console.warn('[Breakdown]', err.message); }
   }
 
@@ -425,6 +454,16 @@ async function loadNotifications(){
             <div class="a-src muted sm">Source: ${a.source_ip||'—'}</div>
           </div>
         </div>`).join('');
+
+      const latest = list[0];
+      const attackEl = document.getElementById('liveAttack');
+      const metaEl = document.getElementById('liveAttackMeta');
+      const footerEl = document.getElementById('liveAttackFooter');
+      if (latest && attackEl && metaEl && footerEl) {
+        attackEl.textContent = latest.attack_type || 'هجوم غير معروف';
+        metaEl.textContent = `آخر تحديث منذ ${timeAgoShort(latest.created_at)} · شدة ${latest.severity || '—'}`;
+        footerEl.textContent = `المصدر: ${latest.source_ip || '—'} · الهدف: ${latest.dest_ip || '—'}`;
+      }
     } catch { box.innerHTML = '<div class="muted sm" style="padding:24px;text-align:center">Failed to load alerts</div>'; }
   }
 
@@ -446,9 +485,9 @@ async function loadNotifications(){
   // ---- Initial load ----
   async function initialLoad(){
     await Promise.allSettled([loadKpis(), loadBreakdown(), loadTrendChart(), loadRecent(), loadNotifications()]);
-    addLog('fa-circle-check','#22c55e','Dashboard loaded from backend');
+    addLog('fa-circle-check','#22c55e','تم تحديث لوحة التحكم من الخادم');
     AisecAPI.modelInfo()
-      .then(i => addLog('fa-brain','#22b8cf',`AI Model: ${i.model_type||'XGBoost'} · ${i.n_features} features`))
+      .then(i => addLog('fa-brain','#22b8cf',`نموذج الذكاء الاصطناعي: ${i.model_type||'XGBoost'} · ${i.n_features} ميزة`))
       .catch(() => {});
   }
   initialLoad();
@@ -466,14 +505,14 @@ async function loadNotifications(){
   let wsRetry = 0;
   function connectWS(){
     const ws = AisecAPI.connectAlertsWS({
-      onOpen: () => { wsRetry = 0; addLog('fa-plug','#22b8cf','WebSocket connected – live updates active'); },
+      onOpen: () => { wsRetry = 0; addLog('fa-plug','#22b8cf','تم الاتصال بالتحديث اللحظي — البث المباشر نشط'); },
       onMessage: (msg) => {
         if (!msg) return;
         if (msg.type === 'alert'){
-          addLog('fa-bell','#ff6b6b', `New alert: ${msg.attackType||msg.attack_type||'Unknown'} (${msg.severity||''})`);
+          addLog('fa-bell','#ff6b6b', `تنبيه جديد: ${msg.attackType||msg.attack_type||'غير معروف'} (${msg.severity||''})`);
           loadKpis(); loadRecent(); loadBreakdown(); loadNotifications();
         } else if (msg.type === 'scan_complete'){
-          addLog('fa-magnifying-glass','#ffa94d','Scan completed – refreshing data');
+          addLog('fa-magnifying-glass','#ffa94d','اكتمل فحص الشبكة — يتم تحديث البيانات');
           loadKpis(); loadRecent(); loadBreakdown(); loadTrendChart(); loadNotifications();
         }
       },

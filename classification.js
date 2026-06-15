@@ -10,6 +10,10 @@ document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 // Params
 const params = new URLSearchParams(location.search);
 const id = params.get('id') || 'INC-001';
+let incidentNumericId = (() => {
+  const m = id.match(/(\d+)/);
+  return m ? parseInt(m[1]) : null;
+})();
 document.getElementById('incRef').textContent = id;
 document.getElementById('backLink').href = 'incident.html?id=' + id;
 document.title = `${id} — AI Classification`;
@@ -144,6 +148,23 @@ function showToast(msg){
   showToast._t = setTimeout(() => toast.classList.remove('show'), 1800);
 }
 
+// Export analysis report (PDF)
+const exportBtn = document.getElementById('nsExport');
+if (exportBtn) {
+  exportBtn.addEventListener('click', async () => {
+    if (!window.AisecAPI) { showToast('API unavailable'); return; }
+    if (!incidentNumericId) { showToast('Unable to determine incident'); return; }
+    try {
+      const { name } = await AisecAPI.downloadAnalysisReport(incidentNumericId);
+      showToast(`Analysis downloaded: ${name}`);
+    } catch (err) {
+      const msg = err?.status === 401 ? 'Session expired — please log in again'
+                : 'Export failed: ' + (err?.message || 'unknown error');
+      showToast(msg);
+    }
+  });
+}
+
 // ===== Backend integration: load real alert classification =====
 (async function loadFromBackend(){
   if (!window.AisecAPI) return;
@@ -154,6 +175,7 @@ function showToast(msg){
 
   try {
     const a = await AisecAPI.getAlert(numId);
+    incidentNumericId = numId;
     const conf = Math.round((a.confidence || 0) * 100);
     const idStr = 'INC-' + String(a.id).padStart(3, '0');
 

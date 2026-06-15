@@ -174,11 +174,14 @@ def _packet_meta(pkt) -> Optional[Dict[str, object]]:  # pragma: no cover - scap
         udp = pkt[UDP]
         src_port, dst_port = int(udp.sport), int(udp.dport)
         l4_payload = bytes(bytes(udp.payload))
+    elif hasattr(layer_ip, 'proto') and int(getattr(layer_ip, 'proto', 0)) == 1 and Raw is not None and Raw in pkt:
+        # ICMP (protocol 1) — treat the raw bytes as payload even though no ports exist.
+        l4_payload = bytes(pkt[Raw])
     else:
         l4_payload = bytes(bytes(layer_ip.payload)) if hasattr(layer_ip, "payload") else b""
 
     raw_payload = bytes(pkt[Raw]) if Raw is not None and Raw in pkt else l4_payload
-    payload = raw_payload if raw_payload else None
+    payload = raw_payload if raw_payload is not None else b""
     return {
         "key": (src_ip, dst_ip, src_port, dst_port, proto),
         "payload": payload,

@@ -161,12 +161,62 @@ function showToast(msg){
 }
 
 // Other actions
-document.querySelectorAll('.det-btn, .btn-action.export-plan, .ns-btn.dark').forEach(b => {
+document.querySelectorAll('.det-btn').forEach(b => {
   b.addEventListener('click', (e) => {
     e.stopPropagation();
     showToast(b.textContent.trim() + ' triggered');
   });
 });
+
+const scheduleBtn = document.getElementById('scheduleExec');
+if (scheduleBtn) {
+  const scheduleModal = document.createElement('div');
+  scheduleModal.className = 'deep-overlay';
+  scheduleModal.innerHTML = `
+    <div class="deep-card">
+      <h2>Schedule Execution</h2>
+      <p class="muted">Select a start time to execute the remaining manual steps.</p>
+      <label class="muted" style="display:block;margin:12px 0 6px">Start Time</label>
+      <input type="datetime-local" id="scheduleTime" class="input">
+      <div style="display:flex;gap:10px;margin-top:18px;justify-content:flex-end">
+        <button class="btn btn-ghost" id="cancelSchedule">Cancel</button>
+        <button class="btn btn-primary" id="confirmSchedule">Confirm</button>
+      </div>
+    </div>`;
+  document.body.appendChild(scheduleModal);
+
+  scheduleBtn.addEventListener('click', () => {
+    scheduleModal.classList.add('show');
+  });
+
+  scheduleModal.addEventListener('click', (e) => {
+    if (e.target === scheduleModal || e.target.id === 'cancelSchedule') {
+      scheduleModal.classList.remove('show');
+    }
+  });
+  scheduleModal.querySelector('#confirmSchedule').addEventListener('click', () => {
+    const dt = scheduleModal.querySelector('#scheduleTime').value;
+    scheduleModal.classList.remove('show');
+    showToast(dt ? `Execution scheduled for ${new Date(dt).toLocaleString()}` : 'Execution scheduled');
+  });
+}
+
+const exportBtn = document.getElementById('exportPlan');
+if (exportBtn) {
+  exportBtn.addEventListener('click', async () => {
+    if (!window.AisecAPI) { showToast('API unavailable'); return; }
+    const m = id.match(/(\d+)/);
+    const alertId = m ? parseInt(m[1]) : null;
+    if (!alertId) { showToast('Unable to determine incident'); return; }
+    try {
+      const { name } = await AisecAPI.downloadResponsePlan(alertId);
+      showToast(`Response plan downloaded: ${name}`);
+    } catch (err) {
+      const msg = err?.status === 401 ? 'Session expired — please log in again' : 'Download failed: ' + (err?.message || 'unknown error');
+      showToast(msg);
+    }
+  });
+}
 
 // ===== Backend integration: generate response plan from real alert =====
 (async function loadFromBackend(){

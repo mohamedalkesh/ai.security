@@ -283,6 +283,63 @@
       setTimeout(() => URL.revokeObjectURL(url), 1000);
       return { name, size: blob.size };
     },
+    downloadAnalysisReport: async (alertId) => {
+      if (!alertId) throw new Error("Missing alert id");
+      const sess = getSession();
+      const token = sess && sess.token;
+      const res = await fetch(API_BASE + "/reports/analysis/" + alertId + ".pdf", {
+        headers: token ? { Authorization: "Bearer " + token } : {}
+      });
+      if (!res.ok) { const err = new Error("HTTP " + res.status); err.status = res.status; throw err; }
+      const blob = await res.blob();
+      let name = `analysis-${alertId}.pdf`;
+      const disp = res.headers.get("Content-Disposition") || "";
+      const m = disp.match(/filename="?([^";]+)"?/i);
+      if (m) name = m[1];
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      return { name, size: blob.size };
+    },
+    downloadMitreReport: async (alertId) => {
+      if (!alertId) throw new Error("Missing alert id");
+      const sess = getSession();
+      const token = sess && sess.token;
+      const res = await fetch(API_BASE + "/reports/mitre/" + alertId + ".pdf", {
+        headers: token ? { Authorization: "Bearer " + token } : {}
+      });
+      if (!res.ok) { const err = new Error("HTTP " + res.status); err.status = res.status; throw err; }
+      const blob = await res.blob();
+      let name = `mitre-${alertId}.pdf`;
+      const disp = res.headers.get("Content-Disposition") || "";
+      const m = disp.match(/filename="?([^";]+)"?/i);
+      if (m) name = m[1];
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      return { name, size: blob.size };
+    },
+    downloadResponsePlan: async (alertId) => {
+      if (!alertId) throw new Error("Missing alert id");
+      const sess = getSession();
+      const token = sess && sess.token;
+      const res = await fetch(API_BASE + "/reports/response/" + alertId + ".pdf", {
+        headers: token ? { Authorization: "Bearer " + token } : {}
+      });
+      if (!res.ok) { const err = new Error("HTTP " + res.status); err.status = res.status; throw err; }
+      const blob = await res.blob();
+      let name = `response-plan-${alertId}.pdf`;
+      const disp = res.headers.get("Content-Disposition") || "";
+      const m = disp.match(/filename="?([^";]+)"?/i);
+      if (m) name = m[1];
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      return { name, size: blob.size };
+    },
 
     // system metrics (live)
     metrics: () => request("/metrics"),

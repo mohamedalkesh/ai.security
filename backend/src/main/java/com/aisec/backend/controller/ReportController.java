@@ -10,9 +10,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -81,6 +79,45 @@ public class ReportController {
         Long orgId = principal != null ? principal.getOrganizationId() : null;
         byte[] pdf = exportService.buildPdf(orgId);
         String filename = "security-report-" + FILE_TS.format(Instant.now()) + ".pdf";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
+    /** Download a single-incident AI classification report. */
+    @GetMapping("/analysis/{alertId}.pdf")
+    public ResponseEntity<byte[]> exportAnalysis(@PathVariable Long alertId,
+                                                 @AuthenticationPrincipal OrgUserDetails principal) throws Exception {
+        Long orgId = principal != null ? principal.getOrganizationId() : null;
+        byte[] pdf = exportService.buildClassificationPdf(alertId, orgId);
+        String filename = String.format("analysis-%03d-%s.pdf", alertId, FILE_TS.format(Instant.now()));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
+    /** Download a single-incident MITRE ATT&CK mapping report. */
+    @GetMapping("/mitre/{alertId}.pdf")
+    public ResponseEntity<byte[]> exportMitre(@PathVariable Long alertId,
+                                              @AuthenticationPrincipal OrgUserDetails principal) throws Exception {
+        Long orgId = principal != null ? principal.getOrganizationId() : null;
+        byte[] pdf = exportService.buildMitrePdf(alertId, orgId);
+        String filename = String.format("mitre-%03d-%s.pdf", alertId, FILE_TS.format(Instant.now()));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.APPLICATION_PDF)
+                .body(pdf);
+    }
+
+    /** Download a single-incident response plan report. */
+    @GetMapping("/response/{alertId}.pdf")
+    public ResponseEntity<byte[]> exportResponsePlan(@PathVariable Long alertId,
+                                                     @AuthenticationPrincipal OrgUserDetails principal) throws Exception {
+        Long orgId = principal != null ? principal.getOrganizationId() : null;
+        byte[] pdf = exportService.buildResponsePlanPdf(alertId, orgId);
+        String filename = String.format("response-plan-%03d-%s.pdf", alertId, FILE_TS.format(Instant.now()));
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .contentType(MediaType.APPLICATION_PDF)

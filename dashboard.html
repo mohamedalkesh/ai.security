@@ -114,13 +114,13 @@
           <button class="icon-btn" id="notifBtn" title="Notifications"><i class="fa-solid fa-bell"></i><span class="dot-red" id="notifDot"></span></button>
           <div class="notif-panel" id="notifPanel">
             <div class="notif-head">
-              <span>Notifications</span>
-              <button class="notif-clear" id="notifMarkAll">Mark all read</button>
+              <span>الإشعارات</span>
+              <button class="notif-clear" id="notifMarkAll">تمييز الكل كمقروء</button>
             </div>
             <ul class="notif-list" id="notifList">
-              <li class="notif-empty">Loading…</li>
+              <li class="notif-empty">جاري التحميل…</li>
             </ul>
-            <a href="alerts.html" class="notif-footer">View all alerts →</a>
+            <a href="alerts.html" class="notif-footer">عرض كل التنبيهات →</a>
           </div>
         </div>
         <div class="user-chip" id="userChip">
@@ -173,6 +173,39 @@
         <div class="stat-val"><span data-target="0" data-float="1">0</span>s</div>
         <div class="stat-lbl">Avg Response Time</div>
         <div class="spark"><div class="spark-bar" style="--h:80%"></div><div class="spark-bar" style="--h:60%"></div><div class="spark-bar" style="--h:70%"></div><div class="spark-bar" style="--h:50%"></div><div class="spark-bar" style="--h:45%"></div><div class="spark-bar" style="--h:35%"></div><div class="spark-bar" style="--h:30%"></div></div>
+      </div>
+    </section>
+
+    <!-- Live Attack Snapshot -->
+    <section class="live-row">
+      <div class="live-card reveal" id="liveLatest">
+        <div class="live-head">
+          <div class="live-ico critical"><i class="fa-solid fa-bolt"></i></div>
+          <span class="live-label">Latest Alert</span>
+        </div>
+        <h4 id="liveAttack">—</h4>
+        <p class="live-meta" id="liveAttackMeta">Waiting for incoming alerts…</p>
+        <div class="live-footer" id="liveAttackFooter">Source — · —</div>
+      </div>
+
+      <div class="live-card reveal" id="liveVolume">
+        <div class="live-head">
+          <div class="live-ico cyan"><i class="fa-solid fa-chart-line"></i></div>
+          <span class="live-label">24h Activity</span>
+        </div>
+        <h4 id="live24h">0</h4>
+        <p class="live-meta" id="liveTrends">No alerts recorded in the last day.</p>
+        <div class="live-footer" id="liveCrit">Critical: 0 · High: 0</div>
+      </div>
+
+      <div class="live-card reveal" id="liveTopType">
+        <div class="live-head">
+          <div class="live-ico purple"><i class="fa-solid fa-rocket"></i></div>
+          <span class="live-label">Top Attack Type</span>
+        </div>
+        <h4 id="liveType">—</h4>
+        <p class="live-meta" id="liveTypeShare">Distribution data unavailable.</p>
+        <div class="live-footer" id="liveTypeTrend">Stay vigilant.</div>
       </div>
     </section>
 
