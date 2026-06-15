@@ -239,10 +239,17 @@ async function loadReportsFromBackend(){
     try {
       const breakdown = await AisecAPI.alertBreakdown();
       const palette = ['#ff6b6b','#ffa94d','#ffd43b','#51cf66','#22b8cf','#9775fa','#fa7268'];
-      const total = Object.values(breakdown).reduce((s,n) => s+n, 0);
-      const entries = Object.entries(breakdown).sort((x,y)=>y[1]-x[1]);
-      const dist = entries.length
-        ? entries.map(([label, n], i) => ({ label, pct: total ? Math.round(n*100/total) : 0, color: palette[i % palette.length] }))
+      const entries = Array.isArray(breakdown)
+        ? breakdown.map(item => [item?.type ?? 'Unknown', Number(item?.count) || 0])
+        : Object.entries(breakdown).map(([label, value]) => [label, Number(value) || 0]);
+      const total = entries.reduce((sum, [,count]) => sum + count, 0);
+      const sorted = entries.sort((a,b) => b[1] - a[1]);
+      const dist = sorted.length
+        ? sorted.map(([label, count], i) => ({
+            label,
+            pct: total ? Math.round(count * 100 / total) : 0,
+            color: palette[i % palette.length]
+          }))
         : [{ label:'No data', pct:100, color:'#334155' }];
       // Update the donut chart
       const chart = Chart.getChart('distChart');
