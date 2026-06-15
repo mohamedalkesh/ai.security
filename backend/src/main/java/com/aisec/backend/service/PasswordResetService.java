@@ -35,6 +35,9 @@ public class PasswordResetService {
     @Value("${spring.mail.username:noreply@aisec.local}")
     private String fromEmail;
 
+    @Value("${app.frontend-url:http://127.0.0.1:5500}")
+    private String frontendUrl;
+
     public PasswordResetService(PasswordResetTokenRepository tokenRepo,
                                 UserRepository userRepo,
                                 PasswordEncoder passwordEncoder,
@@ -120,7 +123,7 @@ public class PasswordResetService {
             "<div style='background:#0b1628;border:1px solid #1e3557;border-radius:12px;padding:20px 24px;margin:0 0 24px'>" +
             "<table width='100%' cellpadding='0' cellspacing='0'>" +
             "<tr><td style='padding:7px 0;color:#8ea0b8;font-size:13px;width:40%'>🌐 Platform URL</td>" +
-            "<td style='padding:7px 0;color:#22b8cf;font-size:13px;font-weight:600'>http://127.0.0.1:5500/login.html</td></tr>" +
+            "<td style='padding:7px 0;color:#22b8cf;font-size:13px;font-weight:600'>" + frontendUrl + "/login.html</td></tr>" +
             "<tr><td style='padding:7px 0;color:#8ea0b8;font-size:13px'>👤 Username</td>" +
             "<td style='padding:7px 0;color:#e6edf7;font-size:13px;font-weight:700;font-family:monospace'>" + username + "</td></tr>" +
             "<tr><td style='padding:7px 0;color:#8ea0b8;font-size:13px'>🔑 Password</td>" +
