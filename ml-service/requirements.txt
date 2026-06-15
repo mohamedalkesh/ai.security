@@ -16,8 +16,5 @@ xgboost>=2.0
 lightgbm>=4.0
 imbalanced-learn>=0.12
 joblib>=1.3
-shap>=0.44
-
-# --- PCAP feature extraction (re-uses AI/pcap_to_features.py) ---
-cicflowmeter>=0.4
-scapy>=2.5
+# shap disabled (shap_max_flows=0) — saves ~300MB RAM
+# cicflowmeter removed — nfstream used instead
