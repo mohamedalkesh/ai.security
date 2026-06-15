@@ -5,9 +5,9 @@ spring:
   application:
     name: ai-security-backend
   datasource:
-    url: jdbc:postgresql://127.0.0.1:5432/ai_ids
-    username: ${DB_USER:aisec}
-    password: ${DB_PASSWORD:aisec_pass}
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://127.0.0.1:5432/ai_ids}
+    username: ${SPRING_DATASOURCE_USERNAME:${DB_USER:aisec}}
+    password: ${SPRING_DATASOURCE_PASSWORD:${DB_PASSWORD:aisec_pass}}
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
