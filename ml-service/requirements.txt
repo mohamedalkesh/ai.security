@@ -5,6 +5,7 @@ python-multipart==0.0.12
 pydantic==2.9.2
 pydantic-settings==2.6.1
 python-dotenv==1.0.1
+psutil>=5.9
 
 # --- ML stack (these MUST already be in AI/.venv ; pinned to be safe) ---
 numpy>=1.26
