@@ -13,7 +13,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -27,6 +26,8 @@ public class ReportController {
 
     private static final DateTimeFormatter FILE_TS =
             DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss").withZone(ZoneId.systemDefault());
+
+    private static final org.slf4j.Logger log = org.slf4j.LoggerFactory.getLogger(ReportController.class);
 
     private final AlertRepository alerts;
     private final ScanResultRepository scans;
@@ -57,20 +58,21 @@ public class ReportController {
 
     /** Download tenant-scoped alerts as CSV. */
     @GetMapping("/export.csv")
-    public ResponseEntity<StreamingResponseBody> exportCsv(@AuthenticationPrincipal OrgUserDetails principal) {
+    public ResponseEntity<byte[]> exportCsv(@AuthenticationPrincipal OrgUserDetails principal) {
         Long orgId = principal != null ? principal.getOrganizationId() : null;
         String filename = "alerts-" + FILE_TS.format(Instant.now()) + ".csv";
-        StreamingResponseBody body = out -> {
-            try {
-                exportService.writeCsv(out, orgId);
-            } catch (Exception e) {
-                throw new RuntimeException(e);
-            }
-        };
+        byte[] csv;
+        try {
+            csv = exportService.buildCsv(orgId);
+            log.info("CSV export complete: orgId={} bytes={}", orgId, csv.length);
+        } catch (Exception e) {
+            log.error("CSV export failed for orgId={}: {}", orgId, e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
                 .contentType(MediaType.parseMediaType("text/csv; charset=UTF-8"))
-                .body(body);
+                .body(csv);
     }
 
     /** Download the tenant-scoped executive summary as PDF. */

@@ -32,8 +32,11 @@ public class ReportExportService {
         this.alertService = alertService;
     }
 
-    /** Stream tenant-scoped alerts as CSV. orgId=null → system tenant only. */
-    public void writeCsv(OutputStream out, Long orgId) throws Exception {
+    /**
+     * Stream tenant-scoped alerts as CSV. orgId=null → system tenant only.
+     * @return number of rows written (excluding header)
+     */
+    public byte[] buildCsv(Long orgId) throws Exception {
         StringBuilder sb = new StringBuilder();
         sb.append("id,created_at,attack_type,severity,status,source_ip,dest_ip,dest_port,protocol,confidence,mitre_technique,mitre_tactic,description\n");
         for (Alert a : alerts.findAllScopedOrdered(orgId)) {
@@ -52,8 +55,7 @@ public class ReportExportService {
               .append(csvEscape(a.getDescription()))
               .append('\n');
         }
-        out.write(sb.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
-        out.flush();
+        return sb.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8);
     }
 
     private static String csvEscape(String s) {
