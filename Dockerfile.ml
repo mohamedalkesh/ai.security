@@ -12,6 +12,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY ml-service/ ./ml-service/
 COPY AI/model_artifacts_v4/ ./AI/model_artifacts_v4/
+COPY AI/pcap_to_features.py ./AI/pcap_to_features.py
 
 WORKDIR /app/ml-service
 
