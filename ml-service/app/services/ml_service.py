@@ -542,14 +542,22 @@ class MLService:
                 f"Could not import pcap_to_features from {settings.ai_package_path}: {e}"
             )
 
+        max_flows = settings.pcap_max_flows if settings.pcap_max_flows > 0 else None
+
         t0 = time.perf_counter()
-        logger.info("Extracting flows from %s", pcap_path)
+        logger.info("Extracting flows from %s (limit=%s)", pcap_path, max_flows or "none")
         df = pcap_to_dataframe(
             str(pcap_path),
             self.feature_names,
+            max_flows=max_flows,
             worker_threads=self.pcap_workers,
         )
-        logger.info("Flow extraction done: %d flows in %.1fs", len(df), time.perf_counter() - t0)
+        sampled = max_flows is not None and len(df) >= max_flows
+        logger.info(
+            "Flow extraction done: %d flows in %.1fs%s",
+            len(df), time.perf_counter() - t0,
+            " (truncated)" if sampled else "",
+        )
 
         # Skip payload sampling for large PCAPs — it requires a second full read
         # of the file and adds significant latency for captures > 50k flows.
@@ -559,6 +567,7 @@ class MLService:
         if df.empty:
             return {
                 "total_flows": 0,
+                "sampled": False,
                 "summary": {},
                 "flows": [],
             }
@@ -657,7 +666,10 @@ class MLService:
                 }
 
         self._add_unknown_explanations(df, predictions)
-        return self._build_prediction_payload(df, predictions)
+        payload = self._build_prediction_payload(df, predictions)
+        payload["sampled"] = sampled
+        payload["sampled_rows"] = len(df)
+        return payload
 
     def _apply_hybrid_attack_rules(self, df: pd.DataFrame, predictions: List[Dict[str, Any]]) -> None:
         """Vectorised hybrid rule engine — evaluates all rows simultaneously via

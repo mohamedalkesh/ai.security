@@ -44,6 +44,11 @@ class Settings(BaseSettings):
 
     # Performance
     pcap_worker_threads: int = 0  # 0 = auto (use CPU count)
+    # Hard cap on flows extracted from a PCAP before ML inference even starts.
+    # Stops NFStream early so large captures (1M+ flows) don't stall the service.
+    # Flows are taken from the START of the capture (chronological order).
+    # Set to 0 to disable the cap (process everything — may be very slow).
+    pcap_max_flows: int = 300_000
     # SHAP explainability is expensive (per-flow tree traversal). Only compute
     # it for the most relevant flows so large scans stay fast. Explanations are
     # generated for attack flows up to this many; benign flows and any excess

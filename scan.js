@@ -200,7 +200,7 @@ function renderResults(r) {
     breakdown = raw.attack_breakdown || raw.breakdown || raw;
   } catch {}
 
-  // Sampled CSV warning
+  // Sampled / truncated warning
   const sampledBanner = document.getElementById('sampledBanner');
   const sampledFlag = r.sampled ?? r.sampled_flag ?? r.sampled_csv;
   const originalRows = r.original_rows ?? r.originalRows ?? r.original_count;
@@ -208,7 +208,12 @@ function renderResults(r) {
   if (sampledBanner) {
     if (sampledFlag) {
       sampledBanner.style.display = '';
-      sampledBanner.innerHTML = `⚠️ الملف كبير جداً — تم تحليل <strong>${(sampledRows||0).toLocaleString()}</strong> صف من أصل <strong>${(originalRows||0).toLocaleString()}</strong> صف.`;
+      const isPcap = (r.source_type || '').toUpperCase() === 'PCAP';
+      if (isPcap) {
+        sampledBanner.innerHTML = `⚠️ الملف كبير جداً — تم تحليل أول <strong>${(sampledRows||0).toLocaleString()}</strong> تدفق فقط. الهجمات المحتملة في باقي الملف لم تُحلَّل.`;
+      } else {
+        sampledBanner.innerHTML = `⚠️ الملف كبير جداً — تم تحليل <strong>${(sampledRows||0).toLocaleString()}</strong> صف من أصل <strong>${(originalRows||0).toLocaleString()}</strong> صف.`;
+      }
     } else {
       sampledBanner.style.display = 'none';
     }
