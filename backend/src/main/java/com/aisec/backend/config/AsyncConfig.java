@@ -46,7 +46,9 @@ public class AsyncConfig implements AsyncConfigurer {
         ThreadPoolTaskExecutor ex = new ThreadPoolTaskExecutor();
         ex.setCorePoolSize(2);
         ex.setMaxPoolSize(4);
-        ex.setQueueCapacity(500);             // burst tolerance during alert storms
+        // bulkSaveFromScan deduplicates by IP pair so typical scans submit
+        // far fewer tasks than alert count; 5000 covers extreme edge cases.
+        ex.setQueueCapacity(5_000);
         ex.setThreadNamePrefix("geoip-");
         ex.setWaitForTasksToCompleteOnShutdown(true);
         ex.setAwaitTerminationSeconds(10);

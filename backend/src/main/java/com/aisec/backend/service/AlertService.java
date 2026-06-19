@@ -10,6 +10,8 @@ import com.aisec.backend.repository.AlertRepository;
 import com.aisec.backend.repository.BlockedIpRepository;
 import com.aisec.backend.repository.UserRepository;
 import com.aisec.backend.websocket.AlertBroadcaster;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +35,8 @@ import java.util.Objects;
  */
 @Service
 public class AlertService {
+
+    private static final Logger log = LoggerFactory.getLogger(AlertService.class);
 
     private final AlertRepository repo;
     private final AlertCommentRepository commentRepo;
@@ -321,19 +325,45 @@ public class AlertService {
     /**
      * Bulk-persist alerts from a PCAP scan without per-alert side-effects.
      * Uses a single saveAll() batch insert then triggers async GeoIP enrichment.
+     *
+     * GeoIP tasks are deduplicated by (srcIp, dstIp) pair: a 1000-alert DDoS
+     * scan typically has only a handful of distinct IP pairs, so we submit
+     * one enrichAsync call per unique pair instead of one per alert. This
+     * prevents geoIpExecutor queue overflow on large scans.
      */
     @Transactional
     public int bulkSaveFromScan(List<Alert> batch) {
         if (batch == null || batch.isEmpty()) return 0;
         List<Alert> saved = repo.saveAll(batch);
-        saved.forEach(a -> {
-            if (a.getId() != null && (a.getSrcCountry() == null || a.getDstCountry() == null)) {
-                geoIp.enrichAsync(a.getSourceIp(), a.getDestIp(), (src, dst) ->
-                        updateGeoColumns(a.getId(), src, dst));
+
+        // Collect unique (srcIp, dstIp) → list of alert IDs needing enrichment
+        java.util.Map<String, java.util.List<Long>> pairToIds = new java.util.LinkedHashMap<>();
+        for (Alert a : saved) {
+            if (a.getId() == null || (a.getSrcCountry() != null && a.getDstCountry() != null)) continue;
+            String key = nullSafe(a.getSourceIp()) + "|" + nullSafe(a.getDestIp());
+            pairToIds.computeIfAbsent(key, k -> new java.util.ArrayList<>()).add(a.getId());
+        }
+
+        // One enrichAsync task per unique IP pair — safe under any scan size
+        for (Alert a : saved) {
+            if (a.getId() == null) continue;
+            String key = nullSafe(a.getSourceIp()) + "|" + nullSafe(a.getDestIp());
+            java.util.List<Long> ids = pairToIds.remove(key); // remove = process once only
+            if (ids == null) continue;
+            final java.util.List<Long> alertIds = ids;
+            try {
+                geoIp.enrichAsync(a.getSourceIp(), a.getDestIp(), (src, dst) -> {
+                    for (Long id : alertIds) updateGeoColumns(id, src, dst);
+                });
+            } catch (Exception ex) {
+                // GeoIP queue full or unavailable — skip enrichment, never fail the scan
+                log.debug("GeoIP enrichment skipped for {} alerts: {}", alertIds.size(), ex.getMessage());
             }
-        });
+        }
         return saved.size();
     }
+
+    private static String nullSafe(String s) { return s == null ? "" : s; }
 
     /**
      * Called by the async GeoIP enricher in its own transaction.
