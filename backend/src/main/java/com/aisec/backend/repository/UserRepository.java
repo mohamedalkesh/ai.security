@@ -16,4 +16,7 @@ public interface UserRepository extends JpaRepository<UserAccount, Long> {
 
     @Query("SELECT u FROM UserAccount u WHERE (:orgId IS NULL AND u.organization IS NULL) OR u.organization.id = :orgId")
     List<UserAccount> findByOrg(@Param("orgId") Long orgId);
+
+    @Query("SELECT u FROM UserAccount u WHERE u.organization IS NOT NULL ORDER BY u.organization.id, u.id")
+    List<UserAccount> findAllOrgUsers();
 }

@@ -25,6 +25,7 @@
     <nav class="side-nav">
       <a class="side-link" href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
       <a class="side-link" href="alerts.html"><i class="fa-solid fa-triangle-exclamation"></i> Alerts</a>
+      <a class="side-link" href="incidents.html"><i class="fa-solid fa-layer-group"></i> Incidents</a>
       <a class="side-link active" href="scan.html"><i class="fa-solid fa-magnifying-glass-chart"></i> Scan PCAP</a>
       <a class="side-link" href="monitoring.html"><i class="fa-solid fa-wave-square"></i> Monitoring</a>
       <a class="side-link" href="reports.html"><i class="fa-solid fa-file-lines"></i> Reports</a>
@@ -33,6 +34,7 @@
       <a class="side-link" href="webhooks.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-bell"></i> Webhooks</a>
       <a class="side-link" href="firewall.html"><i class="fa-solid fa-ban"></i> Firewall</a>
       <a class="side-link" href="analytics.html"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
+      <a class="side-link" href="training.html" data-requires-role="ADMIN,ORG_ADMIN,ANALYST"><i class="fa-solid fa-brain"></i> Training Data</a>
       <a class="side-link" href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
       <a class="side-link" href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications</a>
       <a class="side-link" href="contact.html"><i class="fa-solid fa-envelope"></i> Contact</a>
@@ -51,11 +53,11 @@
 
     <!-- Upload zone -->
     <section class="panel reveal" style="padding:0;overflow:hidden">
-      <div class="upload-zone" id="dropZone" data-requires-role="ADMIN,ANALYST">
-        <input type="file" id="fileInput" hidden data-requires-role="ADMIN,ANALYST"/>
+      <div class="upload-zone" id="dropZone" data-requires-role="ADMIN,ANALYST,ORG_ADMIN">
+        <input type="file" id="fileInput" hidden data-requires-role="ADMIN,ANALYST,ORG_ADMIN"/>
         <div class="uz-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
         <h2 class="uz-title">Drop analysis file here</h2>
-        <p class="uz-sub muted">or click to browse · Max 1 GB · Any format (PCAP recommended)</p>
+        <p class="uz-sub muted">or click to browse · Max 2.5 GB · Any format (PCAP recommended)</p>
         <button class="btn btn-primary" id="browseBtn"><i class="fa-solid fa-folder-open"></i> Browse File</button>
         <div class="uz-info muted sm">
           <i class="fa-solid fa-circle-info"></i>

@@ -349,6 +349,7 @@
     monitorStart: (iface) => request("/monitor/start", { method: "POST", body: { interface: iface } }),
     monitorStop: () => request("/monitor/stop", { method: "POST" }),
     monitorStatus: () => request("/monitor/status"),
+    monitorSetAutostart: (iface) => request("/monitor/autostart", { method: "POST", body: { interface: iface } }),
 
     // firewall blocklist
     listBlockedIps: (params = {}) => {
@@ -366,6 +367,17 @@
     lookupReputation:  (ip) => request("/threat-intel/" + encodeURIComponent(ip)),
     refreshReputation: (ip) => request("/threat-intel/" + encodeURIComponent(ip) + "/refresh",
       { method: "POST" }),
+
+    // ML training data
+    trainingList:  (params = {}) => {
+      const qs = new URLSearchParams(params).toString();
+      return request("/training-data" + (qs ? "?" + qs : ""));
+    },
+    trainingStats: () => request("/training-data/stats"),
+
+    // drift detection (ML service via backend proxy at /api/ml/...)
+    driftSummary: () => request("/ml/drift/summary"),
+    driftReport:  () => request("/ml/drift"),
 
     // platform settings (persisted server-side)
     getSettings:    () => request("/settings"),

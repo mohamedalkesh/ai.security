@@ -125,12 +125,12 @@ function applyScanUpdate(scan) {
 }
 
 // ===== Main upload handler =====
-const MAX_BYTES = 1024 * 1024 * 1024; // 1 GB
+const MAX_BYTES = 2560 * 1024 * 1024; // 2.5 GB
 
 async function handleFile(file) {
   // Validate size only — backend handles content type.
   if (file.size > MAX_BYTES) {
-    showToast(`File too large (${(file.size/1024/1024).toFixed(1)} MB > 1024 MB / 1 GB)`, true);
+    showToast(`File too large (${(file.size/1024/1024).toFixed(1)} MB > 2560 MB / 2.5 GB)`, true);
     return;
   }
 

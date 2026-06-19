@@ -22,6 +22,7 @@ AI/data/
 AI/model_artifacts/
 AI/model_artifacts_v2/
 AI/model_artifacts_v3/
+AI/model_artifacts_v5/
 # model_artifacts_v4 is tracked for deployment
 
 # =========================

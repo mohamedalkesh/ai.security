@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ML Training Data — MADRS</title>
+<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="dashboard.css"/>
+<link rel="stylesheet" href="alerts.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<style>
+.kpi-row { display:flex; gap:16px; flex-wrap:wrap; margin-bottom:24px; }
+.kpi-card { flex:1; min-width:160px; background:var(--surface2,#1e2230);
+  border:1px solid var(--border,#2a3045); border-radius:12px; padding:20px 24px; }
+.kpi-num  { font-size:32px; font-weight:800; color:var(--primary,#22b8cf); }
+.kpi-lbl  { font-size:12px; color:var(--muted,#64748b); margin-top:4px; text-transform:uppercase; letter-spacing:.5px; }
+.kpi-card.attack .kpi-num { color:#ff6b6b; }
+.kpi-card.benign .kpi-num { color:#51cf66; }
+
+.filter-row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin-bottom:18px; }
+.filter-row input, .filter-row select {
+  background:var(--surface2,#1e2230); border:1px solid var(--border,#2a3045);
+  border-radius:8px; padding:8px 14px; color:var(--text,#e2e8f0);
+  font-size:13px; outline:none; min-width:160px; }
+.filter-row input:focus, .filter-row select:focus { border-color:var(--primary,#22b8cf); }
+.filter-row .spacer { flex:1; }
+
+.label-chip { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:.5px; }
+.label-chip.attack { background:rgba(255,107,107,.15); color:#ff6b6b; border:1px solid rgba(255,107,107,.3); }
+.label-chip.benign { background:rgba(81,207,102,.12); color:#51cf66; border:1px solid rgba(81,207,102,.25); }
+
+.sev-chip { display:inline-block; padding:2px 9px; border-radius:10px; font-size:11px; font-weight:600; }
+.sev-chip.CRITICAL { background:rgba(255,0,80,.15); color:#ff0050; }
+.sev-chip.HIGH     { background:rgba(255,107,107,.15); color:#ff6b6b; }
+.sev-chip.MEDIUM   { background:rgba(255,193,7,.12); color:#ffc107; }
+.sev-chip.LOW      { background:rgba(81,207,102,.1); color:#51cf66; }
+.sev-chip.INFORMATIONAL { background:rgba(100,116,139,.1); color:#94a3b8; }
+
+.export-btn { background:linear-gradient(135deg,#22b8cf,#0f7490); color:#fff;
+  border:none; border-radius:8px; padding:9px 18px; font-size:13px;
+  font-weight:600; cursor:pointer; display:flex; align-items:center; gap:8px;
+  text-decoration:none; transition:.2s; }
+.export-btn:hover { opacity:.88; transform:translateY(-1px); }
+
+.mono { font-family:'JetBrains Mono',monospace; font-size:12px; color:var(--primary,#22b8cf); }
+.dim  { color:var(--muted,#64748b); font-size:12px; }
+
+.pagination { display:flex; justify-content:center; align-items:center; gap:8px; margin-top:18px; }
+.pagination button { background:var(--surface2,#1e2230); border:1px solid var(--border,#2a3045);
+  color:var(--text,#e2e8f0); border-radius:6px; padding:6px 14px; cursor:pointer; font-size:13px; }
+.pagination button:disabled { opacity:.35; cursor:default; }
+.pagination button.active { background:var(--primary,#22b8cf); color:#fff; border-color:transparent; }
+.pagination .page-info { color:var(--muted,#64748b); font-size:13px; }
+
+.detail-panel { background:var(--surface2,#1e2230); border:1px solid var(--border,#2a3045);
+  border-radius:12px; padding:20px 24px; margin-top:18px; display:none; }
+.detail-panel h4 { color:var(--primary,#22b8cf); font-size:13px; letter-spacing:1px;
+  text-transform:uppercase; margin:0 0 14px; }
+.detail-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px 24px; }
+.detail-item label { display:block; color:var(--muted,#64748b); font-size:11px; text-transform:uppercase; margin-bottom:3px; }
+.detail-item span  { color:var(--text,#e2e8f0); font-size:13px; }
+.features-box { margin-top:14px; background:#0b1628; border-radius:8px; padding:14px;
+  font-family:'JetBrains Mono',monospace; font-size:11px; color:#94a3b8;
+  max-height:260px; overflow:auto; white-space:pre; }
+</style>
+</head>
+<body class="dash-body">
+
+<div class="dash-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="side-brand">
+      <div class="brand-logo"><i class="fa-solid fa-shield-halved"></i></div>
+      <div><div class="brand-name">MADRS</div><div class="brand-sub muted sm">Platform v3.0</div></div>
+    </div>
+    <nav class="side-nav">
+      <a class="side-link" href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+      <a class="side-link" href="alerts.html"><i class="fa-solid fa-triangle-exclamation"></i> Alerts</a>
+      <a class="side-link" href="incidents.html"><i class="fa-solid fa-layer-group"></i> Incidents</a>
+      <a class="side-link" href="scan.html"><i class="fa-solid fa-magnifying-glass-chart"></i> Scan PCAP</a>
+      <a class="side-link" href="monitoring.html"><i class="fa-solid fa-wave-square"></i> Monitoring</a>
+      <a class="side-link" href="reports.html"><i class="fa-solid fa-file-lines"></i> Reports</a>
+      <a class="side-link" href="users.html"><i class="fa-solid fa-users"></i> Users</a>
+      <a class="side-link" href="audit.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-clipboard-list"></i> Audit Log</a>
+      <a class="side-link" href="webhooks.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-bell"></i> Webhooks</a>
+      <a class="side-link" href="firewall.html"><i class="fa-solid fa-ban"></i> Firewall</a>
+      <a class="side-link" href="analytics.html"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
+      <a class="side-link active" href="training.html" data-requires-role="ADMIN,ORG_ADMIN,ANALYST"><i class="fa-solid fa-brain"></i> Training Data</a>
+      <a class="side-link" href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+      <a class="side-link" href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications</a>
+      <a class="side-link" href="contact.html"><i class="fa-solid fa-envelope"></i> Contact</a>
+    </nav>
+    <a href="index.html" class="side-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="dash-main">
+    <header class="inc-header reveal">
+      <div class="inc-title">
+        <h1><i class="fa-solid fa-brain ai-icon"></i> ML Training Data</h1>
+        <p class="muted">Resolved attacks archived for AI model retraining</p>
+      </div>
+      <a id="exportBtn" href="#" class="export-btn">
+        <i class="fa-solid fa-file-csv"></i> Export CSV
+      </a>
+    </header>
+
+    <!-- KPIs -->
+    <div class="kpi-row reveal">
+      <div class="kpi-card">
+        <div class="kpi-num" id="kTotal">—</div>
+        <div class="kpi-lbl">Total Records</div>
+      </div>
+      <div class="kpi-card attack">
+        <div class="kpi-num" id="kAttack">—</div>
+        <div class="kpi-lbl">Confirmed Attacks</div>
+      </div>
+      <div class="kpi-card benign">
+        <div class="kpi-num" id="kBenign">—</div>
+        <div class="kpi-lbl">False Positives (Benign)</div>
+      </div>
+    </div>
+
+    <!-- Filters -->
+    <section class="panel reveal">
+      <div class="filter-row">
+        <input id="fAttack" placeholder="Filter by attack type..." oninput="debounceLoad()"/>
+        <select id="fLabel" onchange="loadPage(0)">
+          <option value="">All Labels</option>
+          <option value="ATTACK">ATTACK</option>
+          <option value="BENIGN">BENIGN</option>
+        </select>
+        <div class="spacer"></div>
+        <span id="recCount" class="dim"></span>
+      </div>
+
+      <div class="table-wrap">
+        <table class="alerts-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>TRUE LABEL</th>
+              <th>ATTACK TYPE</th>
+              <th>SEVERITY</th>
+              <th>CONFIDENCE</th>
+              <th>SOURCE IP</th>
+              <th>PROTOCOL</th>
+              <th>MITRE TACTIC</th>
+              <th>RESOLVED AT</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--muted)">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="pagination" id="pagination"></div>
+    </section>
+
+    <!-- Detail panel -->
+    <div class="detail-panel reveal" id="detailPanel">
+      <h4><i class="fa-solid fa-microscope"></i> Record Detail — <span id="detailId"></span></h4>
+      <div class="detail-grid" id="detailGrid"></div>
+      <div id="featuresWrap" style="display:none">
+        <h4 style="margin-top:18px"><i class="fa-solid fa-table-cells"></i> Feature Importance / Explanation</h4>
+        <div class="features-box" id="featuresBox"></div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"><i class="fa-solid fa-check-circle"></i> <span>Done</span></div>
+
+<script src="env-config.js"></script>
+<script src="api.js"></script>
+<script src="training.js"></script>
+</body>
+</html>

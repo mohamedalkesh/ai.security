@@ -142,4 +142,20 @@ public class MlClient {
                 .body(Map.class);
         return (java.util.List<Map<String, Object>>) resp.get("detections");
     }
+
+    // ─── Drift Detection Proxy ────────────────────────────────────────
+
+    public Map<String, Object> driftReport() {
+        return ml.get()
+                .uri("/drift")
+                .retrieve()
+                .body(Map.class);
+    }
+
+    public Map<String, Object> driftSummary() {
+        return ml.get()
+                .uri("/drift/summary")
+                .retrieve()
+                .body(Map.class);
+    }
 }

@@ -23,7 +23,8 @@
     </div>
     <nav class="side-nav">
       <a class="side-link" href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
-      <a class="side-link" href="alerts.html"><i class="fa-solid fa-triangle-exclamation"></i> Alerts </a>
+      <a class="side-link" href="alerts.html"><i class="fa-solid fa-triangle-exclamation"></i> Alerts</a>
+      <a class="side-link" href="incidents.html"><i class="fa-solid fa-layer-group"></i> Incidents</a>
       <a class="side-link" href="scan.html"><i class="fa-solid fa-magnifying-glass-chart"></i> Scan PCAP</a>
       <a class="side-link" href="monitoring.html"><i class="fa-solid fa-wave-square"></i> Monitoring</a>
       <a class="side-link" href="reports.html"><i class="fa-solid fa-file-lines"></i> Reports</a>
@@ -32,6 +33,7 @@
       <a class="side-link" href="webhooks.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-bell"></i> Webhooks</a>
       <a class="side-link" href="firewall.html"><i class="fa-solid fa-ban"></i> Firewall</a>
       <a class="side-link" href="analytics.html"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
+      <a class="side-link" href="training.html" data-requires-role="ADMIN,ORG_ADMIN,ANALYST"><i class="fa-solid fa-brain"></i> Training Data</a>
       <a class="side-link" href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
       <a class="side-link" href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications</a>
       <a class="side-link" href="contact.html"><i class="fa-solid fa-envelope"></i> Contact</a>
@@ -67,10 +69,11 @@
               <thead>
                 <tr>
                   <th>USER</th>
+                  <th id="thCompany" style="display:none">COMPANY</th>
                   <th>ROLE</th>
                   <th>STATUS</th>
                   <th>LAST LOGIN</th>
-                  <th class="right">ACTIONS</th>
+                  <th class="right" id="thActions">ACTIONS</th>
                 </tr>
               </thead>
               <tbody id="usersBody"></tbody>

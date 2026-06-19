@@ -37,7 +37,10 @@ class Settings(BaseSettings):
 
     # Storage
     upload_dir: str = "./storage/uploads"
-    max_upload_mb: int = 1024
+    max_upload_mb: int = 2560
+
+    # Live capture — set to interface name (e.g. "eth0") to auto-start on boot
+    autostart_interface: str = ""
 
     # Performance
     pcap_worker_threads: int = 0  # 0 = auto (use CPU count)

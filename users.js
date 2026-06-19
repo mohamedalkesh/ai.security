@@ -98,16 +98,44 @@ function setBanner(text, kind) {
 }
 
 function render(){
+  // Show/hide company column and actions column based on role
+  const thCompany = document.getElementById('thCompany');
+  const thActions = document.getElementById('thActions');
+  if (thCompany) thCompany.style.display = IS_SYS_ADMIN ? '' : 'none';
+  if (thActions) thActions.style.display = '';
+
   const filtered = USERS.filter(u => {
     const q = search.toLowerCase();
     return !q || (u.fullName||'').toLowerCase().includes(q) ||
                  (u.email||'').toLowerCase().includes(q) ||
-                 (u.role||'').toLowerCase().includes(q);
+                 (u.role||'').toLowerCase().includes(q) ||
+                 (u.organizationName||'').toLowerCase().includes(q);
   });
   const body = document.getElementById('usersBody');
+  const colspan = IS_SYS_ADMIN ? 5 : 5;
   body.innerHTML = filtered.map((u, i) => {
     const feRole = beToFe(u.role);
     const color = COLORS[(u.id - 1) % COLORS.length];
+    const companyCell = IS_SYS_ADMIN
+      ? `<td><span style="font-size:12px;color:var(--primary);background:rgba(34,184,207,.1);
+          border:1px solid rgba(34,184,207,.2);border-radius:6px;padding:3px 10px;white-space:nowrap">
+          ${u.organizationName || '—'}</span></td>`
+      : '';
+    // For system ADMIN: show delete only on ORG_ADMIN rows; no edit
+    const actionsCell = IS_SYS_ADMIN
+      ? (u.role === 'ORG_ADMIN' ? `
+      <td class="right">
+        <div class="u-actions">
+          <button class="act-btn del" title="Delete Org Admin" data-del="${u.id}"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </td>` : '<td></td>')
+      : `
+      <td class="right">
+        <div class="u-actions">
+          <button class="act-btn edit" title="Edit role" data-edit="${u.id}" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-pen"></i></button>
+          <button class="act-btn del" title="Delete"   data-del="${u.id}" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </td>`;
     return `
     <tr style="animation-delay:${i*.04}s" data-id="${u.id}">
       <td>
@@ -116,17 +144,13 @@ function render(){
           <div><div class="u-name">${u.fullName}</div><div class="u-email">${u.email}</div></div>
         </div>
       </td>
+      ${companyCell}
       <td><span class="role-chip ${feRole}">${ROLE_LABELS[feRole]}</span></td>
       <td><span class="u-status ${u.enabled?'active':'inactive'}">${u.enabled?'Active':'Inactive'}</span></td>
       <td class="muted">${timeAgo(u.lastLoginAt)}</td>
-      <td class="right">
-        <div class="u-actions">
-          <button class="act-btn edit" title="Edit role" data-edit="${u.id}" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-pen"></i></button>
-          <button class="act-btn del" title="Delete"   data-del="${u.id}" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-trash"></i></button>
-        </div>
-      </td>
+      ${actionsCell}
     </tr>`;
-  }).join('') || `<tr><td colspan="5" style="text-align:center;padding:40px;color:var(--muted)">No users found</td></tr>`;
+  }).join('') || `<tr><td colspan="${colspan}" style="text-align:center;padding:40px;color:var(--muted)">No users found</td></tr>`;
 
   document.getElementById('stTotal').textContent    = USERS.length;
   document.getElementById('stActive').textContent   = USERS.filter(u => u.enabled).length;
@@ -174,7 +198,10 @@ function openAdd(){
   document.getElementById('fUsername').value = '';
   document.getElementById('fPass').value    = '';
   document.getElementById('fConfirm').value = '';
-  document.getElementById('fRole').value    = IS_SYS_ADMIN ? 'org_admin' : 'analyst';
+  // System ADMIN cannot add ORG_ADMIN — hide that option
+  const orgAdminOpt = document.querySelector('#fRole option[value="org_admin"]');
+  if (orgAdminOpt) orgAdminOpt.style.display = IS_SYS_ADMIN ? 'none' : '';
+  document.getElementById('fRole').value    = IS_SYS_ADMIN ? 'administrator' : 'analyst';
   document.getElementById('fStatus').value  = 'active';
   document.getElementById('umError').style.display = 'none';
   setPassFieldsVisible(true);

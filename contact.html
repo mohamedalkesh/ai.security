@@ -26,7 +26,8 @@
     </div>
     <nav class="side-nav">
       <a class="side-link" href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
-      <a class="side-link" href="alerts.html"><i class="fa-solid fa-triangle-exclamation"></i> Alerts </a>
+      <a class="side-link" href="alerts.html"><i class="fa-solid fa-triangle-exclamation"></i> Alerts</a>
+      <a class="side-link" href="incidents.html"><i class="fa-solid fa-layer-group"></i> Incidents</a>
       <a class="side-link" href="scan.html"><i class="fa-solid fa-magnifying-glass-chart"></i> Scan PCAP</a>
       <a class="side-link" href="monitoring.html"><i class="fa-solid fa-wave-square"></i> Monitoring</a>
       <a class="side-link" href="reports.html"><i class="fa-solid fa-file-lines"></i> Reports</a>
@@ -35,8 +36,9 @@
       <a class="side-link" href="webhooks.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-bell"></i> Webhooks</a>
       <a class="side-link" href="firewall.html"><i class="fa-solid fa-ban"></i> Firewall</a>
       <a class="side-link" href="analytics.html"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
+      <a class="side-link" href="training.html" data-requires-role="ADMIN,ORG_ADMIN,ANALYST"><i class="fa-solid fa-brain"></i> Training Data</a>
       <a class="side-link" href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
-      <a class="side-link" href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications </a>
+      <a class="side-link" href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications</a>
       <a class="side-link active" href="contact.html"><i class="fa-solid fa-envelope"></i> Contact</a>
     </nav>
     <a href="index.html" class="side-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
@@ -60,11 +62,11 @@
             <div class="row-2">
               <label class="set-field">
                 <span>Full Name</span>
-                <input type="text" id="cName" value="Ahmed Hassan" required/>
+                <input type="text" id="cName" placeholder="Your full name" required/>
               </label>
               <label class="set-field">
                 <span>Email Address</span>
-                <input type="email" id="cEmail" value="ahmed@example.com" required/>
+                <input type="email" id="cEmail" placeholder="Your email address" required/>
               </label>
             </div>
             <label class="set-field">
@@ -115,7 +117,7 @@
             <div class="ci-ico cyan"><i class="fa-solid fa-envelope"></i></div>
             <div>
               <div class="ci-t">Email</div>
-              <a href="mailto:ai.security.support@gmail.com" class="ci-v">ai.security.support@gmail.com</a>
+              <a href="https://mail.google.com/mail/?view=cm&fs=1&to=MADRS.support@gmail.com" target="_blank" rel="noopener" class="ci-v">MADRS.support@gmail.com</a>
             </div>
           </div>
           <div class="ci-row">

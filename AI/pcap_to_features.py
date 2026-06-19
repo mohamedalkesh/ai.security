@@ -8,6 +8,7 @@ the existing XGBoost model can consume them directly.
 
 from __future__ import annotations
 
+import inspect
 import json
 import os
 import tempfile
@@ -415,26 +416,24 @@ def pcap_to_dataframe(
     from nfstream import NFStreamer
 
     threads = _resolve_worker_threads(worker_threads)
-    streamer_kwargs = dict(
+    valid_params = set(inspect.signature(NFStreamer.__init__).parameters.keys())
+    streamer_kwargs: dict = dict(
         source=pcap_path,
         statistical_analysis=True,
         n_dissections=0,            # disable DPI for speed
         accounting_mode=0,          # link-layer accounting disabled
+        idle_timeout=15,            # emit flow after 15s idle (pcap time)
+        active_timeout=120,         # cap max flow duration at 2 min to emit earlier
     )
+    # n_meters is the thread-count param in newer NFStream; older releases used number_of_threads
     if threads > 1:
-        streamer_kwargs["number_of_threads"] = threads
-    try:
-        streamer = NFStreamer(**streamer_kwargs)
-    except TypeError as exc:
-        # Older NFStream releases may not accept number_of_threads.
-        if "number_of_threads" in str(exc):
-            warnings.warn(
-                "NFStreamer version does not support number_of_threads — falling back to single thread."
-            )
-            streamer_kwargs.pop("number_of_threads", None)
-            streamer = NFStreamer(**streamer_kwargs)
-        else:
-            raise
+        if "n_meters" in valid_params:
+            streamer_kwargs["n_meters"] = threads
+        elif "number_of_threads" in valid_params:
+            streamer_kwargs["number_of_threads"] = threads
+    # Strip any kwargs the installed version doesn't accept to avoid TypeError
+    streamer_kwargs = {k: v for k, v in streamer_kwargs.items() if k in valid_params or k == "source"}
+    streamer = NFStreamer(**streamer_kwargs)
 
     if max_flows is None or max_flows <= 0:
         nf_df = streamer.to_pandas()

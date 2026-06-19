@@ -8,10 +8,12 @@ Wraps the pipeline already in AI/:
 
 from __future__ import annotations
 
+import concurrent.futures
 import json
 import logging
 import os
 import pickle
+import time
 import re
 import sys
 from collections import Counter
@@ -26,6 +28,7 @@ except ImportError:  # pragma: no cover - optional dependency
     shap = None
 
 from app.core.config import settings
+from app.services.drift_detector import DriftDetector
 from app.services.explanation_builder import build_narrative
 from app.services.mitre import MITRE_MAPPING, enrich
 from app.services.payload_sampler import extract_payload_samples
@@ -39,8 +42,9 @@ V2_ARTIFACTS = ("xgb.pkl", "lgbm.pkl", "iso.pkl",
                 "label_encoder.pkl", "scaler.pkl", "feature_names.pkl")
 
 # Sibling directories, tried in order of preference at startup.
-# v4 extends v3 with expanded CICIDS2018 coverage; falls back to v3/v2.
+# v5 uses 10-class taxonomy trained on NF-UQ-NIDS-v2 + CICIDS2017.
 # All versions share the same artifact layout (see V2_ARTIFACTS).
+V5_DIR_NAME = "model_artifacts_v5"
 V4_DIR_NAME = "model_artifacts_v4"
 V3_DIR_NAME = "model_artifacts_v3"
 V2_DIR_NAME = "model_artifacts_v2"
@@ -75,6 +79,7 @@ class MLService:
         self._xgb_explainer = None
         self._lgbm_explainer = None
         self._model_explainer = None
+        self.drift: Optional[DriftDetector] = None
         cpu_default = os.cpu_count() or 1
         cfg_threads = settings.pcap_worker_threads
         if cfg_threads and cfg_threads > 0:
@@ -92,7 +97,7 @@ class MLService:
         deleting any of the dirs without touching config.
         """
         base = self.artifacts_dir.parent
-        for name, label in ((V4_DIR_NAME, "v4"), (V3_DIR_NAME, "v3"), (V2_DIR_NAME, "v2")):
+        for name, label in ((V5_DIR_NAME, "v5"), (V4_DIR_NAME, "v4"), (V3_DIR_NAME, "v3"), (V2_DIR_NAME, "v2")):
             d = base / name
             if d.exists() and all((d / f).exists() for f in V2_ARTIFACTS):
                 return d, label
@@ -109,15 +114,15 @@ class MLService:
         if not chosen_dir.exists():
             raise FileNotFoundError(f"Model artifacts directory not found: {chosen_dir}")
 
-        # v2 and v3 share the same on-disk layout (XGB + LGBM + IsoForest).
-        required = V2_ARTIFACTS if version in ("v2", "v3", "v4") else V1_ARTIFACTS
+        # v2+ share the same on-disk layout (XGB + LGBM + IsoForest).
+        required = V2_ARTIFACTS if version in ("v2", "v3", "v4", "v5") else V1_ARTIFACTS
         missing = [f for f in required if not (chosen_dir / f).exists()]
         if missing:
             raise FileNotFoundError(f"Missing {version} artifacts in {chosen_dir}: {missing}")
 
         logger.info("Loading %s model artifacts from %s", version, chosen_dir)
 
-        if version in ("v2", "v3", "v4"):
+        if version in ("v2", "v3", "v4", "v5"):
             with open(chosen_dir / "xgb.pkl", "rb") as f:
                 self.xgb = pickle.load(f)
             with open(chosen_dir / "lgbm.pkl", "rb") as f:
@@ -150,6 +155,7 @@ class MLService:
         if str(ai_dir) not in sys.path:
             sys.path.insert(0, str(ai_dir))
 
+        self.drift = DriftDetector(chosen_dir)
         self._loaded = True
         logger.info(
             "Model ready (%s): classes=%s, features=%d",
@@ -166,7 +172,7 @@ class MLService:
     # ------------------------------------------------------------------
     def info(self) -> Dict[str, Any]:
         self.load()
-        if self.version in ("v2", "v3"):
+        if self.version in ("v2", "v3", "v4", "v5"):
             model_type = f"Ensemble({type(self.xgb).__name__}+{type(self.lgbm).__name__})"
         else:
             model_type = type(self.model).__name__
@@ -188,15 +194,13 @@ class MLService:
         self.load()
         Xs = self.scaler.transform(X)
 
-        if self.version in ("v2", "v3", "v4"):
-            # Soft-voting: average the two classifiers' class probabilities.
-            # This is mathematically equivalent to sklearn's VotingClassifier
-            # with voting='soft' but avoids re-fitting at load time.
-            proba = (self.xgb.predict_proba(Xs) + self.lgbm.predict_proba(Xs)) / 2.0
-            # Anomaly score — IsolationForest returns negative values for
-            # "normal" and positive for "anomalous". We only use it to
-            # demote borderline supervised predictions to Unknown; on its
-            # own it would generate too many false positives.
+        if self.version in ("v2", "v3", "v4", "v5"):
+            # Run XGBoost and LightGBM predict_proba in parallel — both models
+            # release the GIL during their C++ inference, giving near-2× throughput.
+            with concurrent.futures.ThreadPoolExecutor(max_workers=2) as _pool:
+                _xgb_f = _pool.submit(self.xgb.predict_proba, Xs)
+                _lgb_f = _pool.submit(self.lgbm.predict_proba, Xs)
+                proba = (_xgb_f.result() + _lgb_f.result()) / 2.0
             anomaly_flag = self.iso.predict(Xs) == -1 if self.iso is not None else None
         else:
             proba = self.model.predict_proba(Xs)
@@ -206,26 +210,36 @@ class MLService:
         conf = np.max(proba, axis=1)
         labels = self.label_encoder.inverse_transform(idx)
 
-        results: List[Dict[str, Any]] = []
         classes = [str(c) for c in self.label_encoder.classes_]
+        benign_label = str(list(self.label_encoder.classes_)[self._benign_index or 0])
+
+        # Pre-cache enrich() — only ~8 unique labels exist, no need to call per row.
+        unique_labels = set(labels.tolist()) | {"Unknown"}
+        enrich_cache: Dict[str, Dict] = {lbl: enrich(lbl) for lbl in unique_labels}
 
         # Pre-compute explainability vectors for the predicted class of each flow.
         explanations = self._build_feature_explanations(Xs, idx, raw_df)
 
-        for i, (label, c, p) in enumerate(zip(labels, conf, proba)):
-            # Two ways to land in Unknown:
-            #   1. raw confidence below threshold (both v1 and v2)
-            #   2. v2 only: confidence is OK-ish but the anomaly head says
-            #      "this sample doesn't look like training data" — catches
-            #      novel attack families the supervised model never saw.
+        # Pre-compute per-row probabilities as rounded numpy array to avoid
+        # per-row dict comprehension overhead on large scans.
+        proba_rounded = np.round(proba.astype(np.float32), 4)
+
+        results: List[Dict[str, Any]] = []
+        for i, (label, c, p) in enumerate(zip(labels, conf, proba_rounded)):
             is_anomalous = bool(anomaly_flag[i]) if anomaly_flag is not None else False
             if c < self.confidence_threshold:
                 final_label = "Unknown"
-            elif is_anomalous and c < 0.75 and label == str(list(self.label_encoder.classes_)[self._benign_index or 0]):
+            elif is_anomalous and c < 0.75 and label == benign_label:
                 final_label = "Unknown"
             else:
                 final_label = label
-            mitre = enrich(final_label)
+
+            # Skip building full dict for Benign — callers only need predicted + confidence.
+            if final_label == "Benign":
+                results.append({"predicted": "Benign", "confidence": round(float(c), 4)})
+                continue
+
+            mitre = enrich_cache.get(final_label) or enrich_cache["Unknown"]
             explanation_payload = None
             if explanations and explanations[i]:
                 exp_entry = explanations[i]
@@ -248,9 +262,7 @@ class MLService:
                     "predicted": final_label,
                     "confidence": round(float(c), 4),
                     "anomaly": is_anomalous,
-                    "probabilities": {
-                        classes[k]: round(float(p[k]), 4) for k in range(len(p))
-                    },
+                    "probabilities": {classes[k]: float(p[k]) for k in range(len(p))},
                     "mitre_technique": mitre["technique"],
                     "mitre_tactic": mitre["tactic"],
                     "severity": mitre["severity"],
@@ -351,7 +363,7 @@ class MLService:
     ) -> List[np.ndarray] | None:
         if shap is None:
             return None
-        if self.version in ("v2", "v3") and self._xgb_explainer and self._lgbm_explainer:
+        if self.version in ("v2", "v3", "v4", "v5") and self._xgb_explainer and self._lgbm_explainer:
             shap_xgb = self._extract_shap(self._xgb_explainer, Xs, class_indices)
             shap_lgbm = self._extract_shap(self._lgbm_explainer, Xs, class_indices)
             return [
@@ -392,6 +404,8 @@ class MLService:
         self.load()
         row = [float(features.get(name, 0.0)) for name in self.feature_names]
         raw_df = pd.DataFrame([row], columns=self.feature_names)
+        if self.drift is not None:
+            self.drift.record(features)
         return self._predict_array(np.array([row], dtype=float), raw_df=raw_df)[0]
 
     def predict_dataframe(self, df: pd.DataFrame) -> List[Dict[str, Any]]:
@@ -413,34 +427,16 @@ class MLService:
         extra_meta: List[Dict[str, Any]] | None = None,
     ) -> Dict[str, Any]:
         if df.empty:
-            return {
-                "total_flows": 0,
-                "summary": {},
-                "flows": [],
-            }
+            return {"total_flows": 0, "summary": {}, "flows": []}
 
         meta_quality = self._compute_metadata_quality(df)
 
         meta_cols = [
-            c
-            for c in (
-                "flow_id",
-                "src_ip",
-                "dst_ip",
-                "src_port",
-                "dst_port",
-                "protocol",
-                "Flow Duration",
-                "Total Fwd Packets",
-                "Total Backward Packets",
-                "Flow Bytes/s",
-                "Flow Packets/s",
-                "Packet Length Mean",
-                "Packet Length Std",
-                "_source_breakdown",
-                "_unique_sources",
-                "_dest_breakdown",
-                "_unique_dests",
+            c for c in (
+                "flow_id", "src_ip", "dst_ip", "src_port", "dst_port", "protocol",
+                "Flow Duration", "Total Fwd Packets", "Total Backward Packets",
+                "Flow Bytes/s", "Flow Packets/s", "Packet Length Mean", "Packet Length Std",
+                "_source_breakdown", "_unique_sources", "_dest_breakdown", "_unique_dests",
             )
             if c in df.columns
         ]
@@ -449,12 +445,43 @@ class MLService:
         if extra_meta is None:
             extra_meta = [{}] * len(predictions)
 
-        flows = []
+        # Vectorised summary — Counter is ~5× faster than a manual dict loop
+        summary: Dict[str, int] = dict(Counter(p["predicted"] for p in predictions))
+        attacks  = sum(c for k, c in summary.items() if k != "Benign")
+        avg_conf = float(np.mean([p["confidence"] for p in predictions])) if predictions else 0.0
+
         detail_limit = settings.scan_flow_detail_limit
-        detail_count = 0
-        for m, extra, p in zip(meta, extra_meta, predictions):
-            predicted = p.get("predicted")
-            if predicted != "Benign" and (detail_limit <= 0 or detail_count < detail_limit):
+
+        # Collect non-benign candidates up to the detail cap in a single pass
+        candidates: List[Tuple[Dict, Dict, Dict]] = []
+        for m, ex, p in zip(meta, extra_meta, predictions):
+            if p.get("predicted") == "Benign":
+                continue
+            if detail_limit > 0 and len(candidates) >= detail_limit:
+                break
+            candidates.append((m, ex, p))
+
+        if not candidates:
+            return {
+                "total_flows": len(predictions),
+                "benign": summary.get("Benign", 0),
+                "attacks": attacks,
+                "avg_confidence": round(avg_conf, 4),
+                "summary": summary,
+                "metadata_quality": meta_quality,
+                "flows": [],
+            }
+
+        # Split candidates into chunks and process each chunk in a worker thread.
+        # Threads share the same process so `self` is available without pickling;
+        # JSON parsing inside _parse_flow_breakdowns can overlap across threads.
+        n_workers  = min(os.cpu_count() or 4, 8)
+        chunk_size = max(1, (len(candidates) + n_workers - 1) // n_workers)
+
+        def _process_chunk(items: List[Tuple[Dict, Dict, Dict]]) -> List[Dict[str, Any]]:
+            result: List[Dict[str, Any]] = []
+            for m, extra, p in items:
+                predicted = p.get("predicted")
                 if not p.get("explanation"):
                     mitre = enrich(str(predicted))
                     p = {
@@ -472,24 +499,23 @@ class MLService:
                 if top_sources and flow_entry.get("predicted") in {"DDoS", "DoS"}:
                     explanation = flow_entry.get("explanation") or {}
                     details = explanation.setdefault("details", [])
-                    summary_slice = top_sources[:3]
-                    pretty = ", ".join(f"{item['ip']} ({item['count']})" for item in summary_slice)
+                    pretty = ", ".join(
+                        f"{item['ip']} ({item['count']})" for item in top_sources[:3]
+                    )
                     details.append(f"أكثر المصادر المساهمة في الهجوم: {pretty}.")
                     explanation.setdefault(
                         "recommended_action",
                         "راجع المصادر الأكثر تكرارًا وحدّها عبر الجدار الناري أو مزود الإنترنت.",
                     )
                     flow_entry["explanation"] = explanation
-                flows.append(flow_entry)
-                detail_count += 1
+                result.append(flow_entry)
+            return result
 
-        summary: Dict[str, int] = {}
-        for p in predictions:
-            predicted = p["predicted"]
-            summary[predicted] = summary.get(predicted, 0) + 1
-
-        attacks = sum(c for k, c in summary.items() if k != "Benign")
-        avg_conf = float(np.mean([p["confidence"] for p in predictions])) if predictions else 0.0
+        chunks = [candidates[i:i + chunk_size] for i in range(0, len(candidates), chunk_size)]
+        flows: List[Dict[str, Any]] = []
+        with concurrent.futures.ThreadPoolExecutor(max_workers=n_workers) as pool:
+            for chunk_flows in pool.map(_process_chunk, chunks):
+                flows.extend(chunk_flows)
 
         return {
             "total_flows": len(predictions),
@@ -516,13 +542,19 @@ class MLService:
                 f"Could not import pcap_to_features from {settings.ai_package_path}: {e}"
             )
 
+        t0 = time.perf_counter()
         logger.info("Extracting flows from %s", pcap_path)
         df = pcap_to_dataframe(
             str(pcap_path),
             self.feature_names,
             worker_threads=self.pcap_workers,
         )
-        payload_samples = extract_payload_samples(pcap_path, df) if settings.enable_payload_sampling else []
+        logger.info("Flow extraction done: %d flows in %.1fs", len(df), time.perf_counter() - t0)
+
+        # Skip payload sampling for large PCAPs — it requires a second full read
+        # of the file and adds significant latency for captures > 50k flows.
+        run_payload = settings.enable_payload_sampling and len(df) <= 50_000
+        payload_samples = extract_payload_samples(pcap_path, df) if run_payload else []
 
         if df.empty:
             return {
@@ -628,71 +660,91 @@ class MLService:
         return self._build_prediction_payload(df, predictions)
 
     def _apply_hybrid_attack_rules(self, df: pd.DataFrame, predictions: List[Dict[str, Any]]) -> None:
-        for i, prediction in enumerate(predictions):
-            if i >= len(df):
-                continue
-            row = df.iloc[i]
-            label, confidence, reasons = self._classify_flow_rules(row, prediction)
-            if not label:
-                continue
-            self._override_prediction(prediction, label, confidence, reasons)
+        """Vectorised hybrid rule engine — evaluates all rows simultaneously via
+        numpy boolean masks, then only loops over the small matched subset."""
+        n = len(predictions)
+        if n == 0 or df.empty:
+            return
 
-    def _classify_flow_rules(
-        self, row: pd.Series, prediction: Dict[str, Any]
-    ) -> Tuple[str | None, float, List[str]]:
-        dst_port = self._num(row.get("dst_port", 0))
-        src_port = self._num(row.get("src_port", 0))
-        proto = self._num(row.get("protocol", 0))
-        flow_bytes = self._num(row.get("Flow Bytes/s", 0))
-        flow_packets = self._num(row.get("Flow Packets/s", 0))
-        fwd_len = self._num(row.get("Fwd Packet Length Mean", 0))
-        bwd_len = self._num(row.get("Bwd Packet Length Mean", 0))
-        duration = self._num(row.get("Flow Duration", 0))
-        variance = self._num(row.get("Packet Length Variance", 0))
-        fwd_packets = self._num(row.get("Total Fwd Packets", 0))
-        current = str(prediction.get("predicted", ""))
+        def _col(name: str, default: float = 0.0) -> np.ndarray:
+            if name not in df.columns:
+                return np.full(n, default, dtype=float)
+            return pd.to_numeric(df[name], errors="coerce").fillna(default).to_numpy(dtype=float)
 
-        if proto == 17 and (dst_port == 53 or src_port == 53):
-            ml_conf = float(prediction.get("confidence") or 0.0)
-            ml_label = current
-            dns_suspicious = (
-                (fwd_len > 200 and variance > 300)
-                or (flow_packets > 500 and fwd_len > 150)
-                or (fwd_packets > 1000 and variance > 400)
-            )
-            if dns_suspicious and ml_label in {"Benign", "Unknown"}:
-                return "DNS Tunneling", 0.88, [
-                    "المنفذ 53/UDP مستخدم مع طول أو تكرار استعلامات مرتفع جداً (يتجاوز نمط DNS العادي).",
-                    "النمط يشير إلى احتمال تمرير بيانات داخل DNS بدلاً من استعلامات أسماء عادية.",
-                ]
-            if not dns_suspicious:
-                return None, 0.0, []
-        if duration > 5_000_000 and 5 < flow_packets < 300 and variance < 120 and current in {"Benign", "Unknown", "Bot"}:
-            return "C2 Beaconing", 0.87, [
+        pred_labels = np.array([p.get("predicted", "") for p in predictions], dtype=object)
+
+        dst_port   = _col("dst_port")
+        src_port   = _col("src_port")
+        proto      = _col("protocol")
+        flow_bytes = _col("Flow Bytes/s")
+        flow_pkts  = _col("Flow Packets/s")
+        fwd_len    = _col("Fwd Packet Length Mean")
+        bwd_len    = _col("Bwd Packet Length Mean")
+        duration   = _col("Flow Duration")
+        variance   = _col("Packet Length Variance")
+        fwd_pkts   = _col("Total Fwd Packets")
+
+        # Label-membership masks (computed once, reused across rules)
+        be_un      = np.isin(pred_labels, ["Benign", "Unknown"])
+        be_un_bo   = np.isin(pred_labels, ["Benign", "Unknown", "Bot"])
+        be_un_port = np.isin(pred_labels, ["Benign", "Unknown", "Port Scan"])
+        be_un_inf  = np.isin(pred_labels, ["Benign", "Unknown", "Infiltration"])
+
+        # DNS short-circuit: non-suspicious DNS rows skip ALL subsequent rules
+        is_dns = (proto == 17) & ((dst_port == 53) | (src_port == 53))
+        dns_suspicious = (
+            ((fwd_len > 200) & (variance > 300)) |
+            ((flow_pkts > 500) & (fwd_len > 150)) |
+            ((fwd_pkts > 1000) & (variance > 400))
+        )
+        skip = is_dns & ~dns_suspicious   # non-suspicious DNS → no rule applied
+
+        # First-match-wins: rules applied in priority order via "unset only" writes
+        result_label = np.full(n, "", dtype=object)
+        result_conf  = np.zeros(n, dtype=float)
+
+        def _apply(label: str, conf: float, mask: np.ndarray) -> None:
+            hit = mask & (result_label == "")
+            result_label[hit] = label
+            result_conf[hit]  = conf
+
+        _apply("DNS Tunneling",     0.88, is_dns & dns_suspicious & be_un)
+        _apply("C2 Beaconing",      0.87, ~skip & (duration > 5_000_000) & (flow_pkts > 5) & (flow_pkts < 300) & (variance < 120) & be_un_bo)
+        _apply("Data Exfiltration", 0.88, ~skip & (flow_bytes > 15_000) & (fwd_len > 900) & (duration > 3_000_000) & be_un_inf)
+        _apply("Lateral Movement",  0.84, ~skip & np.isin(dst_port.astype(int), [445, 3389, 22, 5985, 5986]) & (fwd_pkts > 50) & (duration < 2_500_000) & be_un_port)
+        _apply("Ransomware",        0.86, ~skip & (flow_bytes > 12_000) & (fwd_pkts > 800) & (variance > 500) & be_un)
+        _apply("Malware",           0.85, ~skip & (bwd_len > 900) & (duration > 4_000_000) & (flow_pkts > 700) & be_un_bo)
+
+        _REASONS: Dict[str, List[str]] = {
+            "DNS Tunneling":     [
+                "المنفذ 53/UDP مستخدم مع طول أو تكرار استعلامات مرتفع جداً (يتجاوز نمط DNS العادي).",
+                "النمط يشير إلى احتمال تمرير بيانات داخل DNS بدلاً من استعلامات أسماء عادية.",
+            ],
+            "C2 Beaconing":      [
                 "الاتصال طويل ومنتظم وبحجم حزم شبه ثابت.",
                 "هذا يشبه beacon دوري بين جهاز داخلي وجهة تحكم خارجية.",
-            ]
-        if flow_bytes > 15_000 and fwd_len > 900 and duration > 3_000_000 and current in {"Benign", "Unknown", "Infiltration"}:
-            return "Data Exfiltration", 0.88, [
+            ],
+            "Data Exfiltration": [
                 "معدل البيانات الخارجة وحجم الحزم مرتفعان لفترة مستمرة.",
                 "النمط يتوافق مع سحب أو تسريب بيانات وليس تصفحًا عاديًا.",
-            ]
-        if dst_port in {445, 3389, 22, 5985, 5986} and fwd_packets > 50 and duration < 2_500_000 and current in {"Benign", "Unknown", "Port Scan"}:
-            return "Lateral Movement", 0.84, [
+            ],
+            "Lateral Movement":  [
                 "الاتصال يستهدف خدمة إدارية داخلية شائعة مثل SMB/RDP/SSH/WinRM.",
                 "عدد المحاولات وزمن الجلسة القصير يدعمان فرضية انتقال داخلي.",
-            ]
-        if flow_bytes > 12_000 and fwd_packets > 800 and variance > 500 and current in {"Benign", "Unknown"}:
-            return "Ransomware", 0.86, [
+            ],
+            "Ransomware":        [
                 "حجم الحركة وعدد الحزم وتباينها يشبه نشاط قراءة/كتابة مكثف.",
                 "هذا قد يرتبط بتشفير ملفات أو انتشار عدوى داخل الشبكة.",
-            ]
-        if bwd_len > 900 and duration > 4_000_000 and flow_packets > 700 and current in {"Benign", "Unknown", "Bot"}:
-            return "Malware", 0.85, [
+            ],
+            "Malware":           [
                 "ردود كبيرة واتصال طويل مع معدل حزم مرتفع.",
                 "النمط قد يدل على تنزيل payload أو قناة تحكم لبرمجية خبيثة.",
-            ]
-        return None, 0.0, []
+            ],
+        }
+
+        for idx in np.where(result_label != "")[0]:
+            lbl = str(result_label[idx])
+            self._override_prediction(predictions[idx], lbl, float(result_conf[idx]), _REASONS[lbl])
 
     def _override_prediction(
         self, prediction: Dict[str, Any], label: str, confidence: float, reasons: List[str]
@@ -718,10 +770,10 @@ class MLService:
         prediction["explanation"] = explanation
 
     def _add_unknown_explanations(self, df: pd.DataFrame, predictions: List[Dict[str, Any]]) -> None:
-        for idx, prediction in enumerate(predictions):
+        rows = df.to_dict('records')
+        for row, prediction in zip(rows, predictions):
             if prediction.get("predicted") != "Unknown":
                 continue
-            row = df.iloc[idx] if idx < len(df) else None
             prediction["explanation"] = self._build_unknown_explanation(row)
 
     def _build_unknown_explanation(self, row: pd.Series | None) -> Dict[str, Any]:
@@ -908,7 +960,7 @@ class MLService:
             return "Command Injection"
         return None
 
-    _CSV_ROW_LIMIT = 100_000
+    _CSV_ROW_LIMIT = 500_000
 
     def predict_csv(self, csv_path: Path) -> Dict[str, Any]:
         """Run predictions on a CSV whose columns already contain features."""

@@ -19,8 +19,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.io.InputStream;
 import java.io.IOException;
-import com.ibm.icu.text.ArabicShaping;
-import com.ibm.icu.text.ArabicShapingException;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -83,7 +81,6 @@ public class ReportExportService {
     private final AlertRepository alerts;
     private final AlertService alertService;
     private final ObjectMapper json = new ObjectMapper();
-    private BaseFont arabicBaseFont;
 
     public ReportExportService(AlertRepository alerts, AlertService alertService) {
         this.alerts = alerts;
@@ -91,31 +88,31 @@ public class ReportExportService {
     }
 
     private static final List<ResponseStep> DEFAULT_RESPONSE_TEMPLATE = List.of(
-            new ResponseStep("Block Source IP Address",       "Add offending IP to firewall blocklist",                     "< 1 min", "critical", true),
-            new ResponseStep("Update Security Rules",         "Deploy updated signatures for observed attack pattern",      "2 min",   "critical", true),
-            new ResponseStep("Isolate Affected System",       "Quarantine impacted host from production network",            "5 min",   "high",    false),
-            new ResponseStep("Run Integrity Check",           "Verify data integrity and detect unauthorized changes",      "10 min",  "high",    true),
-            new ResponseStep("Notify Security Team",          "Alert on-call security analysts with incident details",      "< 1 min", "medium",  true),
-            new ResponseStep("Generate Incident Report",      "Document incident for compliance requirements",              "3 min",   "medium",  true),
-            new ResponseStep("Review Access Logs",            "Manual review of authentication and access logs",            "30 min",  "low",     false)
+            new ResponseStep("Block Source IP Address", "Add offending IP to firewall blocklist", "< 1 min", "critical", true),
+            new ResponseStep("Update Security Rules", "Deploy updated signatures for observed attack pattern", "2 min", "critical", true),
+            new ResponseStep("Isolate Affected System", "Quarantine impacted host from production network", "5 min", "high", false),
+            new ResponseStep("Run Integrity Check", "Verify data integrity and detect unauthorized changes", "10 min", "high", true),
+            new ResponseStep("Notify Security Team", "Alert on-call security analysts with incident details", "< 1 min", "medium", true),
+            new ResponseStep("Generate Incident Report", "Document incident for compliance requirements", "3 min", "medium", true),
+            new ResponseStep("Review Access Logs", "Manual review of authentication and access logs", "30 min", "low", false)
     );
 
     private static final Map<String, List<ResponseStep>> RESPONSE_TEMPLATES = Map.of(
             "DDOS", List.of(
-                    new ResponseStep("Enable DDoS Mitigation",         "Activate rate limiting for hostile source ranges",            "< 1 min", "critical", true),
-                    new ResponseStep("Scale Edge Capacity",             "Auto-scale edge nodes to absorb flood",                     "2 min",  "critical", true),
-                    new ResponseStep("Block Source Ranges",             "Blackhole offending /24 networks at upstream provider",     "1 min",  "high",    true),
-                    new ResponseStep("Enable Traffic Scrubbing",        "Route inbound traffic through scrubbing center",            "5 min",  "high",    false),
-                    new ResponseStep("Notify NOC Team",                 "Alert Network Operations Center of ongoing attack",         "< 1 min","medium",  true),
-                    new ResponseStep("Generate Post-Incident Report",   "Document attack timeline and countermeasures",              "10 min", "low",     true)
+                    new ResponseStep("Enable DDoS Mitigation", "Activate rate limiting for hostile source ranges", "< 1 min", "critical", true),
+                    new ResponseStep("Scale Edge Capacity", "Auto-scale edge nodes to absorb flood", "2 min", "critical", true),
+                    new ResponseStep("Block Source Ranges", "Blackhole offending /24 networks at upstream provider", "1 min", "high", true),
+                    new ResponseStep("Enable Traffic Scrubbing", "Route inbound traffic through scrubbing center", "5 min", "high", false),
+                    new ResponseStep("Notify NOC Team", "Alert Network Operations Center of ongoing attack", "< 1 min", "medium", true),
+                    new ResponseStep("Generate Post-Incident Report", "Document attack timeline and countermeasures", "10 min", "low", true)
             ),
             "BRUTE FORCE", List.of(
-                    new ResponseStep("Block Source IP",                 "Add offending IP to firewall blocklist",                    "< 1 min", "critical", true),
-                    new ResponseStep("Lock Targeted Accounts",          "Temporarily lock accounts with repeated failures",         "1 min",  "critical", true),
-                    new ResponseStep("Enable MFA / CAPTCHA",            "Force multi-factor authentication on affected service",    "5 min",  "high",    false),
-                    new ResponseStep("Review Authentication Logs",      "Identify impacted accounts and sessions",                  "15 min", "high",    false),
-                    new ResponseStep("Reset Compromised Credentials",   "Force password reset for breached accounts",               "5 min",  "medium",  true),
-                    new ResponseStep("Generate Compliance Report",      "Document incident for regulatory reporting",               "10 min", "low",     true)
+                    new ResponseStep("Block Source IP", "Add offending IP to firewall blocklist", "< 1 min", "critical", true),
+                    new ResponseStep("Lock Targeted Accounts", "Temporarily lock accounts with repeated failures", "1 min", "critical", true),
+                    new ResponseStep("Enable MFA / CAPTCHA", "Force multi-factor authentication on affected service", "5 min", "high", false),
+                    new ResponseStep("Review Authentication Logs", "Identify impacted accounts and sessions", "15 min", "high", false),
+                    new ResponseStep("Reset Compromised Credentials", "Force password reset for breached accounts", "5 min", "medium", true),
+                    new ResponseStep("Generate Compliance Report", "Document incident for regulatory reporting", "10 min", "low", true)
             )
     );
 
@@ -620,7 +617,7 @@ public class ReportExportService {
             }
             if (explanation.previewBytes() != null && explanation.previewBytes() < (explanation.sizeBytes() == null ? Integer.MAX_VALUE : explanation.sizeBytes())) {
                 if (metaLine.length() > 0) metaLine.append(" · ");
-                metaLine.append("عرض أول ").append(explanation.previewBytes()).append(" بايت");
+                metaLine.append("first ").append(explanation.previewBytes()).append(" bytes shown");
             }
             if (explanation.note() != null && !explanation.note().isBlank()) {
                 if (metaLine.length() > 0) metaLine.append(" · ");
@@ -668,44 +665,6 @@ public class ReportExportService {
         }
         checklist.add(new ListItem("Document findings in MADRS audit trail", valFont));
         doc.add(checklist);
-
-        // --- Arabic summary ---
-        doc.add(new Paragraph("5. ملخص باللغة العربية", sectionFont));
-        doc.add(new Paragraph(" ", smallFont));
-
-        Font arabicFont = loadArabicFont();
-        doc.add(makeArabicParagraph(String.format("الحادثة %s من النوع %s بدرجة خطورة %s.",
-                ref, arabicAttackType(alert.getAttackType()), arabicSeverity(alert.getSeverity().name())), arabicFont, 6f));
-
-        doc.add(makeArabicParagraph(String.format("المصدر %s يستهدف %s عبر المنفذ %s وبروتوكول %s.",
-                safe(alert.getSourceIp()), safe(alert.getDestIp()),
-                alert.getDestPort() == null ? "—" : String.valueOf(alert.getDestPort()),
-                safe(alert.getProtocol())), arabicFont, 6f));
-
-        doc.add(makeArabicParagraph("ثقة نموذج الذكاء الاصطناعي: " + (confidencePct >= 0 ? String.format("%.1f%%", confidencePct) : "غير متوفرة"), arabicFont, 6f));
-
-        if (explanation != null && explanation.summary() != null && !explanation.summary().isBlank()) {
-            doc.add(makeArabicParagraph("تفسير الذكاء الاصطناعي: " + explanation.summary(), arabicFont, 6f));
-        }
-        if (explanation != null && !explanation.details().isEmpty()) {
-            com.lowagie.text.List arabicDetails = new com.lowagie.text.List(com.lowagie.text.List.UNORDERED);
-            arabicDetails.setListSymbol(new Chunk("• ", arabicFont));
-            for (String detail : explanation.details()) {
-                arabicDetails.add(makeArabicListItem(detail, arabicFont));
-            }
-            doc.add(arabicDetails);
-        }
-
-        doc.add(makeArabicParagraph("التوصيات:", arabicFont, 4f));
-
-        com.lowagie.text.List arabicList = new com.lowagie.text.List(com.lowagie.text.List.UNORDERED);
-        arabicList.setListSymbol(new Chunk("• ", arabicFont));
-        arabicList.add(makeArabicListItem("تأكيد حظر عنوان المصدر على جدار الحماية.", arabicFont));
-        if (alert.getStatus() != AlertStatus.RESOLVED) {
-            arabicList.add(makeArabicListItem("فتح بلاغ استجابة للحادثة للفريق المختص.", arabicFont));
-        }
-        arabicList.add(makeArabicListItem("توثيق الخطوات في سجل نظام MADRS.", arabicFont));
-        doc.add(arabicList);
 
         doc.close();
         return bos.toByteArray();
@@ -759,97 +718,6 @@ public class ReportExportService {
         table.addCell(cell(value, valFont, Color.WHITE, Element.ALIGN_LEFT));
     }
 
-    private Font loadArabicFont() {
-        if (arabicBaseFont == null) {
-            try (InputStream in = ReportExportService.class.getResourceAsStream("/fonts/NotoSansArabic-Regular.ttf")) {
-                if (in != null) {
-                    byte[] bytes = in.readAllBytes();
-                    arabicBaseFont = BaseFont.createFont("NotoSansArabic-Regular.ttf", BaseFont.IDENTITY_H, BaseFont.EMBEDDED, true, bytes, null);
-                }
-            } catch (IOException | DocumentException ignored) {}
-
-            if (arabicBaseFont == null) {
-                try {
-                    arabicBaseFont = BaseFont.createFont(BaseFont.HELVETICA, BaseFont.WINANSI, BaseFont.NOT_EMBEDDED);
-                } catch (IOException | DocumentException ignored) {}
-            }
-        }
-
-        if (arabicBaseFont != null) {
-            return new Font(arabicBaseFont, 10, Font.NORMAL, Color.BLACK);
-        }
-
-        Font fallback = new Font(Font.HELVETICA, 10, Font.NORMAL, Color.BLACK);
-        fallback.setFamily("Helvetica");
-        return fallback;
-    }
-
-    private static String arabicSeverity(String severity) {
-        return switch (severity.toUpperCase()) {
-            case "CRITICAL" -> "حرجة";
-            case "HIGH" -> "عالية";
-            case "MEDIUM" -> "متوسطة";
-            case "LOW" -> "منخفضة";
-            default -> "غير معروفة";
-        };
-    }
-
-    private static String arabicAttackType(String type) {
-        if (type == null || type.isBlank()) return "تهديد شبكي";
-        String upper = type.toUpperCase();
-        if (upper.contains("DDOS") || upper.contains("DOS")) return "هجوم حجب الخدمة";
-        if (upper.contains("BRUTE")) return "هجوم تخمين كلمات المرور";
-        if (upper.contains("PORT")) return "مسح منافذ";
-        if (upper.contains("SQL")) return "حقن قواعد البيانات";
-        if (upper.contains("XSS")) return "هجوم عبر البرمجة النصية";
-        if (upper.contains("BOT")) return "نشاط بوت نت";
-        if (upper.contains("WEB")) return "هجوم على تطبيق ويب";
-        if (upper.contains("INFILTRATION")) return "تسلل";
-        return "تهديد شبكي";
-    }
-
-    private String shapeArabic(String text) {
-        if (text == null || text.isEmpty()) return "";
-        if (!containsArabic(text)) return text;
-        try {
-            ArabicShaping shaping = new ArabicShaping(
-                    ArabicShaping.LETTERS_SHAPE |
-                    ArabicShaping.LENGTH_GROW_SHRINK |
-                    ArabicShaping.TEXT_DIRECTION_VISUAL_RTL);
-            return shaping.shape(text);
-        } catch (ArabicShapingException e) {
-            return text;
-        }
-    }
-
-    private Paragraph makeArabicParagraph(String text, Font font, float spacingAfter) {
-        Paragraph p = new Paragraph(shapeArabic(text), font);
-        p.setAlignment(Element.ALIGN_RIGHT);
-        p.setSpacingAfter(spacingAfter);
-        p.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
-        return p;
-    }
-
-    private ListItem makeArabicListItem(String text, Font font) {
-        ListItem item = new ListItem(shapeArabic(text), font);
-        item.setAlignment(Element.ALIGN_RIGHT);
-        item.setRunDirection(PdfWriter.RUN_DIRECTION_RTL);
-        return item;
-    }
-
-    private static boolean containsArabic(String text) {
-        for (int i = 0; i < text.length(); i++) {
-            char c = text.charAt(i);
-            if ((c >= 0x0600 && c <= 0x06FF) ||
-                (c >= 0x0750 && c <= 0x077F) ||
-                (c >= 0x08A0 && c <= 0x08FF) ||
-                (c >= 0xFB50 && c <= 0xFDFF) ||
-                (c >= 0xFE70 && c <= 0xFEFF)) {
-                return true;
-            }
-        }
-        return false;
-    }
 
     private Explanation parseExplanation(String raw) {
         if (raw == null || raw.isBlank()) return null;

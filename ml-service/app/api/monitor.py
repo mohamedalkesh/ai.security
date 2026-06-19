@@ -75,3 +75,26 @@ def status():
 def drain(limit: int = 200):
     """Pop and return pending non-Benign detections (called by the Java backend)."""
     return {"detections": live_monitor.drain_detections(limit=limit)}
+
+
+class AutostartRequest(BaseModel):
+    interface: str  # empty string to disable
+
+
+@router.post("/autostart")
+def set_autostart(req: AutostartRequest):
+    """Persist the preferred capture interface to .env so it survives restarts."""
+    import re
+    from pathlib import Path
+    env_path = Path(__file__).resolve().parents[2] / ".env"
+    env_path.touch(exist_ok=True)
+    content = env_path.read_text()
+    key = "AUTOSTART_INTERFACE"
+    new_line = f'{key}="{req.interface}"'
+    if re.search(rf"^{key}=", content, re.MULTILINE):
+        content = re.sub(rf"^{key}=.*$", new_line, content, flags=re.MULTILINE)
+    else:
+        content = content.rstrip("\n") + f"\n{new_line}\n"
+    env_path.write_text(content)
+    return {"saved": True, "interface": req.interface,
+            "note": "Restart the ML service for auto-start to take effect."}

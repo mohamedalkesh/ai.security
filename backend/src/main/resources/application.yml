@@ -11,25 +11,29 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      # SECURITY: change to 'validate' or 'none' in production — use Flyway/Liquibase for schema migrations
+      # db/init.sql is loaded by PostgreSQL on first boot (docker-entrypoint-initdb.d).
+      # update = reconcile any missing columns without dropping data (safe for upgrades).
       ddl-auto: update
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         format_sql: false
+        jdbc.batch_size: 100
+        order_inserts: true
+        order_updates: true
     show-sql: false
     open-in-view: false
   servlet:
     multipart:
-      max-file-size: 1024MB
-      max-request-size: 1050MB
+      max-file-size: 2560MB
+      max-request-size: 2600MB
   jackson:
     property-naming-strategy: SNAKE_CASE
   mail:
     host: ${MAIL_HOST:smtp.gmail.com}
     port: ${MAIL_PORT:587}
-    username: ${MAIL_USERNAME:ai.security.support@gmail.com}
-    password: ${MAIL_PASSWORD:iywfdfudrtcmmoyf}
+    username: ${MAIL_USERNAME:MADRS.support@gmail.com}
+    password: ${MAIL_PASSWORD:oikwqicakyynhpie}
     properties:
       mail:
         smtp:

@@ -10,7 +10,7 @@ public class AppProperties {
     private final Firewall firewall = new Firewall();
     private final ThreatIntel threatIntel = new ThreatIntel();
     private final Security security = new Security();
-    private String supportEmail = "ai.security.support@gmail.com";
+    private String supportEmail = "MADRS.support@gmail.com";
 
     public Cors getCors() { return cors; }
     public Ml getMl() { return ml; }

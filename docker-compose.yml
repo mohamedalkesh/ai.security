@@ -1,0 +1,99 @@
+services:
+
+  # ──────────────────────────────────────────────
+  # PostgreSQL Database
+  # ──────────────────────────────────────────────
+  db:
+    image: postgres:16-alpine
+    container_name: madrs-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-ai_ids}
+      POSTGRES_USER: ${DB_USER:-aisec}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/01-schema.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-aisec} -d ${DB_NAME:-ai_ids}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - madrs-net
+
+  # ──────────────────────────────────────────────
+  # Spring Boot Backend
+  # ──────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: madrs-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME:-ai_ids}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER:-aisec}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-changeme}
+      JWT_SECRET: ${JWT_SECRET}
+      ML_SERVICE_URL: http://ml:8001
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      ABUSEIPDB_KEY: ${ABUSEIPDB_KEY:-}
+      THREAT_INTEL_PROVIDER: ${THREAT_INTEL_PROVIDER:-auto}
+      FIREWALL_ENFORCER: ${FIREWALL_ENFORCER:-noop}
+      ALLOW_SELF_REGISTER: ${ALLOW_SELF_REGISTER:-false}
+    ports:
+      - "8080:8080"
+    networks:
+      - madrs-net
+
+  # ──────────────────────────────────────────────
+  # Python ML Service
+  # ──────────────────────────────────────────────
+  ml:
+    build:
+      context: .
+      dockerfile: Dockerfile.ml
+    container_name: madrs-ml
+    restart: unless-stopped
+    environment:
+      PORT: 8001
+    ports:
+      - "8001:8001"
+    networks:
+      - madrs-net
+
+  # ──────────────────────────────────────────────
+  # Frontend (nginx)
+  # ──────────────────────────────────────────────
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: madrs-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    environment:
+      PORT: 80
+      API_BASE_URL: ${API_BASE_URL:-http://localhost:8080}
+      WS_BASE_URL: ${WS_BASE_URL:-ws://localhost:8080}
+    ports:
+      - "80:80"
+    networks:
+      - madrs-net
+
+volumes:
+  db_data:
+
+networks:
+  madrs-net:
+    driver: bridge

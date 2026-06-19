@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -103,6 +104,9 @@ public class ScanService {
                     a.setExplanation(mapper.writeValueAsString(r.explanation()));
                 } catch (JsonProcessingException ignored) {}
             }
+            try {
+                a.setRawFeaturesJson(mapper.writeValueAsString(features));
+            } catch (JsonProcessingException ignored) {}
             a.setOrganization(org);
             alerts.save(a);
         }
@@ -234,7 +238,7 @@ public class ScanService {
 
     private void createAlertsFromFlows(List<Map<String, Object>> flows, ScanResult scan) {
         if (flows == null) return;
-        int created = 0;
+        List<Alert> batch = new ArrayList<>();
         for (Map<String, Object> f : flows) {
             String predicted = String.valueOf(f.getOrDefault("predicted", "Benign"));
             if ("Benign".equalsIgnoreCase(predicted)) continue;
@@ -256,13 +260,18 @@ public class ScanService {
                 try { a.setExplanation(mapper.writeValueAsString(explanation)); }
                 catch (JsonProcessingException ignored) {}
             }
+            Object rawFeatures = f.get("features");
+            if (rawFeatures != null) {
+                try { a.setRawFeaturesJson(mapper.writeValueAsString(rawFeatures)); }
+                catch (JsonProcessingException ignored) {}
+            }
             a.setScan(scan);
             a.setOrganization(scan.getOrganization());
-            alerts.save(a);
-            created++;
-            if (created >= 200) break;
+            batch.add(a);
+            if (batch.size() >= 5000) break;
         }
+        Integer created = txTemplate.execute(tx -> alerts.bulkSaveFromScan(batch));
         log.info("PCAP scan #{} completed: {} flows, {} alerts created",
-                scan.getId(), scan.getTotalFlows(), created);
+                scan.getId(), scan.getTotalFlows(), created != null ? created : 0);
     }
 }

@@ -4,6 +4,18 @@ const io = new IntersectionObserver((entries) => {
 }, { threshold:.08 });
 document.querySelectorAll('.reveal').forEach(el => io.observe(el));
 
+// Pre-fill name from session
+(async () => {
+  try {
+    const sess = JSON.parse(localStorage.getItem('aisec_session') || 'null');
+    if (sess) {
+      if (sess.fullName) document.getElementById('cName').value = sess.fullName;
+      const me = await api.auth.me();
+      if (me?.email) document.getElementById('cEmail').value = me.email;
+    }
+  } catch (_) {}
+})();
+
 // Form submit
 const form = document.getElementById('contactForm');
 const overlay = document.getElementById('sentOverlay');

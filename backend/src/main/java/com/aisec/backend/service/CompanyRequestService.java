@@ -46,7 +46,7 @@ public class CompanyRequestService {
     public void submitRequest(CompanyRequestDto dto) {
         String supportEmail = appProperties.getSupportEmail();
         if (supportEmail == null || supportEmail.isBlank()) {
-            supportEmail = "ai.security.support@gmail.com";
+            supportEmail = "MADRS.support@gmail.com";
         }
 
         Organization org = createOrganization(dto.companyName());
@@ -136,44 +136,91 @@ public class CompanyRequestService {
 
     private void sendWelcomeEmail(String contactName, String toEmail, String companyName,
                                     String username, String password, String supportEmail) {
-        String html = "<!DOCTYPE html><html><head><meta charset='UTF-8'/></head><body " +
-            "style='margin:0;padding:0;background:#0b1628;font-family:Inter,Arial,sans-serif'>" +
-            "<table width='100%' cellpadding='0' cellspacing='0' style='background:#0b1628;padding:40px 0'>" +
+        String logo =
+            "<table cellpadding='0' cellspacing='0' style='margin:0 auto 18px'><tr><td align='center'>" +
+            "<svg width='64' height='64' viewBox='0 0 64 64' xmlns='http://www.w3.org/2000/svg'>" +
+            "<defs><linearGradient id='sg' x1='0' y1='0' x2='1' y2='1'>" +
+            "<stop offset='0%' stop-color='#22b8cf'/><stop offset='100%' stop-color='#0f7490'/>" +
+            "</linearGradient></defs>" +
+            "<path d='M32 4 L56 14 L56 32 C56 46 45 57 32 60 C19 57 8 46 8 32 L8 14 Z' fill='url(#sg)' opacity='.18'/>" +
+            "<path d='M32 8 L52 17 L52 32 C52 44 43 54 32 57 C21 54 12 44 12 32 L12 17 Z' fill='none' stroke='#22b8cf' stroke-width='1.5' opacity='.6'/>" +
+            "<path d='M32 14 L46 21 L46 32 C46 40 40 47 32 50 C24 47 18 40 18 32 L18 21 Z' fill='url(#sg)' opacity='.35'/>" +
+            "<text x='32' y='37' text-anchor='middle' font-family='Arial,sans-serif' font-weight='800' font-size='16' fill='#ffffff'>M</text>" +
+            "</svg>" +
+            "</td></tr></table>";
+
+        String html =
+            "<!DOCTYPE html><html><head><meta charset='UTF-8'/>" +
+            "<meta name='viewport' content='width=device-width,initial-scale=1'/></head>" +
+            "<body style='margin:0;padding:0;background:#060e1e;font-family:Arial,Helvetica,sans-serif'>" +
+            "<table width='100%' cellpadding='0' cellspacing='0' style='background:#060e1e;padding:48px 0'>" +
             "<tr><td align='center'>" +
-            "<table width='520' cellpadding='0' cellspacing='0' style='background:#16243d;" +
-            "border-radius:16px;border:1px solid #1e3557;overflow:hidden'>" +
-            "<tr><td style='background:linear-gradient(135deg,#0f3460,#16243d);padding:32px 40px;text-align:center'>" +
-            "<div style='display:inline-block;width:56px;height:56px;background:rgba(34,184,207,.15);" +
-            "border-radius:14px;line-height:56px;font-size:28px;margin-bottom:14px'>🛡️</div>" +
-            "<h1 style='color:#e6edf7;font-size:22px;font-weight:700;margin:0'>MADRS</h1>" +
-            "<p style='color:#8ea0b8;font-size:13px;margin:6px 0 0'>Your Organisation Account is Ready</p>" +
+            "<table width='540' cellpadding='0' cellspacing='0' style='max-width:540px;width:100%;background:#0d1b2e;" +
+            "border-radius:20px;border:1px solid #162840;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.6)'>" +
+
+            // ── Header ──
+            "<tr><td style='background:linear-gradient(160deg,#0a2444 0%,#0d1b2e 100%);" +
+            "padding:40px 48px 32px;text-align:center;border-bottom:1px solid #162840'>" +
+            logo +
+            "<h1 style='color:#e8f0fc;font-size:26px;font-weight:800;margin:0 0 6px;letter-spacing:-.5px'>MADRS</h1>" +
+            "<p style='color:#22b8cf;font-size:12px;font-weight:600;letter-spacing:3px;text-transform:uppercase;margin:0'>" +
+            "Security Platform</p>" +
             "</td></tr>" +
-            "<tr><td style='padding:36px 40px'>" +
-            "<p style='color:#cbd5e1;font-size:15px;margin:0 0 8px'>Hello <strong style='color:#e6edf7'>" + contactName + "</strong> 👋</p>" +
-            "<p style='color:#8ea0b8;font-size:14px;line-height:1.7;margin:0 0 24px'>" +
-            "Your organisation <strong style='color:#e6edf7'>" + companyName + "</strong> has been registered on the " +
-            "<strong style='color:#22b8cf'>MADRS</strong>. Here are your admin credentials:</p>" +
-            "<div style='background:#0b1628;border:1px solid #1e3557;border-radius:12px;padding:20px 24px;margin:0 0 24px'>" +
+
+            // ── Title bar ──
+            "<tr><td style='background:#0b1525;padding:20px 48px;border-bottom:1px solid #162840'>" +
+            "<p style='color:#94a3b8;font-size:13px;font-weight:600;letter-spacing:1.5px;" +
+            "text-transform:uppercase;margin:0;text-align:center'>&#x1F3E2; Organisation Account Ready</p>" +
+            "</td></tr>" +
+
+            // ── Body ──
+            "<tr><td style='padding:40px 48px'>" +
+            "<p style='color:#e2e8f0;font-size:16px;margin:0 0 10px'>Hello, <strong style='color:#ffffff'>" + contactName + "</strong></p>" +
+            "<p style='color:#64748b;font-size:14px;line-height:1.8;margin:0 0 28px'>" +
+            "Your organisation <strong style='color:#22b8cf'>" + companyName + "</strong> has been successfully " +
+            "registered on the MADRS Security Platform. Below are your admin credentials to get started." +
+            "</p>" +
+
+            // ── Credentials box ──
+            "<div style='background:#060e1e;border:1px solid #162840;border-radius:16px;padding:24px 28px;margin:0 0 24px'>" +
+            "<p style='color:#475569;font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 16px'>Admin Credentials</p>" +
             "<table width='100%' cellpadding='0' cellspacing='0'>" +
-            "<tr><td style='padding:7px 0;color:#8ea0b8;font-size:13px;width:40%'>🌐 Platform URL</td>" +
-            "<td style='padding:7px 0;color:#22b8cf;font-size:13px;font-weight:600'>http://127.0.0.1:5500/login.html</td></tr>" +
-            "<tr><td style='padding:7px 0;color:#8ea0b8;font-size:13px'>🏢 Organisation</td>" +
-            "<td style='padding:7px 0;color:#e6edf7;font-size:13px;font-weight:600'>" + companyName + "</td></tr>" +
-            "<tr><td style='padding:7px 0;color:#8ea0b8;font-size:13px'>👤 Username</td>" +
-            "<td style='padding:7px 0;color:#e6edf7;font-size:13px;font-weight:700;font-family:monospace'>" + username + "</td></tr>" +
-            "<tr><td style='padding:7px 0;color:#8ea0b8;font-size:13px'>� Password</td>" +
-            "<td style='padding:7px 0;color:#e6edf7;font-size:13px;font-weight:700;font-family:monospace'>" + password + "</td></tr>" +
+            "<tr><td style='padding:10px 0;border-bottom:1px solid #0f2035;color:#475569;font-size:13px;width:38%'>&#x1F310; Platform URL</td>" +
+            "<td style='padding:10px 0;border-bottom:1px solid #0f2035;color:#22b8cf;font-size:13px;font-weight:600'>http://127.0.0.1:5500/login.html</td></tr>" +
+            "<tr><td style='padding:10px 0;border-bottom:1px solid #0f2035;color:#475569;font-size:13px'>&#x1F3E2; Organisation</td>" +
+            "<td style='padding:10px 0;border-bottom:1px solid #0f2035;color:#e2e8f0;font-size:13px;font-weight:600'>" + companyName + "</td></tr>" +
+            "<tr><td style='padding:10px 0;border-bottom:1px solid #0f2035;color:#475569;font-size:13px'>&#x1F464; Username</td>" +
+            "<td style='padding:10px 0;border-bottom:1px solid #0f2035;color:#e2e8f0;font-size:13px;font-weight:700;font-family:Courier New,monospace'>" + username + "</td></tr>" +
+            "<tr><td style='padding:10px 0;color:#475569;font-size:13px'>&#x1F511; Password</td>" +
+            "<td style='padding:10px 0;color:#e2e8f0;font-size:13px;font-weight:700;font-family:Courier New,monospace'>" + password + "</td></tr>" +
             "</table></div>" +
-            "<p style='color:#fbbf24;font-size:12px;background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.2);" +
-            "border-radius:8px;padding:10px 14px;line-height:1.6;margin:0 0 16px'>" +
-            "⚠️ For security, please change your password immediately after your first login.</p>" +
-            "<p style='color:#8ea0b8;font-size:13px;line-height:1.6;margin:0'>" +
-            "Need help? Contact us at <a href='mailto:" + supportEmail + "' style='color:#22b8cf;text-decoration:none'>" + supportEmail + "</a>.</p>" +
+
+            // ── Warning box ──
+            "<table width='100%' cellpadding='0' cellspacing='0' style='margin:0 0 24px'><tr>" +
+            "<td style='background:rgba(251,191,36,.06);border:1px solid rgba(251,191,36,.2);" +
+            "border-radius:12px;padding:16px 20px'>" +
+            "<p style='color:#fbbf24;font-size:13px;font-weight:700;margin:0 0 4px'>&#x26A0;&#xFE0F; Security Notice</p>" +
+            "<p style='color:#92400e;font-size:13px;line-height:1.6;margin:0'>" +
+            "Change your password immediately after your first login. Never share your credentials with anyone.</p>" +
+            "</td></tr></table>" +
+
+            "<p style='color:#475569;font-size:13px;line-height:1.7;margin:0'>" +
+            "Need help getting started? Our support team is available 24/7.<br>" +
+            "Contact us at <a href='mailto:" + supportEmail + "' style='color:#22b8cf;text-decoration:none'>" + supportEmail + "</a>." +
+            "</p>" +
             "</td></tr>" +
-            "<tr><td style='background:#0f1d35;padding:20px 40px;text-align:center;border-top:1px solid #1e3557'>" +
-            "<p style='color:#4a6080;font-size:12px;margin:0'>© 2025 MADRS — Do not share your credentials.</p>" +
-            "</td></tr>" +
+
+            // ── Footer ──
+            "<tr><td style='background:#08111f;padding:24px 48px;border-top:1px solid #162840;text-align:center'>" +
+            "<p style='color:#1e3a5f;font-size:12px;margin:0 0 6px'>" +
+            "MADRS &mdash; Malicious Activity Detection &amp; Response System</p>" +
+            "<p style='color:#1e3a5f;font-size:11px;margin:0'>" +
+            "&#169; 2025 MADRS &mdash; Do not share your credentials &mdash; " +
+            "<a href='mailto:" + supportEmail + "' style='color:#22b8cf;text-decoration:none'>" + supportEmail + "</a>" +
+            "</p></td></tr>" +
+
             "</table></td></tr></table></body></html>";
+
         try {
             MimeMessage msg = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(msg, true, "UTF-8");

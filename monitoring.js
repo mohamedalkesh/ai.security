@@ -874,6 +874,24 @@ document.getElementById('refreshBtn').addEventListener('click', () => {
     }
   });
 
+  // Set default auto-start interface
+  const autostartBtn = document.getElementById('monitorAutostartBtn');
+  if (autostartBtn) {
+    autostartBtn.addEventListener('click', async () => {
+      const iface = ifaceSelect.value;
+      if (!iface) return;
+      autostartBtn.disabled = true;
+      try {
+        await AisecAPI.monitorSetAutostart(iface);
+        autostartBtn.textContent = '✓ Saved as Default';
+        setTimeout(() => { autostartBtn.textContent = 'Set as Default'; autostartBtn.disabled = false; }, 2000);
+      } catch (e) {
+        autostartBtn.disabled = false;
+        alert('Failed to save autostart: ' + (e.message || e));
+      }
+    });
+  }
+
   // Stop monitor
   stopBtn.addEventListener('click', async () => {
     stopBtn.disabled = true;
@@ -944,4 +962,60 @@ document.getElementById('refreshBtn').addEventListener('click', () => {
   // and backend's 1s drain so an attack surfaces in the UI within ~1.5s end-to-end.
   updateStatus();
   setInterval(updateStatus, 1000);
+})();
+
+// ── Feature Drift Detection ──────────────────────────────────────────────────
+(function () {
+  const badge    = document.getElementById('driftBadge');
+  const samples  = document.getElementById('driftSamples');
+  const rec      = document.getElementById('driftRecommendation');
+  const features = document.getElementById('driftFeatures');
+  const checkedAt= document.getElementById('driftCheckedAt');
+  const refreshBtn = document.getElementById('driftRefreshBtn');
+
+  const COLORS = {
+    ok:    { bg: 'rgba(34,197,94,.15)',  border: '#22c55e', text: '#22c55e', label: 'No Drift' },
+    warn:  { bg: 'rgba(234,179,8,.15)', border: '#eab308', text: '#eab308', label: 'Moderate Drift' },
+    drift: { bg: 'rgba(239,68,68,.15)', border: '#ef4444', text: '#ef4444', label: 'Severe Drift' },
+  };
+
+  async function loadDrift() {
+    if (!badge) return;
+    try {
+      const r = await API.driftSummary();
+      const c = COLORS[r.status] || COLORS.ok;
+      badge.textContent = c.label;
+      badge.style.background   = c.bg;
+      badge.style.border       = `1px solid ${c.border}`;
+      badge.style.color        = c.text;
+      samples.textContent      = r.n_samples ? `${r.n_samples} samples` : '';
+      rec.textContent          = r.recommendation || '';
+      checkedAt.textContent    = r.checked_at ? `Last checked: ${new Date(r.checked_at).toLocaleString()}` : '';
+
+      // Feature chips
+      features.innerHTML = '';
+      const addChips = (list, severity) => {
+        const col = COLORS[severity];
+        (list || []).forEach(f => {
+          const chip = document.createElement('span');
+          chip.textContent = f;
+          chip.style.cssText = `padding:3px 10px;border-radius:12px;font-size:12px;background:${col.bg};border:1px solid ${col.border};color:${col.text}`;
+          features.appendChild(chip);
+        });
+      };
+      addChips(r.drifted_features, 'drift');
+      addChips(r.warn_features,    'warn');
+      if (!r.drifted_features?.length && !r.warn_features?.length) {
+        features.innerHTML = '<span style="font-size:13px;color:#22c55e"><i class="fa-solid fa-check-circle"></i> All features stable</span>';
+      }
+    } catch (e) {
+      if (badge) { badge.textContent = 'Unavailable'; badge.style.background = '#1e3557'; badge.style.color = '#64748b'; badge.style.border = 'none'; }
+    }
+  }
+
+  if (refreshBtn) refreshBtn.addEventListener('click', loadDrift);
+
+  // Initial load + refresh every 60 s
+  loadDrift();
+  setInterval(loadDrift, 60_000);
 })();

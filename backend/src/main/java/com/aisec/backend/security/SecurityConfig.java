@@ -98,6 +98,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/company-request").permitAll()
                 .requestMatchers("/api/health", "/actuator/**").permitAll()
                 .requestMatchers("/ws/**").permitAll()
+                .requestMatchers("/*.html", "/*.css", "/*.js", "/assets/**").permitAll()
                 .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasAnyRole("ADMIN", "ORG_ADMIN")
                 .requestMatchers(HttpMethod.POST,   "/api/users/**").hasAnyRole("ADMIN", "ORG_ADMIN")
                 .requestMatchers(HttpMethod.PUT,    "/api/users/**").hasAnyRole("ADMIN", "ORG_ADMIN")

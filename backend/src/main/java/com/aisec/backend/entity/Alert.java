@@ -34,9 +34,12 @@ public class Alert {
     @Column(length = 64)  private String mitreTactic;
     @Column(length = 1024) private String description;
 
-    @Lob
     @Column(columnDefinition = "TEXT")
     private String explanation;
+
+    /** Raw ML feature vector (JSON map) used to classify this alert — stored for retraining. */
+    @Column(columnDefinition = "TEXT")
+    private String rawFeaturesJson;
 
     /** Free-form ISO country codes — populated lazily by GeoIpService. */
     @Column(length = 2) private String srcCountry;
@@ -94,6 +97,8 @@ public class Alert {
     public void setDescription(String d) { this.description = d; }
     public String getExplanation() { return explanation; }
     public void setExplanation(String explanation) { this.explanation = explanation; }
+    public String getRawFeaturesJson() { return rawFeaturesJson; }
+    public void setRawFeaturesJson(String rawFeaturesJson) { this.rawFeaturesJson = rawFeaturesJson; }
     public String getSrcCountry() { return srcCountry; }
     public void setSrcCountry(String c) { this.srcCountry = c; }
     public String getDstCountry() { return dstCountry; }

@@ -170,15 +170,6 @@ document.getElementById('resetBtn').addEventListener('click', async () => {
 });
 
 // ===== Export =====
-document.getElementById('exportBtn').addEventListener('click', () => {
-  const config = collectPayload();
-  const blob = new Blob([JSON.stringify(config, null, 2)], { type:'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'ai-security-config.json'; a.click();
-  URL.revokeObjectURL(url);
-  showToast('Config exported');
-});
 
 // ===== Toast =====
 const toast = document.getElementById('toast');

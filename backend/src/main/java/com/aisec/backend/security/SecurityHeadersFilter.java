@@ -35,10 +35,17 @@ public class SecurityHeadersFilter extends OncePerRequestFilter {
         // Basic XSS protection for older browsers (modern ones use CSP).
         response.setHeader("X-XSS-Protection", "1; mode=block");
 
-        // Content Security Policy — restrictive default; API is consumed by
-        // JS clients so we only need to protect the /actuator HTML pages.
-        response.setHeader("Content-Security-Policy",
-                "default-src 'none'; frame-ancestors 'none'");
+        // Content Security Policy — allow our single-page frontend assets while
+        // keeping the API locked down from embedding.
+        String csp = String.join(" ",
+                "default-src 'self'",
+                "script-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com",
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com",
+                "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com data:",
+                "img-src 'self' data:",
+                "connect-src 'self'",
+                "frame-ancestors 'none'");
+        response.setHeader("Content-Security-Policy", csp);
 
         // Do not send Referer header when navigating away.
         response.setHeader("Referrer-Policy", "no-referrer");

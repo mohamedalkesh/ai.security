@@ -1,58 +1,132 @@
-# Canonical label taxonomy shared across ingestion + training.
-# Extend this file whenever new datasets or attack families are introduced.
+# Canonical label taxonomy — v5 (15 classes).
+# Web Attack split into 3 specific classes.
+# Added: SQL Injection, XSS, Ransomware, Cryptomining, DNS Tunneling, Lateral Movement.
 
 canonical:
   Benign:
     - benign
     - BENIGN
     - Normal
+    - normal
+
+  # ── Volumetric attacks ────────────────────────────────────────────────────
   DDoS:
     - ddos
     - "DDoS Hulk"
     - "DDoS GoldenEye"
     - "DDoS LOIC"
+    - "DDoS HOIC"
+    - Generic
+
   DoS:
     - dos
     - "DoS Hulk"
     - "DoS Slowhttptest"
     - "DoS slowloris"
+    - "DoS GoldenEye"
     - Heartbleed
+    - Fuzzers
+
+  # ── Reconnaissance ────────────────────────────────────────────────────────
   "Port Scan":
     - portscan
     - "Port Scan"
     - Reconnaissance
+    - Recon
+    - Scanning
+
+  # ── Credential attacks ────────────────────────────────────────────────────
   "Brute Force":
     - "FTP-Patator"
     - "SSH-Patator"
     - "Brute Force"
+    - Password
+    - "Web Attack - Brute Force"
+
+  # ── Malware families ──────────────────────────────────────────────────────
   Bot:
     - bot
-    - "Botnet"
-    - "Worms"
-  "Web Attack":
-    - "Web Attack"
-    - "Web Attack - Brute Force"
-    - "Web Attack - XSS"
+    - Botnet
+    - Worms
+    - Malware
+    - "C&C"
+    - Theft
+
+  Ransomware:
+    - Ransomware
+    - ransomware
+    - Cryptolocker
+    - WannaCry
+    - Ryuk
+
+  Cryptomining:
+    - Cryptomining
+    - cryptomining
+    - Cryptojacking
+    - Miner
+    - "Crypto Mining"
+
+  # ── Web attacks (now split) ───────────────────────────────────────────────
+  "SQL Injection":
     - "Web Attack - SQL Injection"
+    - "SQL Injection"
+    - "sql_injection"
+    - Injection
+    - SQLi
+
+  XSS:
+    - "Web Attack - XSS"
+    - XSS
+    - "Cross-Site Scripting"
+    - xss
+
+  "Web Attack":                      # residual generic web attacks
+    - "Web Attack"
     - Exploits
+    - "Web Attack - Brute Force"     # fallback if not mapped above
+
+  # ── Network intrusion ─────────────────────────────────────────────────────
   Infiltration:
     - Infiltration
     - Backdoor
     - Shellcode
+    - Reverse_shell
+    - Man_in_the_middle
+    - Tor
+
+  "Lateral Movement":
+    - "Lateral Movement"
+    - lateral_movement
+    - "Pass the Hash"
+    - "Pass the Ticket"
+    - SMB
+
+  "DNS Tunneling":
+    - "DNS Tunneling"
+    - dns_tunneling
+    - DNS
+    - "DNS Exfil"
+
+  # ── Low-level network ─────────────────────────────────────────────────────
   "ICMP Flood":
     - "ICMP-Flood"
     - "Ping Flood"
-  "ICMP Sweep":
-    - "ICMP-Sweep"
-    - "Ping Sweep"
+    - "ICMP Flood"
+
   Unknown:
     - Unknown
 
 default_label: Unknown
 
-# Dataset-specific overrides. Keys must match the manifest's label_map_key values.
+# ── Dataset-specific overrides ────────────────────────────────────────────────
 datasets:
   cicids2017:
+    # Cleaned version labels (cicids2017_cleaned.csv)
+    "Normal Traffic": Benign
+    "Port Scanning": "Port Scan"
+    Bots: Bot
+    "Web Attacks": XSS
+    # Raw CICIDS2017 labels
     BENIGN: Benign
     "DDoS": DDoS
     "DDoS Hulk": DDoS
@@ -65,10 +139,28 @@ datasets:
     Bot: Bot
     "FTP-Patator": "Brute Force"
     "SSH-Patator": "Brute Force"
-    "Web Attack - Brute Force": "Web Attack"
-    "Web Attack - XSS": "Web Attack"
-    "Web Attack - SQL Injection": "Web Attack"
+    "Web Attack - Brute Force": "Brute Force"
+    "Web Attack - XSS": XSS
+    "Web Attack - SQL Injection": "SQL Injection"
     Infiltration: Infiltration
+
+  cicids2019:
+    BENIGN: Benign
+    "DDoS attacks-LOIC-HTTP": DDoS
+    "DDoS attacks-LOIC-UDP": DDoS
+    "DDoS attacks-HOIC": DDoS
+    "DoS attacks-Hulk": DoS
+    "DoS attacks-SlowHTTPTest": DoS
+    "DoS attacks-Slowloris": DoS
+    "DoS attacks-GoldenEye": DoS
+    "SSH-Bruteforce": "Brute Force"
+    "FTP-BruteForce": "Brute Force"
+    "Brute Force -Web": "Brute Force"
+    "Brute Force -XSS": XSS
+    "SQL Injection": "SQL Injection"
+    "Infilteration": Infiltration
+    Bot: Bot
+
   unsw-nb15:
     Normal: Benign
     Fuzzers: DoS
@@ -80,7 +172,7 @@ datasets:
     Reconnaissance: "Port Scan"
     Shellcode: Infiltration
     Worms: Bot
-    "Generic Attack": DDoS
+
   bot-iot:
     Normal: Benign
     DDoS: DDoS
@@ -88,22 +180,75 @@ datasets:
     Recon: "Port Scan"
     Theft: Bot
     "C&C": Bot
+
   toniot:
     Benign: Benign
     DoS: DoS
     DDoS: DDoS
-    Injection: Infiltration
+    Injection: "SQL Injection"
     Man_in_the_middle: Infiltration
     Password: "Brute Force"
     Reverse_shell: Infiltration
     Scanning: "Port Scan"
-  iscx-vpn:
-    NonVPN: Benign
-    VPN: Benign
-    Tor: Infiltration
-    Malicious: Infiltration
+    Ransomware: Ransomware
+    XSS: XSS
+
   ctu-13:
     Normal: Benign
     Background: Benign
     Botnet: Bot
     Malware: Bot
+
+  nf-uq-nids:
+    # Actual labels found in NF-UQ-NIDS-v2.csv
+    Benign: Benign
+    DDoS: DDoS
+    DoS: DoS
+    scanning: "Port Scan"
+    Reconnaissance: "Port Scan"
+    xss: XSS
+    password: "Brute Force"
+    injection: "SQL Injection"
+    Bot: Bot
+    "Brute Force": "Brute Force"
+    Infilteration: Infiltration
+    ransomware: Ransomware
+    mitm: Infiltration
+    Exploits: Infiltration
+    Backdoor: Infiltration
+    Shellcode: Infiltration
+    Fuzzers: DoS
+    Generic: DDoS
+    Worms: Bot
+    Theft: Bot
+    Analysis: "Port Scan"
+    # Legacy labels (older NF-UQ variants)
+    BenignTraffic: Benign
+    DDoS-ACK_Fragmentation: DDoS
+    DDoS-HTTP_Flood: DDoS
+    DDoS-ICMP_Flood: "ICMP Flood"
+    DDoS-ICMP_Fragmentation: DDoS
+    DDoS-SlowLoris: DoS
+    DDoS-SYN_Flood: DDoS
+    DDoS-TCP_Flood: DDoS
+    DDoS-UDP_Flood: DDoS
+    "DoS-HTTP_Flood": DoS
+    "DoS-SYN_Flood": DoS
+    "DoS-TCP_Flood": DoS
+    "DoS-UDP_Flood": DoS
+    Mirai-UDP_Flood: Bot
+    Mirai-HTTP_Flood: Bot
+    Mirai-greeth_flood: Bot
+    "BruteForce-Web": "Brute Force"
+    "BruteForce-XSS": XSS
+    "SqlInjection": "SQL Injection"
+    "Backdoor_Malware": Infiltration
+    "CommandInjection": Infiltration
+    "MITM-ArpSpoofing": Infiltration
+    "DictionaryBruteForce": "Brute Force"
+    "DNS_Spoofing": "DNS Tunneling"
+    "Recon-HostDiscovery": "Port Scan"
+    "Recon-OSScan": "Port Scan"
+    "Recon-PortScan": "Port Scan"
+    "VulnerabilityScan": "Port Scan"
+    "Ransomware": Ransomware

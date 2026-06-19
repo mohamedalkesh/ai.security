@@ -40,7 +40,10 @@ public class UserController {
     @GetMapping
     public List<UserDto> list(@AuthenticationPrincipal OrgUserDetails principal) {
         Long orgId = principal != null ? principal.getOrganizationId() : null;
-        // Always tenant-scoped: orgId=null → system users only; orgId=N → org N only.
+        // System ADMIN (orgId=null) sees all org users; tenant users see only their own org.
+        if (orgId == null) {
+            return users.findAllOrgUsers().stream().map(UserDto::from).toList();
+        }
         return users.findByOrg(orgId).stream().map(UserDto::from).toList();
     }
 
@@ -85,6 +88,10 @@ public class UserController {
                 throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Org admins cannot create system admins");
             targetOrgId = callerOrgId;
         } else {
+            // System ADMIN cannot create ORG_ADMIN accounts
+            if (role == Role.ORG_ADMIN)
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "System admins cannot create organisation admins — use company registration");
             targetOrgId = req.organizationId();
         }
 
@@ -136,7 +143,15 @@ public class UserController {
     public void delete(@PathVariable Long id, @AuthenticationPrincipal OrgUserDetails principal) {
         UserAccount u = users.findById(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
-        verifyOrgAccess(u, principal);
+        Long callerOrgId = principal != null ? principal.getOrganizationId() : null;
+        // System ADMIN (callerOrgId=null) may only delete ORG_ADMIN accounts from any org
+        if (callerOrgId == null) {
+            if (u.getOrganization() == null || u.getRole() != Role.ORG_ADMIN)
+                throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+                        "System admins can only delete organisation admins");
+        } else {
+            verifyOrgAccess(u, principal);
+        }
         String deletedUsername = u.getUsername();
         users.deleteById(id);
         audit.log("USER_DELETE", "USER", id, "deleted user=" + deletedUsername);

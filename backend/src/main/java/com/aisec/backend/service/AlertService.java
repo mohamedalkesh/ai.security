@@ -44,6 +44,7 @@ public class AlertService {
     private final WebhookService webhooks;
     private final BlockedIpService firewall;
     private final BlockedIpRepository blockedIpRepo;
+    private final MlTrainingService mlTraining;
 
     public AlertService(AlertRepository repo,
                         AlertCommentRepository commentRepo,
@@ -54,7 +55,8 @@ public class AlertService {
                         AuditService audit,
                         WebhookService webhooks,
                         BlockedIpService firewall,
-                        BlockedIpRepository blockedIpRepo) {
+                        BlockedIpRepository blockedIpRepo,
+                        MlTrainingService mlTraining) {
         this.repo = repo;
         this.commentRepo = commentRepo;
         this.userRepo = userRepo;
@@ -65,6 +67,7 @@ public class AlertService {
         this.webhooks = webhooks;
         this.firewall = firewall;
         this.blockedIpRepo = blockedIpRepo;
+        this.mlTraining = mlTraining;
     }
 
     /* ===================================================================
@@ -127,6 +130,9 @@ public class AlertService {
         }
         Alert saved = repo.save(a);
         audit.log("ALERT_STATUS", "Alert", a.getId(), prev + " -> " + s);
+        if (s == AlertStatus.RESOLVED || s == AlertStatus.FALSE_POSITIVE) {
+            try { mlTraining.archiveAlert(saved); } catch (Exception ignored) {}
+        }
         AlertDto dto = AlertDto.from(saved);
         deleteIfClosed(saved, "ALERT_AUTO_DELETE");
         return dto;
@@ -181,6 +187,9 @@ public class AlertService {
         if (!changes.isEmpty()) {
             audit.log("ALERT_UPDATE", "Alert", a.getId(), String.join(", ", changes));
         }
+        if (saved.getStatus() == AlertStatus.RESOLVED || saved.getStatus() == AlertStatus.FALSE_POSITIVE) {
+            try { mlTraining.archiveAlert(saved); } catch (Exception ignored) {}
+        }
         AlertDto dto = AlertDto.from(saved);
         deleteIfClosed(saved, "ALERT_AUTO_DELETE");
         return dto;
@@ -226,6 +235,7 @@ public class AlertService {
             alert.setStatus(AlertStatus.RESOLVED);
             alert.setResolvedAt(Instant.now());
             repo.save(alert);
+            try { mlTraining.archiveAlert(alert); } catch (Exception ignored) {}
 
             // Add comment for audit trail within the alert timeline
             AlertComment comment = new AlertComment();
@@ -306,6 +316,23 @@ public class AlertService {
                     updateGeoColumns(savedId, src, dst));
         }
         return dto;
+    }
+
+    /**
+     * Bulk-persist alerts from a PCAP scan without per-alert side-effects.
+     * Uses a single saveAll() batch insert then triggers async GeoIP enrichment.
+     */
+    @Transactional
+    public int bulkSaveFromScan(List<Alert> batch) {
+        if (batch == null || batch.isEmpty()) return 0;
+        List<Alert> saved = repo.saveAll(batch);
+        saved.forEach(a -> {
+            if (a.getId() != null && (a.getSrcCountry() == null || a.getDstCountry() == null)) {
+                geoIp.enrichAsync(a.getSourceIp(), a.getDestIp(), (src, dst) ->
+                        updateGeoColumns(a.getId(), src, dst));
+            }
+        });
+        return saved.size();
     }
 
     /**
