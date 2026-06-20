@@ -32,7 +32,12 @@ public record AlertDto(
         String scanMetadataQualityJson,
         Boolean scanSampled,
         Integer scanOriginalRows,
-        Integer scanSampledRows
+        Integer scanSampledRows,
+        // Threat-intel enrichment (populated from IpReputation cache, may be null)
+        Integer abuseScore,
+        Integer abuseReports,
+        String abuseCountry,
+        String abuseIsp
 ) {
     public static AlertDto from(Alert a) {
         ScanResult scan = a.getScan();
@@ -54,7 +59,18 @@ public record AlertDto(
                 scan != null ? scan.getMetadataQualityJson() : null,
                 scan != null ? scan.getSampled() : null,
                 scan != null ? scan.getOriginalRows() : null,
-                scan != null ? scan.getSampledRows() : null
+                scan != null ? scan.getSampledRows() : null,
+                null, null, null, null   // threat-intel filled in by AlertService
         );
+    }
+
+    /** Return a copy with threat-intel fields populated. */
+    public AlertDto withReputation(Integer score, Integer reports, String country, String isp) {
+        return new AlertDto(id, attackType, severity, status, sourceIp, destIp, destPort,
+                protocol, confidence, mitreTechnique, mitreTactic, description, explanation,
+                srcCountry, dstCountry, mlFeedback, assignedToId, assignedToUsername,
+                incidentId, createdAt, resolvedAt, scanId, scanSummaryJson,
+                scanMetadataQualityJson, scanSampled, scanOriginalRows, scanSampledRows,
+                score, reports, country, isp);
     }
 }

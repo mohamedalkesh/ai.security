@@ -39,6 +39,16 @@ BATCH_INTERVAL_MS = 150    # flush even if batch not full
 RATE_WINDOW_SEC = 10       # rolling window for flows/sec and attacks/sec
 HISTORY_SEC = 60           # per-second buckets retained for sparkline
 
+# ── Behavioral Baseline tunables ─────────────────────────────────────────────
+# After BASELINE_WARMUP_SEC of monitoring, the system learns each source IP's
+# normal flow rate (flows per minute).  An IP that suddenly exceeds
+# BASELINE_SPIKE_FACTOR × its own baseline is flagged as anomalous, even if
+# the ML model classified the individual flows as Benign.
+BASELINE_WARMUP_SEC: int   = 300   # 5 min warm-up before baseline is active
+BASELINE_WINDOW_SEC: int   = 600   # sliding window to compute baseline mean
+BASELINE_SPIKE_FACTOR: float = 5.0 # × normal rate → anomaly flag
+BASELINE_MIN_FLOWS: int    = 10    # minimum flows needed to build a baseline
+
 # ── Precision tunables ───────────────────────────────────────────────────────
 # Only report a detection when the model is at least this confident.
 # Filters out low-confidence "Unknown" classifications (e.g. 56%).
@@ -319,9 +329,13 @@ class LiveMonitor:
         self._total_bytes: int = 0              # cumulative bytes seen
 
         # Repeat-validation hits: (src_ip, attack_label) → deque of timestamps.
-        # Used to require MIN_REPEAT detections of the same type from the same
-        # source before surfacing an alert (suppresses one-shot anomalies).
         self._attack_hits: Dict[Tuple[str, str], Deque[float]] = {}
+
+        # Behavioral baseline: per-IP flow timestamps for anomaly detection.
+        # After BASELINE_WARMUP_SEC the monitor flags IPs whose flow rate
+        # spikes beyond BASELINE_SPIKE_FACTOR × their own rolling baseline.
+        self._ip_flow_times: Dict[str, Deque[float]] = {}   # ip → deque of ts
+        self._baseline_anomalies: Deque[Dict] = deque(maxlen=100)
         self._byte_history: Deque[Tuple[int, int]] = deque(maxlen=HISTORY_SEC)  # (bucket, bytes)
 
         # Rolling ICMP probe windows for heuristic flood / sweep detection.
@@ -383,6 +397,8 @@ class LiveMonitor:
             self._proto_flows.clear()
             self._proto_bytes.clear()
             self._attack_hits.clear()
+            self._ip_flow_times.clear()
+            self._baseline_anomalies.clear()
             self._total_bytes = 0
             self._stop_evt.clear()
             self._icmp_src_window.clear()
@@ -529,6 +545,62 @@ class LiveMonitor:
             while self._pending and len(out) < limit:
                 out.append(self._pending.popleft())
         return out
+
+    # ------------------------------------------------------------------
+    def _check_behavioral_baseline(self, src_ip: str, now: float) -> Optional[Dict]:
+        """Return an anomaly dict if this IP's flow rate spikes above its baseline.
+
+        Works by maintaining a sliding window of per-IP flow timestamps.
+        After BASELINE_WARMUP_SEC of monitoring, an IP that suddenly sends
+        BASELINE_SPIKE_FACTOR × its own baseline rate triggers a synthetic
+        'Behavioral Anomaly' detection — even when the ML model says Benign.
+        """
+        if not src_ip:
+            return None
+        started = self._started_at or now
+        if (now - started) < BASELINE_WARMUP_SEC:
+            return None   # still warming up
+
+        times = self._ip_flow_times.setdefault(src_ip, deque())
+        times.append(now)
+
+        # Keep only the last BASELINE_WINDOW_SEC seconds
+        cutoff = now - BASELINE_WINDOW_SEC
+        while times and times[0] < cutoff:
+            times.popleft()
+
+        n = len(times)
+        if n < BASELINE_MIN_FLOWS:
+            return None   # not enough history to establish a baseline
+
+        # Split window in half: baseline = first half, current = second half
+        half = BASELINE_WINDOW_SEC / 2
+        split = now - half
+        baseline_flows = sum(1 for t in times if t < split)
+        current_flows  = sum(1 for t in times if t >= split)
+
+        if baseline_flows == 0:
+            return None
+
+        # Normalise to flows-per-minute for comparability
+        baseline_rate = (baseline_flows / half) * 60
+        current_rate  = (current_flows  / half) * 60
+
+        if current_rate >= baseline_rate * BASELINE_SPIKE_FACTOR and current_rate > 20:
+            confidence = min(0.95, 0.70 + 0.05 * (current_rate / baseline_rate - BASELINE_SPIKE_FACTOR))
+            return {
+                "predicted": "Behavioral Anomaly",
+                "confidence": round(confidence, 4),
+                "severity": "MEDIUM",
+                "mitre_technique": "T1046",
+                "mitre_tactic": "Discovery",
+                "description": (
+                    f"Flow rate spike: {current_rate:.0f} flows/min "
+                    f"(baseline {baseline_rate:.0f} flows/min, ×{current_rate/baseline_rate:.1f})"
+                ),
+                "src_ip": src_ip,
+            }
+        return None
 
     # ------------------------------------------------------------------
     def _apply_icmp_heuristics(self, meta: Dict[str, Any]) -> Optional[Tuple[str, float]]:
@@ -800,6 +872,29 @@ class LiveMonitor:
                     mitre_technique = mitre["technique"]
                     mitre_tactic = mitre["tactic"]
                     description = mitre["description"]
+
+                # Behavioral baseline — run on every flow (Benign or not).
+                # If an IP's rate spikes abnormally, surface it even if the
+                # ML model said Benign for this individual flow.
+                src_for_baseline = str(meta.get("src_ip") or "")
+                baseline_hit = self._check_behavioral_baseline(src_for_baseline, now)
+                if baseline_hit and label == "Benign":
+                    # Only one baseline alert per IP per 60 s to avoid flooding.
+                    key = ("__baseline__", src_for_baseline)
+                    bl_hits = self._attack_hits.setdefault(key, deque())
+                    bl_hits.append(now)
+                    while bl_hits and bl_hits[0] < now - 60:
+                        bl_hits.popleft()
+                    if len(bl_hits) == 1:   # first hit in this window → alert
+                        self._benign += 1
+                        added_attacks += 1
+                        self._attacks += 1
+                        detection = {**baseline_hit, **meta, "detected_at": datetime.now(timezone.utc).isoformat()}
+                        self._pending.append(detection)
+                        self._recent.append(detection)
+                    else:
+                        self._benign += 1
+                    continue
 
                 if label == "Benign":
                     self._benign += 1

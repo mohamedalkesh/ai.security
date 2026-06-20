@@ -4,11 +4,13 @@ import com.aisec.backend.dto.alert.AlertCommentDto;
 import com.aisec.backend.dto.alert.AlertDto;
 import com.aisec.backend.dto.alert.AutoResolveRequest;
 import com.aisec.backend.dto.alert.BulkUpdateRequest;
+import com.aisec.backend.dto.threatintel.IpReputationDto;
 import com.aisec.backend.entity.*;
 import com.aisec.backend.repository.AlertCommentRepository;
 import com.aisec.backend.repository.AlertRepository;
 import com.aisec.backend.repository.BlockedIpRepository;
 import com.aisec.backend.repository.UserRepository;
+import com.aisec.backend.service.threatintel.ThreatIntelService;
 import com.aisec.backend.websocket.AlertBroadcaster;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,6 +51,7 @@ public class AlertService {
     private final BlockedIpService firewall;
     private final BlockedIpRepository blockedIpRepo;
     private final MlTrainingService mlTraining;
+    private final ThreatIntelService threatIntel;
 
     public AlertService(AlertRepository repo,
                         AlertCommentRepository commentRepo,
@@ -60,7 +63,8 @@ public class AlertService {
                         WebhookService webhooks,
                         BlockedIpService firewall,
                         BlockedIpRepository blockedIpRepo,
-                        MlTrainingService mlTraining) {
+                        MlTrainingService mlTraining,
+                        ThreatIntelService threatIntel) {
         this.repo = repo;
         this.commentRepo = commentRepo;
         this.userRepo = userRepo;
@@ -72,11 +76,22 @@ public class AlertService {
         this.firewall = firewall;
         this.blockedIpRepo = blockedIpRepo;
         this.mlTraining = mlTraining;
+        this.threatIntel = threatIntel;
     }
 
     /* ===================================================================
      *                           QUERIES
      * =================================================================== */
+
+    /** Convert Alert → AlertDto and attach cached threat-intel reputation if available. */
+    private AlertDto toDto(Alert a) {
+        AlertDto base = AlertDto.from(a);
+        if (a.getSourceIp() == null || !threatIntel.isEnabled()) return base;
+        return threatIntel.lookupCached(a.getSourceIp())
+                .map(rep -> base.withReputation(
+                        rep.abuseScore(), rep.totalReports(), rep.country(), rep.isp()))
+                .orElse(base);
+    }
 
     @Transactional(readOnly = true)
     public Page<AlertDto> list(String severity, String status, Long orgId, Pageable pageable) {
@@ -88,7 +103,7 @@ public class AlertService {
         } else {
             page = repo.findScoped(orgId, pageable);
         }
-        return page.map(AlertDto::from);
+        return page.map(this::toDto);
     }
 
     @Transactional(readOnly = true)
@@ -323,6 +338,16 @@ public class AlertService {
                 log.debug("GeoIP enrichment skipped for alert {}: {}", savedId, ex.getMessage());
             }
         }
+
+        // Threat-intel cache warm-up — fire-and-forget so the next list() call
+        // can serve reputation data from cache without blocking the request.
+        if (saved.getSourceIp() != null && threatIntel.isEnabled()) {
+            try { threatIntel.lookup(saved.getSourceIp()); }
+            catch (Exception ex) {
+                log.debug("ThreatIntel warm-up skipped for {}: {}", saved.getSourceIp(), ex.getMessage());
+            }
+        }
+
         return dto;
     }
 
