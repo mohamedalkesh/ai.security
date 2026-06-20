@@ -39,15 +39,29 @@ BATCH_INTERVAL_MS = 150    # flush even if batch not full
 RATE_WINDOW_SEC = 10       # rolling window for flows/sec and attacks/sec
 HISTORY_SEC = 60           # per-second buckets retained for sparkline
 
+# ── Precision tunables ───────────────────────────────────────────────────────
+# Only report a detection when the model is at least this confident.
+# Filters out low-confidence "Unknown" classifications (e.g. 56%).
+MIN_CONFIDENCE: float = 0.80
+
+# Repeat-validation: a source IP must produce at least this many flows with
+# the SAME attack label within REPEAT_WINDOW_SEC before the system raises an
+# alert.  Single-flow anomalies (one probe, one metadata lookup) are suppressed.
+# Set to 1 to disable (report every detection immediately).
+MIN_REPEAT: int = 2
+REPEAT_WINDOW_SEC: int = 60
+
+# Well-known server ports.  Flows where the SOURCE port is one of these and the
+# DESTINATION port is ephemeral (≥1024) are server responses, not attacks.
+SERVER_PORTS: frozenset = frozenset({
+    20, 21, 22, 23, 25, 53, 67, 68, 80, 110, 123, 143,
+    161, 389, 443, 465, 587, 636, 993, 995, 3306, 3389,
+    5432, 6379, 8080, 8443, 8888,
+})
+
 # ── Safe-destination whitelist ───────────────────────────────────────────────
-# Flows to these destinations are ALWAYS Benign regardless of what the ML model
-# says.  These are well-known local/multicast/broadcast addresses that the
-# CICIDS2017 training set never contained, so the model produces false positives
-# on them (e.g. MLDv2 multicast classified as Brute Force).
-#
-# IPv6 multicast block  ff00::/8  — covers ff02::1 (all-nodes), ff02::2
-#   (all-routers), ff02::16 (MLDv2), ff02::fb (mDNS), ff02::1:2 (DHCPv6), …
-# IPv4 broadcast / multicast block 224.0.0.0–239.255.255.255 handled at runtime.
+# Flows to/from these addresses are ALWAYS Benign — the CICIDS2017 training set
+# never contained local-network protocols so the model false-positives on them.
 SAFE_DST_EXACT: frozenset = frozenset({
     "255.255.255.255",   # IPv4 limited broadcast
     "224.0.0.1",         # all-hosts multicast
@@ -60,32 +74,51 @@ SAFE_DST_EXACT: frozenset = frozenset({
 
 
 def _is_safe_flow(meta: Dict[str, Any]) -> bool:
-    """Return True when a flow should always be labelled Benign.
-
-    Covers multicast/broadcast destinations that the ML model was never trained
-    on and therefore consistently misclassifies as attacks.
-    """
+    """Return True when a flow must be labelled Benign without ML inference."""
     dst = str(meta.get("dst_ip") or "").strip().lower()
-    if not dst:
-        return False
+    src = str(meta.get("src_ip") or "").strip().lower()
 
-    # IPv6 multicast: all addresses in ff00::/8 start with "ff"
+    # IPv6 multicast ff00::/8 (ff02::1, ff02::16, ff02::fb, …)
     if dst.startswith("ff"):
         return True
 
-    # Exact-match whitelist (IPv4 broadcast + well-known multicast groups)
+    # Exact-match whitelist
     if dst in SAFE_DST_EXACT:
         return True
 
-    # IPv4 multicast range 224.0.0.0 – 239.255.255.255
+    # IPv4 multicast 224.0.0.0 – 239.255.255.255
     try:
-        first = int(dst.split(".")[0])
-        if 224 <= first <= 239:
+        if 224 <= int(dst.split(".")[0]) <= 239:
             return True
     except (ValueError, IndexError):
         pass
 
+    # Link-local 169.254.0.0/16 — APIPA self-assigned IPs and cloud IMDS
+    # (169.254.169.254 is the AWS/Azure/GCP instance metadata endpoint).
+    # Traffic to/from these addresses is always local-network housekeeping.
+    if dst.startswith("169.254.") or src.startswith("169.254."):
+        return True
+
     return False
+
+
+def _is_response_flow(meta: Dict[str, Any]) -> bool:
+    """Return True when a flow looks like a server response, not an attack.
+
+    Pattern: well-known server port (≤1024 or in SERVER_PORTS) as source,
+    high ephemeral port (≥1024) as destination.  This is the TCP/UDP response
+    direction — the model was trained on client→server flows and consistently
+    mis-labels server→client return traffic as attacks.
+    """
+    try:
+        src_port = int(meta.get("src_port") or 0)
+        dst_port = int(meta.get("dst_port") or 0)
+    except (TypeError, ValueError):
+        return False
+
+    if dst_port < 1024:          # destination is also a server port → not a response
+        return False
+    return src_port in SERVER_PORTS or src_port <= 1024
 
 
 # ICMP heuristics mirror AI/pcap_to_features.py defaults so the live
@@ -284,6 +317,11 @@ class LiveMonitor:
         self._proto_flows: Counter = Counter()  # flows per app protocol label (HTTP, DNS, ...)
         self._proto_bytes: Counter = Counter()  # bytes per app protocol label
         self._total_bytes: int = 0              # cumulative bytes seen
+
+        # Repeat-validation hits: (src_ip, attack_label) → deque of timestamps.
+        # Used to require MIN_REPEAT detections of the same type from the same
+        # source before surfacing an alert (suppresses one-shot anomalies).
+        self._attack_hits: Dict[Tuple[str, str], Deque[float]] = {}
         self._byte_history: Deque[Tuple[int, int]] = deque(maxlen=HISTORY_SEC)  # (bucket, bytes)
 
         # Rolling ICMP probe windows for heuristic flood / sweep detection.
@@ -344,6 +382,7 @@ class LiveMonitor:
             self._dst_bytes.clear()
             self._proto_flows.clear()
             self._proto_bytes.clear()
+            self._attack_hits.clear()
             self._total_bytes = 0
             self._stop_evt.clear()
             self._icmp_src_window.clear()
@@ -765,6 +804,32 @@ class LiveMonitor:
                 if label == "Benign":
                     self._benign += 1
                     continue
+
+                # ── Precision filters (false-positive suppression) ─────────
+                # Layer 1: response traffic — src is a well-known server port,
+                # dst is ephemeral.  This is a server→client reply, not an attack.
+                if _is_response_flow(meta):
+                    self._benign += 1
+                    continue
+
+                # Layer 2: confidence gate — ignore low-confidence predictions.
+                if confidence < MIN_CONFIDENCE:
+                    self._benign += 1
+                    continue
+
+                # Layer 3: repeat validation — require MIN_REPEAT flows of the
+                # same attack type from the same source IP within REPEAT_WINDOW_SEC.
+                # A single anomalous flow is far more likely noise than a real attack.
+                hit_key: Tuple[str, str] = (str(meta.get("src_ip") or ""), label)
+                hits = self._attack_hits.setdefault(hit_key, deque())
+                hits.append(now)
+                cutoff = now - REPEAT_WINDOW_SEC
+                while hits and hits[0] < cutoff:
+                    hits.popleft()
+                if len(hits) < MIN_REPEAT:
+                    continue
+                # ─────────────────────────────────────────────────────────────
+
                 added_attacks += 1
                 self._attacks += 1
                 detection = {
