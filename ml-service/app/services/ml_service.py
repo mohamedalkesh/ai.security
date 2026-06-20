@@ -42,8 +42,10 @@ V2_ARTIFACTS = ("xgb.pkl", "lgbm.pkl", "iso.pkl",
                 "label_encoder.pkl", "scaler.pkl", "feature_names.pkl")
 
 # Sibling directories, tried in order of preference at startup.
-# v5 uses 10-class taxonomy trained on NF-UQ-NIDS-v2 + CICIDS2017.
+# v6: SMOTE-balanced, weighted ensemble, per-class thresholds (runtime_config.json)
+# v5 uses 52 CICFlowMeter features trained on CICIDS2017.
 # All versions share the same artifact layout (see V2_ARTIFACTS).
+V6_DIR_NAME = "model_artifacts_v6"
 V5_DIR_NAME = "model_artifacts_v5"
 V4_DIR_NAME = "model_artifacts_v4"
 V3_DIR_NAME = "model_artifacts_v3"
@@ -80,6 +82,10 @@ class MLService:
         self._lgbm_explainer = None
         self._model_explainer = None
         self.drift: Optional[DriftDetector] = None
+        # v6 runtime config — per-class thresholds and ensemble weights
+        self._per_class_thresholds: Dict[str, float] = {}
+        self._xgb_weight: float = 0.5
+        self._lgbm_weight: float = 0.5
         cpu_default = os.cpu_count() or 1
         cfg_threads = settings.pcap_worker_threads
         if cfg_threads and cfg_threads > 0:
@@ -97,7 +103,10 @@ class MLService:
         deleting any of the dirs without touching config.
         """
         base = self.artifacts_dir.parent
-        for name, label in ((V5_DIR_NAME, "v5"), (V4_DIR_NAME, "v4"), (V3_DIR_NAME, "v3"), (V2_DIR_NAME, "v2")):
+        for name, label in (
+            (V6_DIR_NAME, "v6"), (V5_DIR_NAME, "v5"),
+            (V4_DIR_NAME, "v4"), (V3_DIR_NAME, "v3"), (V2_DIR_NAME, "v2"),
+        ):
             d = base / name
             if d.exists() and all((d / f).exists() for f in V2_ARTIFACTS):
                 return d, label
@@ -155,6 +164,20 @@ class MLService:
         if str(ai_dir) not in sys.path:
             sys.path.insert(0, str(ai_dir))
 
+        # v6+: load per-class thresholds and ensemble weights if available
+        runtime_cfg_path = chosen_dir / "runtime_config.json"
+        if runtime_cfg_path.exists():
+            with open(runtime_cfg_path) as f:
+                runtime_cfg = json.load(f)
+            self._per_class_thresholds = runtime_cfg.get("per_class_thresholds", {})
+            ew = runtime_cfg.get("ensemble_weights", {})
+            self._xgb_weight  = float(ew.get("xgb",  0.5))
+            self._lgbm_weight = float(ew.get("lgbm", 0.5))
+            logger.info(
+                "Loaded runtime_config: thresholds=%s  weights=XGB:%.3f LGBM:%.3f",
+                self._per_class_thresholds, self._xgb_weight, self._lgbm_weight,
+            )
+
         self.drift = DriftDetector(chosen_dir)
         self._loaded = True
         logger.info(
@@ -194,20 +217,48 @@ class MLService:
         self.load()
         Xs = self.scaler.transform(X)
 
-        if self.version in ("v2", "v3", "v4", "v5"):
+        if self.version in ("v2", "v3", "v4", "v5", "v6"):
             # Run XGBoost and LightGBM predict_proba in parallel — both models
             # release the GIL during their C++ inference, giving near-2× throughput.
             with concurrent.futures.ThreadPoolExecutor(max_workers=2) as _pool:
                 _xgb_f = _pool.submit(self.xgb.predict_proba, Xs)
                 _lgb_f = _pool.submit(self.lgbm.predict_proba, Xs)
-                proba = (_xgb_f.result() + _lgb_f.result()) / 2.0
+                # v6 uses learned per-class weights; v2-v5 use simple average (0.5/0.5)
+                proba = (
+                    self._xgb_weight  * _xgb_f.result() +
+                    self._lgbm_weight * _lgb_f.result()
+                )
             anomaly_flag = self.iso.predict(Xs) == -1 if self.iso is not None else None
         else:
             proba = self.model.predict_proba(Xs)
             anomaly_flag = None
 
-        idx = np.argmax(proba, axis=1)
-        conf = np.max(proba, axis=1)
+        # Per-class threshold decision (v6) or simple argmax (v2-v5)
+        classes_list = [str(c) for c in self.label_encoder.classes_]
+        if self._per_class_thresholds:
+            # For each flow: pick the class with highest probability that exceeds
+            # its own threshold. If none exceed their threshold → mark as Unknown.
+            idx_arr = []
+            conf_arr = []
+            for row in proba:
+                best_i, best_p = int(np.argmax(row)), float(np.max(row))
+                best_cls = classes_list[best_i]
+                thr = self._per_class_thresholds.get(best_cls, self.confidence_threshold)
+                if best_p >= thr:
+                    idx_arr.append(best_i)
+                    conf_arr.append(best_p)
+                else:
+                    idx_arr.append(best_i)   # keep label, mark low confidence
+                    conf_arr.append(best_p)
+            idx  = np.array(idx_arr, dtype=int)
+            conf = np.array(conf_arr, dtype=float)
+            # Override confidence threshold with per-class value in the loop below
+            _use_per_class_thr = True
+        else:
+            idx  = np.argmax(proba, axis=1)
+            conf = np.max(proba, axis=1)
+            _use_per_class_thr = False
+
         labels = self.label_encoder.inverse_transform(idx)
 
         classes = [str(c) for c in self.label_encoder.classes_]
@@ -227,7 +278,13 @@ class MLService:
         results: List[Dict[str, Any]] = []
         for i, (label, c, p) in enumerate(zip(labels, conf, proba_rounded)):
             is_anomalous = bool(anomaly_flag[i]) if anomaly_flag is not None else False
-            if c < self.confidence_threshold:
+            # Per-class threshold (v6) or global threshold (v2-v5)
+            eff_threshold = (
+                self._per_class_thresholds.get(str(label), self.confidence_threshold)
+                if _use_per_class_thr
+                else self.confidence_threshold
+            )
+            if c < eff_threshold:
                 final_label = "Unknown"
             elif is_anomalous and c < 0.75 and label == benign_label:
                 final_label = "Unknown"
