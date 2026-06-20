@@ -316,8 +316,12 @@ public class AlertService {
         // are filled in within a few hundred ms by the geoIpExecutor.
         Long savedId = saved.getId();
         if (savedId != null && (a.getSrcCountry() == null || a.getDstCountry() == null)) {
-            geoIp.enrichAsync(a.getSourceIp(), a.getDestIp(), (src, dst) ->
-                    updateGeoColumns(savedId, src, dst));
+            try {
+                geoIp.enrichAsync(a.getSourceIp(), a.getDestIp(), (src, dst) ->
+                        updateGeoColumns(savedId, src, dst));
+            } catch (Exception ex) {
+                log.debug("GeoIP enrichment skipped for alert {}: {}", savedId, ex.getMessage());
+            }
         }
         return dto;
     }
