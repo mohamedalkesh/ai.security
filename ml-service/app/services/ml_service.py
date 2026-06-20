@@ -124,14 +124,14 @@ class MLService:
             raise FileNotFoundError(f"Model artifacts directory not found: {chosen_dir}")
 
         # v2+ share the same on-disk layout (XGB + LGBM + IsoForest).
-        required = V2_ARTIFACTS if version in ("v2", "v3", "v4", "v5") else V1_ARTIFACTS
+        required = V2_ARTIFACTS if version in ("v2", "v3", "v4", "v5", "v6") else V1_ARTIFACTS
         missing = [f for f in required if not (chosen_dir / f).exists()]
         if missing:
             raise FileNotFoundError(f"Missing {version} artifacts in {chosen_dir}: {missing}")
 
         logger.info("Loading %s model artifacts from %s", version, chosen_dir)
 
-        if version in ("v2", "v3", "v4", "v5"):
+        if version in ("v2", "v3", "v4", "v5", "v6"):
             with open(chosen_dir / "xgb.pkl", "rb") as f:
                 self.xgb = pickle.load(f)
             with open(chosen_dir / "lgbm.pkl", "rb") as f:
@@ -195,7 +195,7 @@ class MLService:
     # ------------------------------------------------------------------
     def info(self) -> Dict[str, Any]:
         self.load()
-        if self.version in ("v2", "v3", "v4", "v5"):
+        if self.version in ("v2", "v3", "v4", "v5", "v6"):
             model_type = f"Ensemble({type(self.xgb).__name__}+{type(self.lgbm).__name__})"
         else:
             model_type = type(self.model).__name__
@@ -420,7 +420,7 @@ class MLService:
     ) -> List[np.ndarray] | None:
         if shap is None:
             return None
-        if self.version in ("v2", "v3", "v4", "v5") and self._xgb_explainer and self._lgbm_explainer:
+        if self.version in ("v2", "v3", "v4", "v5", "v6") and self._xgb_explainer and self._lgbm_explainer:
             shap_xgb = self._extract_shap(self._xgb_explainer, Xs, class_indices)
             shap_lgbm = self._extract_shap(self._lgbm_explainer, Xs, class_indices)
             return [
