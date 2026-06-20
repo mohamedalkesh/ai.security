@@ -39,6 +39,55 @@ BATCH_INTERVAL_MS = 150    # flush even if batch not full
 RATE_WINDOW_SEC = 10       # rolling window for flows/sec and attacks/sec
 HISTORY_SEC = 60           # per-second buckets retained for sparkline
 
+# ── Safe-destination whitelist ───────────────────────────────────────────────
+# Flows to these destinations are ALWAYS Benign regardless of what the ML model
+# says.  These are well-known local/multicast/broadcast addresses that the
+# CICIDS2017 training set never contained, so the model produces false positives
+# on them (e.g. MLDv2 multicast classified as Brute Force).
+#
+# IPv6 multicast block  ff00::/8  — covers ff02::1 (all-nodes), ff02::2
+#   (all-routers), ff02::16 (MLDv2), ff02::fb (mDNS), ff02::1:2 (DHCPv6), …
+# IPv4 broadcast / multicast block 224.0.0.0–239.255.255.255 handled at runtime.
+SAFE_DST_EXACT: frozenset = frozenset({
+    "255.255.255.255",   # IPv4 limited broadcast
+    "224.0.0.1",         # all-hosts multicast
+    "224.0.0.2",         # all-routers multicast
+    "224.0.0.22",        # IGMP v3
+    "224.0.0.251",       # mDNS
+    "224.0.0.252",       # LLMNR
+    "239.255.255.250",   # SSDP / UPnP
+})
+
+
+def _is_safe_flow(meta: Dict[str, Any]) -> bool:
+    """Return True when a flow should always be labelled Benign.
+
+    Covers multicast/broadcast destinations that the ML model was never trained
+    on and therefore consistently misclassifies as attacks.
+    """
+    dst = str(meta.get("dst_ip") or "").strip().lower()
+    if not dst:
+        return False
+
+    # IPv6 multicast: all addresses in ff00::/8 start with "ff"
+    if dst.startswith("ff"):
+        return True
+
+    # Exact-match whitelist (IPv4 broadcast + well-known multicast groups)
+    if dst in SAFE_DST_EXACT:
+        return True
+
+    # IPv4 multicast range 224.0.0.0 – 239.255.255.255
+    try:
+        first = int(dst.split(".")[0])
+        if 224 <= first <= 239:
+            return True
+    except (ValueError, IndexError):
+        pass
+
+    return False
+
+
 # ICMP heuristics mirror AI/pcap_to_features.py defaults so the live
 # monitor surfaces ping floods / sweeps without needing model retraining.
 ICMP_PROTOCOLS = (1, 58)
@@ -623,23 +672,42 @@ class LiveMonitor:
             return
         ml_service.load()
         # Build array in model's feature order.
-        names = ml_service.feature_names
-        X = np.array(
-            [[float(f.get(n, 0.0)) for n in names] for f in feats],
-            dtype=float,
-        )
-        preds = ml_service._predict_array(X)  # type: ignore[attr-defined]
+        # Split batch into flows that need ML inference and flows that are
+        # unconditionally Benign (multicast, broadcast, well-known local addrs).
+        # Safe flows skip the model entirely — no wasted compute, no false positives.
+        safe_mask = [_is_safe_flow(m) for m in metas]
+        ml_feats  = [f for f, s in zip(feats, safe_mask) if not s]
+        ml_metas  = [m for m, s in zip(metas, safe_mask) if not s]
+
+        if ml_feats:
+            names = ml_service.feature_names
+            X = np.array(
+                [[float(f.get(n, 0.0)) for n in names] for f in ml_feats],
+                dtype=float,
+            )
+            ml_preds = ml_service._predict_array(X)  # type: ignore[attr-defined]
+        else:
+            ml_preds = []
+
+        # Re-merge into a single flat sequence for the stats loop below.
+        # Safe flows get a synthetic Benign prediction dict.
+        _BENIGN_PRED = {"predicted": "Benign", "confidence": 1.0,
+                        "severity": "INFORMATIONAL",
+                        "mitre_technique": None, "mitre_tactic": None,
+                        "description": None}
+        ml_iter = iter(ml_preds)
+        merged_preds = [_BENIGN_PRED if s else next(ml_iter) for s in safe_mask]
 
         now = time.time()
         now_bucket = int(now)
-        added_flows = len(preds)
+        added_flows = len(merged_preds)
         added_attacks = 0
 
         with self._lock:
             self._total_flows += added_flows
             self._last_flow_at = now
             added_bytes = 0
-            for pred, meta in zip(preds, metas):
+            for pred, meta in zip(merged_preds, metas):
                 label = pred.get("predicted", "Benign")
                 confidence = float(pred.get("confidence", 0.0))
                 severity = pred.get("severity", "INFORMATIONAL")
