@@ -262,19 +262,296 @@ def _nflow_to_feature_dict(flow) -> Dict[str, float]:
 
 
 def _flow_meta(flow) -> Dict[str, Any]:
+    def _s(attr):
+        v = getattr(flow, attr, None)
+        return v if v else None
+
     return {
-        "src_ip": getattr(flow, "src_ip", None),
-        "dst_ip": getattr(flow, "dst_ip", None),
+        # ── Identity ──────────────────────────────────────────────────────
+        "src_ip":   getattr(flow, "src_ip",   None),
+        "dst_ip":   getattr(flow, "dst_ip",   None),
         "src_port": getattr(flow, "src_port", None),
         "dst_port": getattr(flow, "dst_port", None),
         "protocol": getattr(flow, "protocol", None),
-        "packets": getattr(flow, "bidirectional_packets", 0),
-        "bytes": getattr(flow, "bidirectional_bytes", 0),
+        "ip_version": getattr(flow, "ip_version", None),
+        "vlan_id":  getattr(flow, "vlan_id",  None) or None,
+        # ── Volume ────────────────────────────────────────────────────────
+        "packets":              getattr(flow, "bidirectional_packets", 0),
+        "bytes":                getattr(flow, "bidirectional_bytes",   0),
         "bidirectional_packets": getattr(flow, "bidirectional_packets", 0),
-        "bidirectional_bytes": getattr(flow, "bidirectional_bytes", 0),
-        "src2dst_packets": getattr(flow, "src2dst_packets", 0),
-        "dst2src_packets": getattr(flow, "dst2src_packets", 0),
+        "bidirectional_bytes":   getattr(flow, "bidirectional_bytes",   0),
+        "src2dst_packets":       getattr(flow, "src2dst_packets", 0),
+        "dst2src_packets":       getattr(flow, "dst2src_packets", 0),
+        "src2dst_bytes":         getattr(flow, "src2dst_bytes",   0),
+        "dst2src_bytes":         getattr(flow, "dst2src_bytes",   0),
+        # ── Timing ────────────────────────────────────────────────────────
+        "flow_duration_ms": getattr(flow, "bidirectional_duration_ms", 0),
+        "first_seen_ms":    getattr(flow, "bidirectional_first_seen_ms", None),
+        "last_seen_ms":     getattr(flow, "bidirectional_last_seen_ms",  None),
+        # ── Layer-2 (available when DPI is on) ────────────────────────────
+        "src_mac": _s("src_mac"),
+        "dst_mac": _s("dst_mac"),
+        "src_oui": _s("src_oui"),
+        "dst_oui": _s("dst_oui"),
+        # ── Application layer (NFStream nDPI — n_dissections > 0) ─────────
+        "app_name":       _s("application_name"),
+        "app_category":   _s("application_category_name"),
+        "app_confidence": getattr(flow, "application_confidence", None),
+        "app_guessed":    getattr(flow, "application_is_guessed", None),
+        "server_name":    _s("requested_server_name"),   # TLS SNI / HTTP Host
+        "ja3_client":     _s("client_fingerprint"),       # JA3 hash
+        "ja3_server":     _s("server_fingerprint"),       # JA3S hash
+        "http_user_agent": _s("user_agent"),
+        "http_content_type": _s("content_type"),
+        # ── Process (system visibility mode) ──────────────────────────────
+        "process_name": _s("system_process_name"),
+        "process_pid":  getattr(flow, "system_process_pid", None) or None,
     }
+
+
+_ICMP_TYPES: Dict[int, str] = {
+    0: "Echo Reply", 3: "Destination Unreachable", 4: "Source Quench",
+    5: "Redirect", 8: "Echo Request", 9: "Router Advertisement",
+    10: "Router Solicitation", 11: "Time Exceeded", 12: "Parameter Problem",
+    13: "Timestamp", 14: "Timestamp Reply",
+}
+
+
+class PacketEnricher:
+    """Parallel Scapy sniffer that captures L7 metadata per flow.
+
+    Runs in a background daemon thread alongside NFStream.  NFStream gives us
+    statistical flow features; Scapy gives us the *content* — DNS names, HTTP
+    URLs, TLS SNI, ICMP type/code, ARP queries.  When NFStream finalises a flow
+    we call ``lookup()`` to attach whatever Scapy captured for that 5-tuple.
+    """
+
+    _CACHE_TTL  = 120      # seconds before a cache entry expires
+    _CACHE_MAX  = 60_000   # hard cap to prevent unbounded memory use
+
+    def __init__(self) -> None:
+        self._cache: Dict[tuple, Dict[str, Any]] = {}
+        self._ts:    Dict[tuple, float] = {}
+        self._lock   = threading.Lock()
+        self._stop   = threading.Event()
+        self._thread: Optional[threading.Thread] = None
+        self._scapy_ok: bool = False
+
+    # ------------------------------------------------------------------
+    def start(self, iface: str) -> None:
+        self._stop.clear()
+        self._thread = threading.Thread(
+            target=self._sniff_loop, args=(iface,),
+            name=f"pkt-enricher-{iface}", daemon=True,
+        )
+        self._thread.start()
+
+    def stop(self) -> None:
+        self._stop.set()
+
+    # ------------------------------------------------------------------
+    def lookup(self, src_ip: str, dst_ip: str,
+               src_port: int, dst_port: int, proto: int) -> Dict[str, Any]:
+        """Return any L7 metadata captured for this 5-tuple (or its reverse)."""
+        fwd = (src_ip, dst_ip, src_port, dst_port, proto)
+        rev = (dst_ip, src_ip, dst_port, src_port, proto)
+        with self._lock:
+            merged: Dict[str, Any] = {}
+            merged.update(self._cache.get(rev, {}))
+            merged.update(self._cache.get(fwd, {}))  # fwd wins on collision
+            return merged
+
+    # ------------------------------------------------------------------
+    def _store(self, key: tuple, data: Dict[str, Any]) -> None:
+        now = time.time()
+        with self._lock:
+            if len(self._cache) >= self._CACHE_MAX:
+                # Evict the oldest entry to stay under the cap.
+                oldest_key = min(self._ts, key=self._ts.__getitem__)
+                self._cache.pop(oldest_key, None)
+                self._ts.pop(oldest_key, None)
+            existing = self._cache.setdefault(key, {})
+            existing.update({k: v for k, v in data.items() if v is not None})
+            self._ts[key] = now
+
+    # ------------------------------------------------------------------
+    def _sniff_loop(self, iface: str) -> None:
+        try:
+            from scapy.all import sniff, conf as scapy_conf
+            scapy_conf.verb = 0
+            self._scapy_ok = True
+        except ImportError:
+            logger.warning("PacketEnricher: scapy not available — L7 enrichment disabled")
+            return
+
+        def _cb(pkt):
+            if self._stop.is_set():
+                return
+            try:
+                self._process(pkt)
+            except Exception:
+                pass
+
+        try:
+            sniff(
+                iface=iface,
+                prn=_cb,
+                store=False,
+                stop_filter=lambda _: self._stop.is_set(),
+                filter="ip or arp",
+            )
+        except Exception as exc:
+            logger.warning("PacketEnricher sniff error: %s", exc)
+
+    # ------------------------------------------------------------------
+    def _process(self, pkt) -> None:
+        try:
+            from scapy.layers.inet import IP, TCP, UDP, ICMP
+        except ImportError:
+            return
+
+        data: Dict[str, Any] = {}
+
+        # ── ARP (no IP layer) ─────────────────────────────────────────────
+        try:
+            from scapy.layers.l2 import ARP
+            if pkt.haslayer(ARP):
+                arp = pkt[ARP]
+                arp_key = (str(arp.psrc), str(arp.pdst), 0, 0, 0)
+                self._store(arp_key, {
+                    "arp_op":     "who-has" if arp.op == 1 else "is-at",
+                    "arp_src_mac": str(arp.hwsrc),
+                    "arp_dst_ip":  str(arp.pdst),
+                })
+                return
+        except Exception:
+            pass
+
+        if not pkt.haslayer(IP):
+            return
+
+        ip = pkt[IP]
+        src_ip = str(ip.src)
+        dst_ip = str(ip.dst)
+        proto  = int(ip.proto)
+        src_port = dst_port = 0
+
+        try:
+            if pkt.haslayer(TCP):
+                src_port = int(pkt[TCP].sport)
+                dst_port = int(pkt[TCP].dport)
+            elif pkt.haslayer(UDP):
+                src_port = int(pkt[UDP].sport)
+                dst_port = int(pkt[UDP].dport)
+        except Exception:
+            pass
+
+        key = (src_ip, dst_ip, src_port, dst_port, proto)
+
+        # ── DNS ───────────────────────────────────────────────────────────
+        try:
+            from scapy.layers.dns import DNS, DNSQR
+            if pkt.haslayer(DNS):
+                dns = pkt[DNS]
+                if dns.qr == 0 and dns.qd:              # query
+                    qname = dns.qd.qname
+                    if isinstance(qname, bytes):
+                        qname = qname.decode("utf-8", errors="replace").rstrip(".")
+                    data["dns_query"] = qname
+                    data["dns_qtype"] = {
+                        1: "A", 2: "NS", 5: "CNAME", 12: "PTR",
+                        15: "MX", 16: "TXT", 28: "AAAA", 33: "SRV",
+                    }.get(dns.qd.qtype, str(dns.qd.qtype))
+                elif dns.qr == 1 and dns.an:             # response
+                    rips: List[str] = []
+                    rr = dns.an
+                    while rr and len(rips) < 5:
+                        if hasattr(rr, "rdata"):
+                            rips.append(str(rr.rdata))
+                        rr = getattr(rr, "payload", None)
+                        if rr and not hasattr(rr, "rdata"):
+                            break
+                    if rips:
+                        data["dns_response_ips"] = rips
+        except Exception:
+            pass
+
+        # ── HTTP (scapy's built-in HTTP layer) ────────────────────────────
+        try:
+            from scapy.layers.http import HTTPRequest, HTTPResponse
+            if pkt.haslayer(HTTPRequest):
+                req = pkt[HTTPRequest]
+                def _dec(b):
+                    return b.decode("utf-8", errors="replace") if isinstance(b, (bytes, bytearray)) else b
+                data["http_method"] = _dec(getattr(req, "Method", None))
+                data["http_url"]    = _dec(getattr(req, "Path",   None))
+                data["http_host"]   = _dec(getattr(req, "Host",   None))
+                ua = getattr(req, "User_Agent", None)
+                if ua:
+                    data["http_user_agent"] = _dec(ua)
+            elif pkt.haslayer(HTTPResponse):
+                sc = getattr(pkt[HTTPResponse], "Status_Code", None)
+                if sc:
+                    data["http_status"] = sc.decode("utf-8", errors="replace") if isinstance(sc, bytes) else str(sc)
+        except Exception:
+            pass
+
+        # ── TLS SNI from raw ClientHello (covers HTTPS/QUIC/SMTPS…) ──────
+        try:
+            from scapy.packet import Raw
+            if not data.get("server_name") and pkt.haslayer(Raw):
+                sni = self._parse_tls_sni(bytes(pkt[Raw]))
+                if sni:
+                    data["tls_sni"] = sni
+        except Exception:
+            pass
+
+        # ── ICMP type/code ────────────────────────────────────────────────
+        try:
+            if pkt.haslayer(ICMP):
+                icmp = pkt[ICMP]
+                data["icmp_type"] = _ICMP_TYPES.get(icmp.type, f"Type {icmp.type}")
+                data["icmp_code"] = int(icmp.code)
+        except Exception:
+            pass
+
+        if data:
+            self._store(key, data)
+
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _parse_tls_sni(raw: bytes) -> Optional[str]:
+        """Extract SNI hostname from a TLS 1.x ClientHello record."""
+        try:
+            if len(raw) < 9 or raw[0] != 0x16 or raw[5] != 0x01:
+                return None
+            offset = 9  # past record header (5) + handshake type (1) + length (3)
+            offset += 2  # ProtocolVersion
+            offset += 32  # Random
+            if offset >= len(raw):
+                return None
+            sid_len = raw[offset]; offset += 1 + sid_len
+            if offset + 2 > len(raw):
+                return None
+            cs_len = int.from_bytes(raw[offset:offset + 2], "big"); offset += 2 + cs_len
+            if offset + 1 > len(raw):
+                return None
+            cm_len = raw[offset]; offset += 1 + cm_len
+            if offset + 2 > len(raw):
+                return None
+            ext_total = int.from_bytes(raw[offset:offset + 2], "big"); offset += 2
+            end = offset + ext_total
+            while offset + 4 <= end and offset + 4 <= len(raw):
+                ext_type = int.from_bytes(raw[offset:offset + 2], "big")
+                ext_len  = int.from_bytes(raw[offset + 2:offset + 4], "big")
+                offset  += 4
+                if ext_type == 0 and offset + 5 <= len(raw):  # server_name
+                    name_len = int.from_bytes(raw[offset + 3:offset + 5], "big")
+                    return raw[offset + 5: offset + 5 + name_len].decode("utf-8", errors="replace")
+                offset += ext_len
+        except Exception:
+            pass
+        return None
 
 
 class LiveMonitor:
@@ -286,6 +563,7 @@ class LiveMonitor:
         self._classify_thread: Optional[threading.Thread] = None
         self._stop_evt = threading.Event()
         self._streamer = None
+        self._enricher = PacketEnricher()
         # Explicit running flag — flips False immediately on stop() so the UI
         # reflects "Stopped" even if the capture thread is still blocked
         # inside libpcap waiting on a quiet/DOWN interface.
@@ -411,6 +689,9 @@ class LiveMonitor:
             except queue.Empty:
                 pass
 
+            self._enricher.stop()   # reset from any prior session
+            self._enricher.start(iface)
+
             self._capture_thread = threading.Thread(
                 target=self._capture_loop, name=f"live-capture-{iface}", daemon=True
             )
@@ -432,6 +713,7 @@ class LiveMonitor:
             # for the (possibly libpcap-blocked) capture thread to unwind.
             self._running_flag = False
             logger.info("LiveMonitor stop requested")
+        self._enricher.stop()
         # Best-effort: wait briefly for threads to finish current batch.
         # Capture thread may stay alive inside libpcap until the next packet
         # arrives — it's a daemon, so it will be reaped at process exit.
@@ -666,11 +948,13 @@ class LiveMonitor:
             return
 
         try:
-            # Tighter timeouts → flows are finalised and classified ~3x faster.
+            # n_dissections=20 enables nDPI protocol dissection:
+            # application_name, requested_server_name (TLS SNI / HTTP Host),
+            # client_fingerprint (JA3), user_agent, content_type, MAC addresses.
             self._streamer = NFStreamer(
                 source=self._iface,
                 statistical_analysis=True,
-                n_dissections=0,
+                n_dissections=20,
                 accounting_mode=0,
                 idle_timeout=5,
                 active_timeout=30,
@@ -706,6 +990,19 @@ class LiveMonitor:
                 try:
                     feat = _nflow_to_feature_dict(flow)
                     meta = _flow_meta(flow)
+                    # Attach Scapy L7 enrichment (DNS, HTTP, TLS SNI, ICMP…).
+                    # server_name from NFStream DPI takes priority; Scapy fills
+                    # gaps (e.g. tls_sni when nDPI confidence is low).
+                    enrichment = self._enricher.lookup(
+                        str(meta.get("src_ip") or ""),
+                        str(meta.get("dst_ip") or ""),
+                        int(meta.get("src_port") or 0),
+                        int(meta.get("dst_port") or 0),
+                        int(meta.get("protocol") or 0),
+                    )
+                    for k, v in enrichment.items():
+                        if k not in meta or meta[k] is None:
+                            meta[k] = v
                     self._queue.put_nowait((feat, meta))
                 except queue.Full:
                     # Classifier can't keep up — count the drop instead of blocking capture.
