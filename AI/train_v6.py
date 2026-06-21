@@ -5,9 +5,10 @@ Train IDS v6 — 7-class model on CICIDS2017.
 Improvements over v5:
   1. SMOTE oversampling: Bot (1948→8000) and XSS (2143→8000) — fixes low Bot precision
   2. Stronger models: XGBoost 500 trees, LightGBM 400 trees, better regularisation
-  3. Weighted ensemble: optimal XGB/LGBM blend weights learned on validation set
-  4. Per-class confidence thresholds: each class gets its own cut-off (maximises F1)
-     → saved to per_class_thresholds.json for the ML service to load at runtime
+  3. Weighted ensemble: optimal XGB/LGBM blend weights learned on VALIDATION set (no leakage)
+  4. Per-class confidence thresholds: tuned on validation set, evaluated on held-out test set
+     → saved to runtime_config.json for the ML service to load at runtime
+  5. Proper 60/20/20 train/val/test split — weights and thresholds never see the test set
 
 Expected: Bot precision 93% → 96%+, overall F1-macro stays ≥ 99.3%
 """
@@ -124,16 +125,21 @@ def train_model(df: pd.DataFrame, seed: int = 42):
 
     X = X.replace([np.inf, -np.inf], np.nan).fillna(0).clip(-1e12, 1e12)
 
-    X_train, X_test, y_train, y_test = train_test_split(
+    # 60% train / 20% val (threshold + weight tuning) / 20% test (final eval only)
+    X_tmp, X_test, y_tmp, y_test = train_test_split(
         X, y, test_size=0.2, stratify=y, random_state=seed)
+    X_train, X_val, y_train, y_val = train_test_split(
+        X_tmp, y_tmp, test_size=0.25, stratify=y_tmp, random_state=seed)
 
     le = LabelEncoder()
-    y_tr = le.fit_transform(y_train)
-    y_te = le.transform(y_test)
+    y_tr  = le.fit_transform(y_train)
+    y_val_enc = le.transform(y_val)
+    y_te  = le.transform(y_test)
 
     sc = StandardScaler()
-    Xtr = sc.fit_transform(X_train)
-    Xte = sc.transform(X_test)
+    Xtr  = sc.fit_transform(X_train)
+    Xval = sc.transform(X_val)
+    Xte  = sc.transform(X_test)
 
     # ── SMOTE: oversample minority classes on training set only ───────────────
     class_counts = pd.Series(y_tr).value_counts()
@@ -201,16 +207,16 @@ def train_model(df: pd.DataFrame, seed: int = 42):
                           random_state=seed, n_jobs=-1)
     iso.fit(Xtr)
 
-    # ── Optimal ensemble weights ───────────────────────────────────────────────
-    log.info("Optimising ensemble weights ...")
-    xgb_val  = xgb.predict_proba(Xte)
-    lgbm_val = lgbm.predict_proba(Xte)
+    # ── Optimal ensemble weights (tuned on val, never on test) ────────────────
+    log.info("Optimising ensemble weights on validation set ...")
+    xgb_val_proba  = xgb.predict_proba(Xval)
+    lgbm_val_proba = lgbm.predict_proba(Xval)
 
     def neg_f1_macro(w: np.ndarray) -> float:
         w = np.abs(w) / (np.abs(w).sum() + 1e-9)
-        combined = w[0] * xgb_val + w[1] * lgbm_val
+        combined = w[0] * xgb_val_proba + w[1] * lgbm_val_proba
         preds = combined.argmax(axis=1)
-        return -float(f1_score(y_te, preds, average="macro", zero_division=0))
+        return -float(f1_score(y_val_enc, preds, average="macro", zero_division=0))
 
     res = minimize(neg_f1_macro, x0=np.array([0.5, 0.5]), method="Nelder-Mead",
                    options={"xatol": 1e-4, "fatol": 1e-4, "maxiter": 200})
@@ -218,19 +224,16 @@ def train_model(df: pd.DataFrame, seed: int = 42):
     xgb_w, lgbm_w = float(w[0]), float(w[1])
     log.info("Optimal weights: XGBoost=%.3f  LightGBM=%.3f", xgb_w, lgbm_w)
 
-    proba = xgb_w * xgb_val + lgbm_w * lgbm_val
+    val_proba = xgb_w * xgb_val_proba + lgbm_w * lgbm_val_proba
 
-    # ── Per-class threshold optimisation ──────────────────────────────────────
-    # For each class: sweep thresholds and pick the one that maximises F1.
-    # The threshold is used at inference time: label is accepted only when
-    # its probability exceeds the class-specific cut-off.
-    log.info("Optimising per-class thresholds ...")
+    # ── Per-class threshold optimisation (on val set) ─────────────────────────
+    log.info("Optimising per-class thresholds on validation set ...")
     per_class_thresholds: dict = {}
     for i, cls in enumerate(le.classes_):
-        y_bin = (y_te == i).astype(int)
+        y_bin = (y_val_enc == i).astype(int)
         best_f1, best_thr = 0.0, 0.5
         for thr in np.arange(0.30, 0.97, 0.01):
-            preds_bin = (proba[:, i] >= thr).astype(int)
+            preds_bin = (val_proba[:, i] >= thr).astype(int)
             prec = precision_score(y_bin, preds_bin, zero_division=0)
             rec  = recall_score(y_bin, preds_bin, zero_division=0)
             f1   = 2 * prec * rec / (prec + rec + 1e-9)
@@ -238,11 +241,12 @@ def train_model(df: pd.DataFrame, seed: int = 42):
                 best_f1, best_thr = f1, float(thr)
 
         per_class_thresholds[cls] = round(best_thr, 3)
-        log.info("  %-15s threshold=%.3f  F1=%.4f", cls, best_thr, best_f1)
+        log.info("  %-15s threshold=%.3f  val-F1=%.4f", cls, best_thr, best_f1)
 
-    # ── Evaluate with per-class thresholds ────────────────────────────────────
+    # ── Final evaluation on held-out test set (no tuning done here) ───────────
+    test_proba = xgb_w * xgb.predict_proba(Xte) + lgbm_w * lgbm.predict_proba(Xte)
     y_pred = []
-    for row_proba in proba:
+    for row_proba in test_proba:
         best_label, best_p = le.classes_[0], -1.0
         for i, cls in enumerate(le.classes_):
             thr = per_class_thresholds[cls]
