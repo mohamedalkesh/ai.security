@@ -1,0 +1,80 @@
+{
+  "Benign": {
+    "technique": "N/A",
+    "tactic": "N/A",
+    "severity": "Informational",
+    "description": "Normal network traffic."
+  },
+  "DDoS": {
+    "technique": "T1498",
+    "tactic": "Impact",
+    "severity": "High",
+    "description": "Volumetric DDoS flood."
+  },
+  "DoS": {
+    "technique": "T1499",
+    "tactic": "Impact",
+    "severity": "High",
+    "description": "Application-layer DoS."
+  },
+  "Port Scan": {
+    "technique": "T1046",
+    "tactic": "Discovery",
+    "severity": "Medium",
+    "description": "Network port enumeration."
+  },
+  "Bot": {
+    "technique": "T1071",
+    "tactic": "Command and Control",
+    "severity": "High",
+    "description": "Botnet C2 communication."
+  },
+  "Brute Force": {
+    "technique": "T1110",
+    "tactic": "Credential Access",
+    "severity": "High",
+    "description": "Credential brute force attack."
+  },
+  "XSS": {
+    "technique": "T1059.007",
+    "tactic": "Execution",
+    "severity": "High",
+    "description": "Cross-site scripting attack."
+  },
+  "SQL Injection": {
+    "technique": "T1190",
+    "tactic": "Initial Access",
+    "severity": "Critical",
+    "description": "SQL injection exploitation."
+  },
+  "Infiltration": {
+    "technique": "T1133",
+    "tactic": "Initial Access",
+    "severity": "Critical",
+    "description": "System infiltration / backdoor."
+  },
+  "Ransomware": {
+    "technique": "T1486",
+    "tactic": "Impact",
+    "severity": "Critical",
+    "description": "Ransomware data encryption."
+  },
+  "DNS Tunneling": {
+    "technique": "T1071.004",
+    "tactic": "Command and Control",
+    "severity": "High",
+    "description": "DNS-based covert channel."
+  },
+  "ICMP Flood": {
+    "technique": "T1498.001",
+    "tactic": "Impact",
+    "severity": "Medium",
+    "description": "ICMP ping flood."
+  },
+  "Unknown": {
+    "technique": "Unknown",
+    "tactic": "Unknown",
+    "severity": "Low",
+    "description": "Out-of-distribution traffic."
+  }
+}

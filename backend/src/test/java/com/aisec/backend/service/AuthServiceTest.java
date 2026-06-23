@@ -5,12 +5,12 @@ import com.aisec.backend.dto.auth.LoginRequest;
 import com.aisec.backend.dto.auth.RegisterRequest;
 import com.aisec.backend.entity.Role;
 import com.aisec.backend.entity.UserAccount;
+import com.aisec.backend.config.AppProperties;
 import com.aisec.backend.repository.UserRepository;
 import com.aisec.backend.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -37,10 +37,18 @@ class AuthServiceTest {
     @Mock PasswordEncoder encoder;
     @Mock AuthenticationManager authManager;
     @Mock JwtService jwt;
-    @InjectMocks AuthService service;
+    @Mock AuditService audit;
+
+    AppProperties appProperties;
+    AuthService service;
 
     @BeforeEach
     void setUp() {
+        // Use a real AppProperties so register() self-registration gate is open.
+        appProperties = new AppProperties();
+        appProperties.getSecurity().setAllowSelfRegister(true);
+        service = new AuthService(users, encoder, authManager, jwt, audit, appProperties);
+
         lenient().when(jwt.generate(any(), any())).thenReturn("mock.jwt.token");
         lenient().when(jwt.generate(any(), any(), any())).thenReturn("mock.jwt.token");
         lenient().when(jwt.getExpirationMs()).thenReturn(60_000L);

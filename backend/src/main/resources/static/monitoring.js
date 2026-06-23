@@ -501,9 +501,19 @@ document.getElementById('refreshBtn').addEventListener('click', () => {
   if (!window.AisecAPI) return;
   if (!AisecAPI.requireAuth()) return;
 
-  const ifaceSelect = document.getElementById('monitorIface');
+  const ifaceList = document.getElementById('monitorIfaceList');
   const startBtn = document.getElementById('monitorStartBtn');
   const stopBtn = document.getElementById('monitorStopBtn');
+
+  // Returns array of currently checked interface names
+  function getSelectedIfaces() {
+    return Array.from(ifaceList.querySelectorAll('input[type=checkbox]:checked')).map(cb => cb.value);
+  }
+
+  // Disable / enable all checkboxes (called when monitor is running)
+  function setIfacesDisabled(disabled) {
+    ifaceList.querySelectorAll('input[type=checkbox]').forEach(cb => { cb.disabled = disabled; });
+  }
   const liveDot = document.getElementById('monitorLiveDot');
   const errorDiv = document.getElementById('monitorError');
 
@@ -705,7 +715,20 @@ document.getElementById('refreshBtn').addEventListener('click', () => {
   const seenDetections   = new Set();
   const sessionAttacks   = {};   // { attackType → count } — accumulates for the whole session
   const blockedIps       = new Set(); // IPs blocked this session
+  const blockingIps      = new Set(); // IPs with block request in-flight
+  const isolatedIps      = new Set(); // IPs under ARP isolation
+  const isolatingIps     = new Set(); // IPs with isolation request in-flight
   let   lastCriticalIp   = null;      // for the banner Block button
+
+  // Returns true when the IP belongs to a private/loopback range (this machine
+  // or its LAN). For outbound attack detections (src=local) we block the DST
+  // instead of the src, because the INPUT chain rule wouldn't stop outgoing traffic.
+  function _isPrivateIp(ip) {
+    if (!ip) return false;
+    return ip.startsWith('127.') || ip.startsWith('10.') ||
+           ip.startsWith('192.168.') ||
+           /^172\.(1[6-9]|2\d|3[01])\./.test(ip);
+  }
 
   const detectionsList = document.getElementById('monDetectionsList');
   const detectionsWrap = document.getElementById('monDetectionsWrap');
@@ -744,14 +767,41 @@ document.getElementById('refreshBtn').addEventListener('click', () => {
         if (sev === 'CRITICAL' && d.src_ip) newCritical = d;
       }
 
-      const alreadyBlocked = d.src_ip && blockedIps.has(d.src_ip);
-      const blockBtn = d.src_ip
-        ? `<button class="mon-block-btn${alreadyBlocked ? ' blocked' : ''}"
-              data-ip="${d.src_ip}" data-type="${d.predicted || ''}"
-              ${alreadyBlocked ? 'disabled' : ''}>
-             <i class="fa-solid fa-${alreadyBlocked ? 'check' : 'ban'}"></i>
-             ${alreadyBlocked ? 'Blocked' : 'Block'}
-           </button>`
+      // For outbound attacks (src = local machine), block the destination so
+      // the OUTPUT chain rule stops the traffic. For inbound attacks block src.
+      const _ipToBlock      = _isPrivateIp(d.src_ip) ? (d.dst_ip || d.src_ip) : d.src_ip;
+      const alreadyBlocked  = _ipToBlock && blockedIps.has(_ipToBlock);
+      const blockInFlight   = _ipToBlock && blockingIps.has(_ipToBlock);
+      const blockBtn = _ipToBlock
+        ? (alreadyBlocked
+            ? `<button class="mon-block-btn blocked" disabled data-ip="${_ipToBlock}" data-type="${d.predicted || ''}">
+                 <i class="fa-solid fa-check"></i> Blocked
+               </button>`
+            : blockInFlight
+            ? `<button class="mon-block-btn" disabled data-ip="${_ipToBlock}" data-type="${d.predicted || ''}">
+                 <i class="fa-solid fa-spinner fa-spin"></i>
+               </button>`
+            : `<button class="mon-block-btn" data-ip="${_ipToBlock}" data-type="${d.predicted || ''}">
+                 <i class="fa-solid fa-ban"></i> Block ${_ipToBlock}
+               </button>`)
+        : '';
+
+      // Isolate button — only show for external IPs (can't ARP-isolate ourselves)
+      const _ipToIsolate    = _isPrivateIp(d.src_ip) ? null : d.src_ip;
+      const alreadyIsolated = _ipToIsolate && isolatedIps.has(_ipToIsolate);
+      const isolateInFlight = _ipToIsolate && isolatingIps.has(_ipToIsolate);
+      const isolateBtn = _ipToIsolate
+        ? (alreadyIsolated
+            ? `<button class="mon-isolate-btn isolated" disabled data-ip="${_ipToIsolate}" data-type="${d.predicted || ''}">
+                 <i class="fa-solid fa-wifi"></i> Isolated
+               </button>`
+            : isolateInFlight
+            ? `<button class="mon-isolate-btn" disabled data-ip="${_ipToIsolate}" data-type="${d.predicted || ''}">
+                 <i class="fa-solid fa-spinner fa-spin"></i>
+               </button>`
+            : `<button class="mon-isolate-btn" data-ip="${_ipToIsolate}" data-type="${d.predicted || ''}">
+                 <i class="fa-solid fa-wifi"></i> Isolate
+               </button>`)
         : '';
 
       return `
@@ -762,7 +812,7 @@ document.getElementById('refreshBtn').addEventListener('click', () => {
           <span style="color:${sevColor};font-weight:600;min-width:120px;flex-shrink:0">${d.predicted || '—'}</span>
           <span style="color:#cbd5e1;font-family:monospace;font-size:11.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${src} → ${dst}</span>
           <span style="color:#8ea0b8;font-family:monospace;font-size:11px;flex-shrink:0">${conf}</span>
-          ${blockBtn}
+          ${blockBtn}${isolateBtn}
         </div>`;
     }).join('');
     detectionsList.innerHTML = html;
@@ -832,7 +882,6 @@ document.getElementById('refreshBtn').addEventListener('click', () => {
         await AisecAPI.blockIp({
           ip: lastCriticalIp,
           reason: '[MADRS Live Detection] Critical attack auto-response',
-          severity: 'CRITICAL',
         });
         blockedIps.add(lastCriticalIp);
         showToast(`✓ ${lastCriticalIp} blocked`);
@@ -875,30 +924,163 @@ document.getElementById('refreshBtn').addEventListener('click', () => {
     if (!btn || btn.disabled || btn.classList.contains('blocked')) return;
     const ip   = btn.dataset.ip;
     const type = btn.dataset.type || 'Attack';
-    if (!ip) return;
+    if (!ip || blockingIps.has(ip) || blockedIps.has(ip)) return;
+
+    // Mark in-flight — the next poll render will show the spinner.
+    blockingIps.add(ip);
     btn.disabled = true;
     btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
     try {
       await AisecAPI.blockIp({
         ip,
         reason: `[MADRS Live Detection] ${type}`,
-        severity: 'HIGH',
       });
       blockedIps.add(ip);
-      btn.classList.add('blocked');
-      btn.innerHTML = '<i class="fa-solid fa-check"></i> Blocked';
       showToast(`✓ ${ip} blocked`);
-      // Also update banner if it's showing this IP
       if (lastCriticalIp === ip && critBlockBtn) {
         critBlockBtn.disabled = true;
         critBlockBtn.innerHTML = '<i class="fa-solid fa-check"></i> Blocked';
       }
     } catch (err) {
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-ban"></i> Block';
-      showToast('Block failed: ' + (err.message || 'error'));
+      const detail = (err.data && (err.data.detail || err.data.message || err.data.error)) || err.message || 'error';
+      showToast('Block failed: ' + detail);
+    } finally {
+      blockingIps.delete(ip);
+      // Next poll cycle will re-render the button with correct state.
     }
   });
+
+  // ── Isolate button event delegation ─────────────────────────────────
+  detectionsList.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.mon-isolate-btn');
+    if (!btn || btn.disabled || btn.classList.contains('isolated')) return;
+    const ip   = btn.dataset.ip;
+    const type = btn.dataset.type || 'Attack';
+    if (!ip || isolatingIps.has(ip) || isolatedIps.has(ip)) return;
+
+    isolatingIps.add(ip);
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+
+    try {
+      await AisecAPI.monitorIsolate(ip, `[MADRS Live Detection] ${type}`);
+      isolatedIps.add(ip);
+      showToast(`✓ ${ip} isolated (network-wide)`);
+      refreshIsolationPanel();
+    } catch (err) {
+      const detail = (err.data && (err.data.detail || err.data.message || err.data.error)) || err.message || 'error';
+      showToast('Isolate failed: ' + detail);
+    } finally {
+      isolatingIps.delete(ip);
+    }
+  });
+
+  // ── Isolation status panel ───────────────────────────────────────────
+  // Dynamically injected into the monitoring panel (after detection list).
+  let isolationPanelEl = null;
+
+  function ensureIsolationPanel() {
+    if (isolationPanelEl) return isolationPanelEl;
+    isolationPanelEl = document.createElement('div');
+    isolationPanelEl.id = 'monIsolationPanel';
+    isolationPanelEl.style.cssText = 'margin-top:18px;display:none';
+    // Insert after the detections wrap
+    const detectWrap = document.getElementById('monDetectionsWrap');
+    if (detectWrap && detectWrap.parentNode) {
+      detectWrap.parentNode.insertBefore(isolationPanelEl, detectWrap.nextSibling);
+    }
+    return isolationPanelEl;
+  }
+
+  async function refreshIsolationPanel() {
+    const panel = ensureIsolationPanel();
+    let rows = [];
+    try {
+      rows = (await AisecAPI.monitorListIsolated()) || [];
+      // Sync the local set
+      const liveSet = new Set(rows.map(r => r.ip));
+      for (const ip of [...isolatedIps]) {
+        if (!liveSet.has(ip)) isolatedIps.delete(ip);
+      }
+      rows.forEach(r => isolatedIps.add(r.ip));
+    } catch {
+      return;
+    }
+
+    if (rows.length === 0) {
+      panel.style.display = 'none';
+      return;
+    }
+
+    panel.style.display = '';
+    panel.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span style="font-size:12px;font-weight:600;color:#8ea0b8;text-transform:uppercase;letter-spacing:.5px">
+          <i class="fa-solid fa-wifi" style="color:#f97316"></i> Network-Wide Isolation
+          <span style="font-size:10px;color:#f97316;font-weight:400;margin-left:6px">ARP quarantine active</span>
+        </span>
+        <span style="font-size:11px;color:#4a6080;font-family:monospace">${rows.length} host${rows.length === 1 ? '' : 's'} isolated</span>
+      </div>
+      <div style="background:#0d1b2e;border:1px solid rgba(249,115,22,.3);border-radius:10px;overflow:hidden">
+        ${rows.map(r => {
+          const since = r.isolated_at ? new Date(r.isolated_at).toLocaleTimeString() : '';
+          const arpOk = r.arp_ok;
+          return `
+          <div style="padding:10px 14px;border-bottom:1px solid #1e3557;display:flex;align-items:center;gap:10px;font-size:12.5px;flex-wrap:wrap">
+            <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${arpOk ? '#f97316' : '#64748b'};animation:${arpOk ? 'warnBlink 2s step-end infinite' : 'none'};flex-shrink:0"></span>
+            <span style="color:#f97316;font-family:monospace;font-weight:600;min-width:140px">${r.ip}</span>
+            <span style="color:#94a3b8;font-size:11px;flex:1">${r.reason || '—'}</span>
+            <span style="color:#4a6080;font-family:monospace;font-size:11px;min-width:68px">${since}</span>
+            <span style="font-size:10px;padding:2px 7px;border-radius:4px;background:${arpOk ? 'rgba(249,115,22,.15)' : 'rgba(100,116,139,.15)'};color:${arpOk ? '#fb923c' : '#64748b'}">${arpOk ? 'ARP active' : 'Pending…'}</span>
+            <button class="mon-release-btn" data-ip="${r.ip}" style="background:rgba(100,116,139,.12);color:#94a3b8;border:1px solid rgba(100,116,139,.3);padding:3px 9px;border-radius:5px;font-family:inherit;font-size:10.5px;cursor:pointer;display:inline-flex;align-items:center;gap:4px">
+              <i class="fa-solid fa-lock-open"></i> Release
+            </button>
+          </div>`;
+        }).join('')}
+      </div>`;
+
+    // Delegate release button clicks
+    panel.querySelectorAll('.mon-release-btn').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const ip = btn.dataset.ip;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        try {
+          await AisecAPI.monitorRelease(ip);
+          isolatedIps.delete(ip);
+          showToast(`✓ ${ip} released from isolation`);
+          refreshIsolationPanel();
+        } catch (err) {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-lock-open"></i> Release';
+          showToast('Release failed: ' + (err.message || 'error'));
+        }
+      });
+    });
+  }
+
+  // Inject isolation panel CSS
+  if (!document.getElementById('monIsoStyles')) {
+    const st = document.createElement('style');
+    st.id = 'monIsoStyles';
+    st.textContent = `
+      .mon-isolate-btn {
+        background:rgba(249,115,22,.1);color:#f97316;
+        border:1px solid rgba(249,115,22,.3);padding:4px 10px;border-radius:6px;
+        font-family:inherit;font-size:10.5px;font-weight:700;cursor:pointer;
+        display:inline-flex;align-items:center;gap:5px;transition:all .2s;
+        white-space:nowrap;flex-shrink:0;
+      }
+      .mon-isolate-btn:hover{background:rgba(249,115,22,.25);border-color:rgba(249,115,22,.6)}
+      .mon-isolate-btn.isolated{background:rgba(251,146,60,.1);color:#fb923c;border-color:rgba(251,146,60,.3);cursor:default}
+    `;
+    document.head.appendChild(st);
+  }
+
+  // Poll isolation panel every 3 s (less frequent than the 1 s status poll)
+  setInterval(refreshIsolationPanel, 3000);
+  refreshIsolationPanel();
 
   // ---------------- Email & App activity feeds ----------------
   const emailWrap   = document.getElementById('monEmailWrap');
@@ -990,26 +1172,30 @@ document.getElementById('refreshBtn').addEventListener('click', () => {
     document.head.appendChild(st);
   }
 
-  // Load interfaces
+  // Load interfaces as checkboxes
   async function loadInterfaces() {
     try {
       const resp = await AisecAPI.monitorInterfaces();
       const ifaces = Array.isArray(resp) ? resp : (resp.interfaces || []);
-      // UP interfaces first so the user lands on a usable one. DOWN
-      // interfaces are kept in the list but disabled — capturing on them
-      // blocks libpcap forever with zero traffic.
       const sorted = ifaces.slice().sort((a, b) => (b.is_up ? 1 : 0) - (a.is_up ? 1 : 0));
-      ifaceSelect.innerHTML = sorted.map(i =>
-        `<option value="${i.name}"${i.is_up ? '' : ' disabled'}>${i.name}${i.is_up ? ' (UP)' : ' (DOWN — no traffic)'}</option>`
-      ).join('');
       if (sorted.length === 0) {
-        ifaceSelect.innerHTML = '<option value="">No interfaces found</option>';
-      } else {
-        const firstUp = sorted.find(i => i.is_up);
-        if (firstUp) ifaceSelect.value = firstUp.name;
+        ifaceList.innerHTML = '<span style="color:#506a8a;font-size:13px">No interfaces found</span>';
+        return;
       }
+      ifaceList.innerHTML = sorted.map(i => {
+        const upLabel = i.is_up
+          ? `<span style="color:#10b981;font-size:10px;margin-left:4px">UP</span>`
+          : `<span style="color:#ef4444;font-size:10px;margin-left:4px">DOWN</span>`;
+        const speed = i.speed_mbps ? ` ${i.speed_mbps}Mbps` : '';
+        const addrs = i.addresses && i.addresses.length ? ` · ${i.addresses[0]}` : '';
+        return `<label style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;background:rgba(30,53,87,.5);border:1px solid #1e3557;border-radius:6px;cursor:${i.is_up ? 'pointer' : 'not-allowed'};opacity:${i.is_up ? '1' : '.45'};font-size:13px;white-space:nowrap">
+          <input type="checkbox" value="${i.name}" ${i.is_up ? 'checked' : 'disabled'}
+            style="accent-color:#22b8cf;width:14px;height:14px">
+          <span>${i.name}${speed}${addrs}</span>${upLabel}
+        </label>`;
+      }).join('');
     } catch (e) {
-      ifaceSelect.innerHTML = '<option value="">Failed to load</option>';
+      ifaceList.innerHTML = '<span style="color:#ef4444;font-size:13px">Failed to load interfaces</span>';
       console.error('Failed to load interfaces:', e);
     }
   }
@@ -1017,18 +1203,22 @@ document.getElementById('refreshBtn').addEventListener('click', () => {
 
   // Start monitor
   startBtn.addEventListener('click', async () => {
-    const iface = ifaceSelect.value;
-    if (!iface) return;
+    const ifaces = getSelectedIfaces();
+    if (ifaces.length === 0) {
+      errorDiv.textContent = 'Select at least one interface to start monitoring.';
+      errorDiv.style.display = 'block';
+      return;
+    }
     errorDiv.style.display = 'none';
     startBtn.disabled = true;
-    // Reset session state
     Object.keys(sessionAttacks).forEach(k => delete sessionAttacks[k]);
     blockedIps.clear();
     seenDetections.clear();
     hideCriticalBanner();
     renderAttackBreakdown();
     try {
-      await AisecAPI.monitorStart(iface);
+      // Send as multi-interface request; backend accepts {"interfaces": [...]}
+      await AisecAPI.monitorStart(ifaces.length === 1 ? ifaces[0] : ifaces);
       updateStatus();
     } catch (e) {
       errorDiv.textContent = e.message || 'Failed to start monitor';
@@ -1042,13 +1232,16 @@ document.getElementById('refreshBtn').addEventListener('click', () => {
   const autostartBtn = document.getElementById('monitorAutostartBtn');
   if (autostartBtn) {
     autostartBtn.addEventListener('click', async () => {
-      const iface = ifaceSelect.value;
-      if (!iface) return;
+      const ifaces = getSelectedIfaces();
+      if (ifaces.length === 0) return;
       autostartBtn.disabled = true;
       try {
-        await AisecAPI.monitorSetAutostart(iface);
-        autostartBtn.textContent = '✓ Saved as Default';
-        setTimeout(() => { autostartBtn.textContent = 'Set as Default'; autostartBtn.disabled = false; }, 2000);
+        await AisecAPI.monitorSetAutostart(ifaces.length === 1 ? ifaces[0] : ifaces);
+        autostartBtn.innerHTML = '<i class="fa-solid fa-bookmark"></i> Saved';
+        setTimeout(() => {
+          autostartBtn.innerHTML = '<i class="fa-solid fa-bookmark"></i> Set as Default';
+          autostartBtn.disabled = false;
+        }, 2000);
       } catch (e) {
         autostartBtn.disabled = false;
         alert('Failed to save autostart: ' + (e.message || e));
@@ -1078,7 +1271,7 @@ document.getElementById('refreshBtn').addEventListener('click', () => {
       startBtn.style.display = running ? 'none' : 'inline-flex';
       stopBtn.style.display  = running ? 'inline-flex' : 'none';
       liveDot.style.display  = running ? 'inline-block' : 'none';
-      ifaceSelect.disabled   = running;
+      setIfacesDisabled(running);
 
       // Animated counters
       smoothInt('monFlows',   s.total_flows   || 0);
@@ -1093,6 +1286,38 @@ document.getElementById('refreshBtn').addEventListener('click', () => {
       const tbEl = document.getElementById('monTotalBytes');
       if (brEl) brEl.textContent = fmtBytes(s.bytes_per_sec || 0) + '/s';
       if (tbEl) tbEl.textContent = fmtBytes(s.total_bytes || 0);
+
+      // Capture quality + dropped flows
+      const cqEl = document.getElementById('monCaptureQuality');
+      const drEl = document.getElementById('monDropped');
+      if (cqEl) {
+        const q = s.capture_quality != null ? s.capture_quality : 100;
+        cqEl.textContent = q.toFixed(1) + '%';
+        cqEl.style.color = q >= 99 ? '#10b981' : q >= 95 ? '#f59e0b' : '#ef4444';
+      }
+      if (drEl) {
+        const d = s.dropped || 0;
+        drEl.textContent = d.toLocaleString();
+        drEl.style.color = d === 0 ? '#10b981' : d < 100 ? '#f59e0b' : '#ef4444';
+      }
+
+      // Per-interface badges (show when multiple interfaces active)
+      const ifStats = s.interface_stats || [];
+      if (ifStats.length > 1) {
+        const existing = document.getElementById('monIfaceBadges');
+        const container = existing || (() => {
+          const el = document.createElement('div');
+          el.id = 'monIfaceBadges';
+          el.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;margin-top:10px';
+          ifaceList.parentElement.appendChild(el);
+          return el;
+        })();
+        container.innerHTML = ifStats.map(i =>
+          `<span style="font-size:12px;padding:3px 10px;border-radius:20px;background:rgba(34,184,207,.12);border:1px solid rgba(34,184,207,.25);color:#22b8cf">
+            ${i.name}: ${(i.flows||0).toLocaleString()} flows${i.error ? ' ⚠' : ''}
+          </span>`
+        ).join('');
+      }
 
       // Top talkers + Protocol distribution
       renderAggregates(s);

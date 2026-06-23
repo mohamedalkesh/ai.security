@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PCAP Scan — MADRS</title>
+<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="dashboard.css"/>
+<link rel="stylesheet" href="scan.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+</head>
+<body class="dash-body">
+
+<div class="dash-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="side-brand">
+      <div class="brand-logo"><i class="fa-solid fa-shield-halved"></i></div>
+      <div>
+        <div class="brand-name">MADRS</div>
+        <div class="brand-sub muted sm">Platform v3.0</div>
+      </div>
+    </div>
+    <nav class="side-nav">
+      <a class="side-link" href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+      <a class="side-link" href="alerts.html"><i class="fa-solid fa-triangle-exclamation"></i> Alerts</a>
+      <a class="side-link active" href="scan.html"><i class="fa-solid fa-magnifying-glass-chart"></i> Scan PCAP</a>
+      <a class="side-link" href="monitoring.html"><i class="fa-solid fa-wave-square"></i> Monitoring</a>
+      <a class="side-link" href="reports.html"><i class="fa-solid fa-file-lines"></i> Reports</a>
+      <a class="side-link" href="users.html"><i class="fa-solid fa-users"></i> Users</a>
+      <a class="side-link" href="audit.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-clipboard-list"></i> Audit Log</a>
+      <a class="side-link" href="webhooks.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-bell"></i> Webhooks</a>
+      <a class="side-link" href="firewall.html"><i class="fa-solid fa-ban"></i> Firewall</a>
+      <a class="side-link" href="analytics.html"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
+      <a class="side-link" href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+      <a class="side-link" href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications</a>
+      <a class="side-link" href="contact.html"><i class="fa-solid fa-envelope"></i> Contact</a>
+    </nav>
+    <a href="#" class="side-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="dash-main">
+    <header class="inc-header reveal">
+      <div class="inc-title">
+        <h1><i class="fa-solid fa-magnifying-glass-chart ai-icon"></i> PCAP Network Scan</h1>
+        <p class="muted">Upload a packet capture file (.pcap / .pcapng) and let the AI analyze it for threats</p>
+      </div>
+    </header>
+
+    <!-- Upload zone -->
+    <section class="panel reveal" style="padding:0;overflow:hidden">
+      <div class="upload-zone" id="dropZone" data-requires-role="ADMIN,ANALYST">
+        <input type="file" id="fileInput" hidden data-requires-role="ADMIN,ANALYST"/>
+        <div class="uz-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+        <h2 class="uz-title">Drop analysis file here</h2>
+        <p class="uz-sub muted">or click to browse · Max 1 GB · Any format (PCAP recommended)</p>
+        <button class="btn btn-primary" id="browseBtn"><i class="fa-solid fa-folder-open"></i> Browse File</button>
+        <div class="uz-info muted sm">
+          <i class="fa-solid fa-circle-info"></i>
+          The file is sent to the AI engine for flow extraction & classification using the trained XGBoost model.
+        </div>
+      </div>
+    </section>
+
+    <!-- Progress -->
+    <section class="panel reveal" id="progressPanel" style="display:none">
+      <div class="panel-head"><h3><i class="fa-solid fa-gauge-high"></i> Analysis Progress</h3></div>
+      <div class="prog-row">
+        <div class="prog-step" data-stage="upload">
+          <div class="ps-ico"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+          <div class="ps-lbl">Uploading</div>
+        </div>
+        <div class="prog-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+        <div class="prog-step" data-stage="analyze">
+          <div class="ps-ico"><i class="fa-solid fa-brain"></i></div>
+          <div class="ps-lbl">AI Analyzing</div>
+        </div>
+        <div class="prog-arrow"><i class="fa-solid fa-arrow-right"></i></div>
+        <div class="prog-step" data-stage="save">
+          <div class="ps-ico"><i class="fa-solid fa-database"></i></div>
+          <div class="ps-lbl">Saving Alerts</div>
+        </div>
+      </div>
+      <div class="progress-bar" style="margin-top:18px"><span id="progBar" style="width:0;background:linear-gradient(90deg,#22b8cf,#9775fa)"></span></div>
+      <p class="muted sm" id="progText" style="margin-top:10px">Waiting…</p>
+    </section>
+
+    <!-- Results -->
+    <section class="reveal" id="resultsSection" style="display:none">
+      <div class="result-stats">
+        <div class="panel kpi">
+          <div class="kpi-val" id="rTotal">0</div>
+          <div class="kpi-lbl">Total Flows</div>
+        </div>
+        <div class="panel kpi">
+          <div class="kpi-val green" id="rBenign">0</div>
+          <div class="kpi-lbl">Benign Flows</div>
+        </div>
+        <div class="panel kpi">
+          <div class="kpi-val red" id="rAttacks">0</div>
+          <div class="kpi-lbl">Attack Flows</div>
+        </div>
+        <div class="panel kpi">
+          <div class="kpi-val cyan"><span id="rConf">0</span>%</div>
+          <div class="kpi-lbl">Avg Confidence</div>
+        </div>
+      </div>
+
+      <!-- Sampled CSV Banner -->
+      <div id="sampledBanner" style="display:none;background:rgba(255,193,7,0.12);border:1px solid #ffc107;border-radius:8px;padding:12px 18px;margin-top:14px;color:#ffc107;font-size:0.93rem;"></div>
+
+      <!-- Metadata Quality Panel -->
+      <div id="metaQualityPanel" style="display:none;background:var(--surface2,#1e2230);border:1px solid var(--border,#2a3045);border-radius:8px;padding:14px 18px;margin-top:14px;"></div>
+
+      <div class="panel" style="margin-top:18px">
+        <div class="panel-head">
+          <h3><i class="fa-solid fa-list-check"></i> Detected Attacks</h3>
+          <a href="alerts.html" class="link sm">View All Alerts →</a>
+        </div>
+        <div class="table-wrap">
+          <table class="alerts-table">
+            <thead>
+              <tr>
+                <th>ATTACK TYPE</th>
+                <th>COUNT</th>
+                <th>SEVERITY</th>
+                <th>SAMPLE SOURCE</th>
+              </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div style="margin-top:18px;display:flex;gap:12px;justify-content:flex-end">
+        <button class="btn btn-ghost" id="resetBtn"><i class="fa-solid fa-rotate-left"></i> Scan Another File</button>
+        <a href="alerts.html" class="btn btn-primary"><i class="fa-solid fa-triangle-exclamation"></i> Go to Alerts</a>
+      </div>
+    </section>
+
+    <!-- Recent scans -->
+    <section class="panel reveal" style="margin-top:24px">
+      <div class="panel-head"><h3><i class="fa-regular fa-clock"></i> Recent Scans</h3></div>
+      <div class="table-wrap">
+        <table class="alerts-table">
+          <thead>
+            <tr>
+              <th>FILE</th>
+              <th>STATUS</th>
+              <th>FLOWS</th>
+              <th>ATTACKS</th>
+              <th>AVG CONFIDENCE</th>
+              <th>SCANNED</th>
+            </tr>
+          </thead>
+          <tbody id="recentBody"><tr><td colspan="6" style="text-align:center;padding:40px;color:var(--muted)">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="toast" id="toast"><i class="fa-solid fa-check-circle"></i> <span>Done</span></div>
+
+<script src="env-config.js"></script>
+<script src="api.js"></script>
+<script src="scan.js"></script>
+</body>
+</html>

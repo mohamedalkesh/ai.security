@@ -11,6 +11,7 @@ public class AppProperties {
     private final ThreatIntel threatIntel = new ThreatIntel();
     private final Security security = new Security();
     private String supportEmail = "MADRS.support@gmail.com";
+    private String frontendUrl = "http://127.0.0.1:5500";
 
     public Cors getCors() { return cors; }
     public Ml getMl() { return ml; }
@@ -19,6 +20,8 @@ public class AppProperties {
     public Security getSecurity() { return security; }
     public String getSupportEmail() { return supportEmail; }
     public void setSupportEmail(String supportEmail) { this.supportEmail = supportEmail; }
+    public String getFrontendUrl() { return frontendUrl; }
+    public void setFrontendUrl(String frontendUrl) { this.frontendUrl = frontendUrl; }
 
     public static class Cors {
         private String allowedOrigins = "";

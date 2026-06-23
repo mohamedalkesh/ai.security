@@ -92,11 +92,22 @@ public class SecurityConfig {
             .cors(c -> c.configurationSource(corsSource()))
             .csrf(c -> c.disable())
             .sessionManagement(s -> s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            // Return 401 (not the Spring default 403) when a request reaches a
+            // protected endpoint without valid authentication — e.g. a missing
+            // or expired JWT. This lets the frontend distinguish "session expired"
+            // (401 → re-login) from "forbidden" (403 → insufficient role).
+            .exceptionHandling(e -> e
+                .authenticationEntryPoint((req, res, ex) -> {
+                    res.setStatus(jakarta.servlet.http.HttpServletResponse.SC_UNAUTHORIZED);
+                    res.setContentType("application/json");
+                    res.getWriter().write("{\"error\":\"Authentication required or session expired\"}");
+                }))
             .authorizeHttpRequests(a -> a
                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                 .requestMatchers("/api/auth/**").permitAll()
                 .requestMatchers("/api/company-request").permitAll()
                 .requestMatchers("/api/health", "/actuator/**").permitAll()
+                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
                 .requestMatchers("/ws/**").permitAll()
                 .requestMatchers("/*.html", "/*.css", "/*.js", "/assets/**").permitAll()
                 .requestMatchers(HttpMethod.DELETE, "/api/users/**").hasAnyRole("ADMIN", "ORG_ADMIN")

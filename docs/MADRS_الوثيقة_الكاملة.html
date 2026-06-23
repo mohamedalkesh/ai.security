@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>MADRS — الوثيقة الكاملة الشاملة</title>
+<style>
+@page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Noto Naskh Arabic', 'Amiri', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.9;
+    color: #1f2933;
+    margin: 0;
+    background: #ffffff;
+    font-size: 13px;
+  }
+  .cover {
+    text-align: center;
+    padding: 120px 30px 80px;
+    background: linear-gradient(160deg, #06172e 0%, #0b1f37 55%, #06111f 100%);
+    color: #e8f0fc;
+    page-break-after: always;
+    min-height: 95vh;
+  }
+  .cover h1 { font-size: 46px; margin: 24px 0 8px; color: #ffffff; letter-spacing: 1px; }
+  .cover .sub { color: #22b8cf; font-size: 16px; letter-spacing: 6px; text-transform: uppercase; }
+  .cover .desc { margin-top: 40px; font-size: 18px; color: #9fb0c5; line-height: 2; }
+  .cover .meta { margin-top: 70px; font-size: 14px; color: #6f86a3; }
+  .cover .badge-mark {
+    width: 130px; height: 130px; margin: 0 auto; display: block;
+    filter: drop-shadow(0 0 22px rgba(34,184,207,.45));
+  }
+  h1.section { font-size: 26px; color: #06172e; border-bottom: 3px solid #22b8cf; padding-bottom: 10px; margin-top: 10px; page-break-before: always; }
+  h2 { font-size: 20px; color: #0b2545; margin-top: 28px; padding-right: 14px; border-right: 5px solid #22b8cf; }
+  h3 { font-size: 16px; color: #0f3460; margin-top: 18px; }
+  p { margin: 8px 0; text-align: justify; }
+  ul, ol { margin: 8px 0; padding-right: 26px; }
+  li { margin: 6px 0; }
+  strong { color: #0b6fa4; }
+  code {
+    background: #eef3f8; color: #0b4f6c; padding: 1px 6px; border-radius: 5px;
+    font-family: 'Courier New', monospace; font-size: 12px; direction: ltr; display: inline-block;
+  }
+  pre {
+    background: #06172e; color: #d6e6f5; padding: 14px 18px; border-radius: 10px;
+    direction: ltr; text-align: left; overflow-x: auto; font-size: 12px; line-height: 1.6;
+  }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 12.5px; }
+  th, td { border: 1px solid #d4dde6; padding: 9px 11px; text-align: right; vertical-align: top; }
+  th { background: #0b2545; color: #ffffff; }
+  tr:nth-child(even) td { background: #f4f8fb; }
+  .toc { background: #f7fafc; border: 1px solid #d4dde6; border-radius: 12px; padding: 18px 26px; }
+  .toc h1.section { page-break-before: avoid; border: none; }
+  .toc ol { font-size: 14px; }
+  .toc li { margin: 7px 0; }
+  .note { background: #eafaf1; border-right: 5px solid #22c55e; padding: 12px 16px; border-radius: 8px; margin: 14px 0; }
+  .warn { background: #fff7e6; border-right: 5px solid #f59e0b; padding: 12px 16px; border-radius: 8px; margin: 14px 0; }
+  .flow { background: #06172e; color: #d6e6f5; padding: 16px; border-radius: 10px; text-align: center; direction: ltr; font-family: 'Courier New', monospace; font-size: 12px; }
+  hr { border: none; border-top: 1px solid #e2e8f0; margin: 26px 0; }
+  .lead { font-size: 14px; color: #51606e; }
+/* ── Part 2 additions ── */
+.src { font-size: 11px; color: #8a98a8; direction: ltr; text-align: left; margin-top: 4px; }
+
+.part-sep {
+  page-break-before:always;page-break-after:always;text-align:center;
+  padding:140px 30px;background:linear-gradient(135deg,#06172e,#0b2545,#06172e);
+  color:#fff;min-height:92vh;
+}
+</style>
+</head>
+<body>
+<!-- ============ صفحة الغلاف ============ -->
+<div class="cover">
+  <svg class="badge-mark" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="o" x1="24" y1="18" x2="136" y2="142" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#24E0FF"/><stop offset="1" stop-color="#127CFF"/></linearGradient>
+      <linearGradient id="i" x1="48" y1="40" x2="112" y2="120" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#24BAFF"/><stop offset="1" stop-color="#1060D4"/></linearGradient>
+    </defs>
+    <polygon points="80,14 136,47 136,113 80,146 24,113 24,47" fill="#010A16" stroke="url(#o)" stroke-width="3"/>
+    <polygon points="80,30 122,55 122,105 80,130 38,105 38,55" fill="#051C34" stroke="url(#i)" stroke-width="2"/>
+    <circle cx="80" cy="80" r="43" stroke="#1ED6FF" stroke-opacity="0.5" stroke-width="2" stroke-dasharray="10 7"/>
+    <circle cx="80" cy="80" r="30" stroke="#25E5FF" stroke-opacity="0.7" stroke-width="2"/>
+    <path d="M80 52C71.5 52 60 67.2 60 80C60 92.8 71.5 108 80 108C88.5 108 100 92.8 100 80C100 67.2 88.5 52 80 52Z" fill="#072139" stroke="#24E0FF" stroke-width="2"/>
+    <circle cx="80" cy="80" r="12" fill="#0AB6FF" stroke="#7DF2FF" stroke-width="2"/>
+    <circle cx="80" cy="80" r="5" fill="#001220"/>
+  </svg>
+  <h1>MADRS</h1>
+  <div class="sub">Security Platform</div>
+  <div class="desc">
+    نظام كشف الأنشطة الخبيثة والاستجابة لها<br>
+    Malicious Activity Detection &amp; Response System
+  </div>
+  <div class="desc" style="font-size:15px;">الوثيقة الفنية الشاملة — شرح كامل لجميع مكوّنات النظام وواجهاته</div>
+  <div class="meta">الإصدار 3.0 &nbsp;|&nbsp; 2026 &nbsp;|&nbsp; وثيقة فنية</div>
+</div>
+
+<!-- ============ الفهرس ============ -->
+
+<div style="background:#f7fafc;border:1px solid #d4dde6;border-radius:12px;padding:18px 26px;">
+<h1 style="font-size:24px;color:#06172e;border-bottom:3px solid #22b8cf;padding-bottom:10px;margin-top:10px;">الفهرس العام</h1>
+<p style="font-weight:bold;color:#0b2545;font-size:14px;">الجزء الأول — دليل النظام والواجهات</p>
+<ol style="font-size:13px;">
+<li>مقدمة عن النظام · المعمارية العامة · دورة الحياة</li>
+<li>Backend · ML Service · قاعدة البيانات · Firewall · RBAC</li>
+<li>شرح 21 واجهة (index، login، dashboard، alerts، scan، monitoring، incidents، firewall، training، analytics، MITRE، reports، response، classification، users، audit، webhooks، notifications، settings، contact)</li>
+<li>واجهات API الرئيسية · سيناريو Demo · التشغيل والإعداد</li>
+</ol>
+<p style="font-weight:bold;color:#0b2545;font-size:14px;margin-top:14px;">الجزء الثاني — التوثيق التقني العميق</p>
+<ol start="5" style="font-size:13px;">
+<li>Pipeline الكامل · التقاط الترافيك (NFStream)</li>
+<li>طبقات الكشف الثلاث: Safe-flow · XGBoost · مرشّحات الدقة</li>
+<li>ICMP Heuristics · Behavioral Baseline · MITRE Mapping</li>
+<li>نقل الكشف ML→Backend · Correlation (Incidents)</li>
+<li>Persistence + Audit · الحظر (nftables بالتفصيل)</li>
+<li>الحل الجماعي · الأرشفة · جدول كل الثوابت</li>
+</ol>
+</div>
+
+
+<!-- ============ 1. مقدمة ============ -->
+<h1 class="section">1. مقدمة عن النظام</h1>
+<p class="lead"><strong>MADRS</strong> هو منصة متكاملة للأمن السيبراني تجمع بين كشف التهديدات باستخدام الذكاء الاصطناعي، والاستجابة التلقائية، وإدارة التنبيهات والحوادث، والتوثيق وإصدار التقارير.</p>
+<p>يعمل النظام على تحليل حركة الشبكة (سواء حيّاً عبر بطاقة الشبكة أو من ملفات <code>PCAP</code> مسجّلة)، ويستخدم نموذج تعلّم آلي مُدرّب لتصنيف كل تدفّق شبكي إلى <strong>سليم (Benign)</strong> أو <strong>هجوم (Attack)</strong> مع تحديد نوع الهجوم ودرجة الخطورة ونسبة الثقة.</p>
+<h3>أبرز قدرات النظام:</h3>
+<ul>
+  <li><strong>كشف ذكي:</strong> تصنيف التدفقات باستخدام نموذج <code>XGBoost</code> مع كشف الشذوذ السلوكي.</li>
+  <li><strong>استجابة فعلية:</strong> حظر عناوين IP على مستوى نواة النظام عبر <code>nftables</code> فيوقف الترافيك حقيقةً.</li>
+  <li><strong>إدارة دورة حياة التنبيه:</strong> جديد ← قيد التحقيق ← محلول / إيجابية خاطئة.</li>
+  <li><strong>التعلّم المستمر:</strong> أرشفة التنبيهات المحلولة في بيانات تدريب لإعادة تدريب النموذج.</li>
+  <li><strong>تعدد المنظّمات (Multi-tenant):</strong> عزل بيانات كل منظمة عن الأخرى.</li>
+  <li><strong>التوثيق والتقارير:</strong> تقارير PDF و CSV احترافية.</li>
+  <li><strong>التكامل الخارجي:</strong> Webhooks وThreat Intelligence (AbuseIPDB).</li>
+</ul>
+
+<!-- ============ 2. المعمارية ============ -->
+<h1 class="section">2. المعمارية العامة</h1>
+<p>يتكوّن النظام من أربعة مكوّنات رئيسية تعمل معاً:</p>
+<table>
+  <thead><tr><th>المكوّن</th><th>التقنية</th><th>الوظيفة</th><th>المنفذ</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Frontend</strong></td><td>HTML / CSS / JavaScript</td><td>واجهات المستخدم والتفاعل</td><td>5500</td></tr>
+    <tr><td><strong>Backend</strong></td><td>Java / Spring Boot</td><td>منطق العمل، الـ API، الأمان، قاعدة البيانات</td><td>8080</td></tr>
+    <tr><td><strong>ML Service</strong></td><td>Python / FastAPI</td><td>التصنيف، المراقبة الحية، تحليل PCAP</td><td>8001</td></tr>
+    <tr><td><strong>Database</strong></td><td>PostgreSQL</td><td>تخزين كل البيانات</td><td>5432</td></tr>
+  </tbody>
+</table>
+<h3>كيف تتكامل المكوّنات؟</h3>
+<div class="flow">Frontend ⇄ Backend (REST + JWT) ⇄ ML Service (HTTP)<br>Backend ⇄ PostgreSQL (JPA) &nbsp;|&nbsp; Backend ⇄ nftables (sudo)</div>
+<ul>
+  <li>تتواصل <strong>الواجهات</strong> مع <strong>الـ Backend</strong> عبر REST API مع توثيق <code>JWT</code>.</li>
+  <li>يطلب <strong>الـ Backend</strong> التصنيفات من <strong>ML Service</strong>، ويخزّن النتائج في <strong>قاعدة البيانات</strong>.</li>
+  <li>عند اتخاذ قرار الحظر، يطبّق <strong>الـ Backend</strong> قاعدة على <strong>nftables</strong> في نواة النظام.</li>
+</ul>
+
+<!-- ============ 3. دورة الحياة ============ -->
+<h1 class="section">3. دورة حياة الكشف والاستجابة</h1>
+<p>هذه هي الرحلة الكاملة لأي هجمة داخل النظام:</p>
+<div class="flow">كشف الترافيك → تصنيف ML → إنشاء تنبيه → تحقيق المحلل → قرار (حظر/حل) → أرشفة في التدريب → تقرير</div>
+<ol>
+  <li><strong>الكشف:</strong> تُلتقط التدفقات حيّاً أو من ملف PCAP.</li>
+  <li><strong>التصنيف:</strong> يحدّد النموذج النوع والخطورة ونسبة الثقة.</li>
+  <li><strong>إنشاء التنبيه:</strong> يُحفظ تنبيه جديد إن تجاوز عتبة الثقة، ولم يكن مصدره محظوراً مسبقاً.</li>
+  <li><strong>التحقيق:</strong> يفحص المحلل التفاصيل ويضيف ملاحظات وتغذية راجعة.</li>
+  <li><strong>الاستجابة:</strong> حظر الـ IP، أو حل التنبيه، أو وسمه كإيجابية خاطئة.</li>
+  <li><strong>الحظر الجماعي:</strong> عند حظر IP، تُحلّ تلقائياً كل تنبيهاته المفتوحة وتُؤرشف.</li>
+  <li><strong>الأرشفة:</strong> تُخزّن التنبيهات المحلولة في <code>ml_training_data</code> مع القرار والاستجابة.</li>
+  <li><strong>التقرير:</strong> يُصدَّر تقرير PDF/CSV للتوثيق.</li>
+</ol>
+<div class="note"><strong>ميزة مهمة:</strong> حل تنبيه واحد من 100 هجمة متكرّرة من نفس المصدر والنوع يحلّها جميعاً ويؤرشفها دفعة واحدة، بدل تكرار نفس العمل 100 مرة.</div>
+<div class="note"><strong>ميزة مهمة:</strong> عنوان IP المحظور لا يظهر مرة أخرى كتنبيه جديد، لأن النظام يتجاهل ترافيكه قبل إنشاء التنبيه.</div>
+
+<!-- ============ 4. Backend ============ -->
+<h1 class="section">4. المكوّن الخلفي (Backend / Spring Boot)</h1>
+<p>الـ Backend هو قلب النظام، ومسؤول عن منطق العمل، الأمان، والتواصل مع قاعدة البيانات و ML Service. وهو مبني بلغة <strong>Java</strong> باستخدام إطار <strong>Spring Boot</strong>.</p>
+<h3>أهم المتحكّمات (Controllers):</h3>
+<table>
+  <thead><tr><th>المتحكّم</th><th>الوظيفة</th></tr></thead>
+  <tbody>
+    <tr><td><code>AuthController</code></td><td>تسجيل الدخول والتسجيل وإصدار توكن JWT</td></tr>
+    <tr><td><code>AlertController</code></td><td>إدارة التنبيهات: قائمة، تفاصيل، تحديث حالة، تعليقات، تصدير</td></tr>
+    <tr><td><code>ScanController</code></td><td>رفع وتحليل ملفات PCAP</td></tr>
+    <tr><td><code>MonitorController</code></td><td>التحكم في المراقبة الحية (تشغيل/إيقاف/حالة)</td></tr>
+    <tr><td><code>IncidentController</code></td><td>إدارة الحوادث (تجميعات التنبيهات)</td></tr>
+    <tr><td><code>FirewallController</code></td><td>حظر/فك حظر عناوين IP</td></tr>
+    <tr><td><code>MlTrainingController</code></td><td>بيانات تدريب النموذج وتصديرها CSV</td></tr>
+    <tr><td><code>AnalyticsController</code></td><td>مؤشرات الأداء والاتجاهات</td></tr>
+    <tr><td><code>ReportController</code></td><td>إصدار تقارير PDF و CSV</td></tr>
+    <tr><td><code>UserController</code> / <code>OrganizationController</code></td><td>إدارة المستخدمين والمنظمات</td></tr>
+    <tr><td><code>AuditLogController</code></td><td>سجل التدقيق للإجراءات الحساسة</td></tr>
+    <tr><td><code>WebhookController</code></td><td>إدارة تكاملات الإشعارات الخارجية</td></tr>
+    <tr><td><code>ThreatIntelController</code></td><td>سمعة عناوين IP (AbuseIPDB)</td></tr>
+    <tr><td><code>SettingsController</code></td><td>إعدادات المنصة</td></tr>
+    <tr><td><code>CompanyRequestController</code></td><td>طلبات إنشاء حسابات المؤسسات وإرسال بريد الترحيب</td></tr>
+    <tr><td><code>HealthController</code> / <code>MetricsController</code></td><td>صحة النظام ومقاييسه</td></tr>
+  </tbody>
+</table>
+<h3>أهم الخدمات (Services):</h3>
+<ul>
+  <li><strong>AlertService:</strong> إنشاء/تحديث التنبيهات، تجاهل المحظورين، والحل الجماعي للتنبيهات المتشابهة.</li>
+  <li><strong>BlockedIpService:</strong> الحظر/فك الحظر، تطبيق قواعد nftables، وحل التنبيهات وأرشفتها عند الحظر.</li>
+  <li><strong>MlTrainingService:</strong> أرشفة التنبيهات المحلولة مع كامل السياق والقرار.</li>
+  <li><strong>ScanService:</strong> معالجة ملفات PCAP وتحويل التدفقات إلى تنبيهات.</li>
+  <li><strong>LiveMonitorService:</strong> جلب الكشوفات الحية من ML Service وتحويلها لتنبيهات.</li>
+  <li><strong>ReportExportService:</strong> توليد تقارير PDF.</li>
+  <li><strong>ThreatIntelService:</strong> الاستعلام عن سمعة عناوين IP.</li>
+  <li><strong>CompanyRequestService:</strong> إنشاء المنظمة والمستخدم المدير وإرسال بريد الترحيب.</li>
+</ul>
+
+<!-- ============ 5. ML Service ============ -->
+<h1 class="section">5. خدمة الذكاء الاصطناعي (ML Service)</h1>
+<p>خدمة مستقلة مبنية بـ <strong>Python / FastAPI</strong>، مسؤولة عن كل ما يتعلق بالتعلّم الآلي والتقاط الشبكة.</p>
+<h3>وظائفها:</h3>
+<ul>
+  <li><strong>تحميل النموذج:</strong> نموذج <code>XGBoost</code> مُدرّب مع قائمة الميزات (features).</li>
+  <li><strong>التصنيف:</strong> استقبال ميزات التدفق وإرجاع التصنيف ونسبة الثقة.</li>
+  <li><strong>المراقبة الحية:</strong> التقاط الحزم من بطاقة الشبكة، استخراج التدفقات، وتصنيفها على دفعات.</li>
+  <li><strong>الكشف السلوكي:</strong> قياس خط أساس للسلوك واكتشاف الشذوذ (مثل ICMP flood أو port scan).</li>
+  <li><strong>تحليل PCAP:</strong> قراءة الملف، استخراج التدفقات، والتصنيف.</li>
+</ul>
+<h3>كيف يعمل التقاط الشبكة؟</h3>
+<p>تحتاج الخدمة صلاحية التقاط الحزم الخام. يُمنح مفسّر Python صلاحية <code>CAP_NET_RAW</code> عبر سكربت <code>scripts/grant-capture-perms.sh</code> ليعمل الالتقاط دون تشغيل كامل بصلاحية الجذر.</p>
+<div class="warn"><strong>ملاحظة أداء:</strong> لتسريع تحليل ملفات PCAP الكبيرة، يكون <code>SHAP</code> وعيّنات الحمولة معطّلة افتراضياً، مع الحفاظ على الإحصاءات والتفسير المبسّط للتنبيهات.</div>
+
+<!-- ============ 6. Database ============ -->
+<h1 class="section">6. قاعدة البيانات (PostgreSQL)</h1>
+<p>قاعدة البيانات هي <code>ai_ids</code>، والمستخدم <code>aisec</code>. يُهيّأ المخطّط عبر ملف <code>db/init.sql</code>.</p>
+<h3>أهم الجداول:</h3>
+<table>
+  <thead><tr><th>الجدول</th><th>المحتوى</th></tr></thead>
+  <tbody>
+    <tr><td><code>alerts</code></td><td>التنبيهات: النوع، المصدر، الخطورة، الثقة، الحالة، الوصف</td></tr>
+    <tr><td><code>alert_comments</code></td><td>تعليقات وملاحظات التحقيق على التنبيهات</td></tr>
+    <tr><td><code>blocked_ips</code></td><td>عناوين IP المحظورة وسبب ومصدر الحظر</td></tr>
+    <tr><td><code>ml_training_data</code></td><td>التنبيهات المؤرشفة لإعادة تدريب النموذج مع القرار والاستجابة</td></tr>
+    <tr><td><code>incidents</code></td><td>الحوادث (تجميع تنبيهات مترابطة)</td></tr>
+    <tr><td><code>users</code> / <code>organizations</code></td><td>المستخدمون والمنظمات</td></tr>
+    <tr><td><code>audit_log</code></td><td>سجل الإجراءات الحساسة</td></tr>
+    <tr><td><code>ip_reputation</code></td><td>سمعة عناوين IP المخزّنة مؤقتاً</td></tr>
+  </tbody>
+</table>
+
+<!-- ============ 7. Firewall ============ -->
+<h1 class="section">7. الجدار الناري (Firewall / nftables)</h1>
+<p>عند حظر عنوان IP، لا يكتفي النظام بتسجيله في قاعدة البيانات، بل يطبّق قاعدة فعلية على نواة لينكس عبر <code>nftables</code> لإسقاط ترافيك ذلك العنوان قبل وصوله لأي خدمة.</p>
+<h3>كيف يعمل؟</h3>
+<ul>
+  <li>يُنشأ جدول <code>inet aisec</code> يحتوي مجموعتين: <code>aisec_block_v4</code> و <code>aisec_block_v6</code>.</li>
+  <li>تُطبّق قواعد <code>drop</code> على ثلاث سلاسل: <strong>input</strong> (الوارد)، <strong>output</strong> (الصادر)، <strong>forward</strong> (المُمرَّر).</li>
+  <li>عند الحظر، يُضاف العنوان للمجموعة المناسبة فيُسقَط ترافيكه فوراً.</li>
+</ul>
+<h3>متطلبات التفعيل:</h3>
+<pre>sudo tee /etc/sudoers.d/aisec-nft &lt;&lt;'EOF'
+mohamed ALL=(root) NOPASSWD: /usr/sbin/nft
+EOF
+sudo chmod 0440 /etc/sudoers.d/aisec-nft</pre>
+<div class="warn"><strong>هام:</strong> بدون هذه الصلاحية يعمل النظام بوضع تسجيل في قاعدة البيانات فقط (NoOp) دون إيقاف فعلي للترافيك.</div>
+
+<!-- ============ 8. Security ============ -->
+<h1 class="section">8. الأمان والصلاحيات (Security &amp; RBAC)</h1>
+<ul>
+  <li><strong>المصادقة:</strong> عبر <code>JWT</code> يُصدر عند تسجيل الدخول ويُرفق مع كل طلب.</li>
+  <li><strong>تشفير كلمات المرور:</strong> باستخدام خوارزمية تجزئة آمنة قبل التخزين.</li>
+  <li><strong>عزل المنظمات:</strong> كل مستخدم يرى بيانات منظمته فقط.</li>
+  <li><strong>سجل التدقيق:</strong> تسجيل كل عملية حساسة (دخول، حظر، تعديل تنبيه).</li>
+</ul>
+<table>
+  <thead><tr><th>الدور</th><th>يرى</th><th>يعدّل</th><th>صفحات خاصة</th></tr></thead>
+  <tbody>
+    <tr><td><strong>ADMIN</strong></td><td>كل شيء</td><td>كل شيء</td><td>Settings, Audit, Webhooks</td></tr>
+    <tr><td><strong>ORG_ADMIN</strong></td><td>منظمته فقط</td><td>مستخدمي منظمته</td><td>Audit, Webhooks</td></tr>
+    <tr><td><strong>ANALYST</strong></td><td>منظمته فقط</td><td>التنبيهات والحوادث</td><td>—</td></tr>
+    <tr><td><strong>VIEWER</strong></td><td>منظمته فقط</td><td>قراءة فقط</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<!-- ============ 9. الواجهات ============ -->
+<h1 class="section">9. شرح تفصيلي لكل الواجهات</h1>
+<p class="lead">فيما يلي شرح مفصّل لكل صفحة في النظام: الغرض منها، وأهم عناصرها، والإجراءات المتاحة فيها.</p>
+
+<h2>9.1 الصفحة التعريفية (index.html)</h2>
+<p><strong>الغرض:</strong> صفحة الهبوط التعريفية بالمنصة.</p>
+<ul>
+  <li><strong>Hero:</strong> عنوان رئيسي يعرّف بـ MADRS وقدراته.</li>
+  <li><strong>الإحصاءات:</strong> أرقام تعريفية عن النظام.</li>
+  <li><strong>الأقسام:</strong> الميزات، كيف يعمل، الدعوة للإجراء.</li>
+  <li><strong>زر Login:</strong> ينقل لصفحة تسجيل الدخول.</li>
+</ul>
+
+<h2>9.2 تسجيل الدخول (login.html)</h2>
+<p><strong>الغرض:</strong> الدخول للمنصة عبر بيانات الاعتماد.</p>
+<ul>
+  <li><strong>Username / Password:</strong> اسم المستخدم وكلمة المرور (مع إظهار/إخفاء).</li>
+  <li><strong>Remember me:</strong> حفظ الجلسة في المتصفح.</li>
+  <li><strong>Forgot Password:</strong> الانتقال لاستعادة كلمة المرور.</li>
+  <li><strong>Sign In:</strong> إرسال البيانات للتحقق وإصدار JWT.</li>
+  <li><strong>Request enterprise access:</strong> نموذج طلب حساب مؤسسي.</li>
+</ul>
+
+<h2>9.3 استعادة كلمة المرور (forgot-password / reset-password)</h2>
+<p><strong>الغرض:</strong> استعادة الوصول عند نسيان كلمة المرور.</p>
+<ul>
+  <li><strong>forgot-password:</strong> إدخال البريد لإرسال رابط الاستعادة.</li>
+  <li><strong>reset-password:</strong> تعيين كلمة مرور جديدة عبر الرابط.</li>
+</ul>
+
+<h2>9.4 لوحة التحكم (dashboard.html)</h2>
+<p><strong>الغرض:</strong> نظرة عامة فورية على حالة الأمان.</p>
+<ul>
+  <li><strong>KPIs:</strong> التنبيهات النشطة، التهديدات المحظورة، صحة النظام، متوسط وقت الاستجابة.</li>
+  <li><strong>Threat Activity:</strong> رسم بياني للهجمات والحجب (24 ساعة / 7 / 30 يوم).</li>
+  <li><strong>Attack Types:</strong> رسم دائري لتوزيع أنواع الهجمات.</li>
+  <li><strong>Recent Alerts / Activity Log:</strong> أحدث التنبيهات وسجل النشاط.</li>
+  <li><strong>Notifications:</strong> الإشعارات مع تعيين الكل كمقروء.</li>
+</ul>
+
+<h2>9.5 التنبيهات (alerts.html)</h2>
+<p><strong>الغرض:</strong> إدارة والتحقيق في كل تنبيهات الأمان.</p>
+<ul>
+  <li><strong>Severity Pills:</strong> عدّاد لكل مستوى: Critical / High / Medium / Low.</li>
+  <li><strong>أدوات:</strong> بحث، تصفية حسب الخطورة، ترتيب، تصدير CSV، إظهار/إخفاء أعمدة.</li>
+  <li><strong>إجراءات جماعية:</strong> Investigate، Resolve، False Positive، Clear.</li>
+  <li><strong>الجدول:</strong> المعرّف، النوع، الخطورة، المصدر، الحالة، المسؤول، الوقت، الإجراءات.</li>
+  <li><strong>نافذة التفاصيل:</strong> تعيين لمحلل، تغذية راجعة لـ ML، ملاحظات التحقيق، وأزرار تغيير الحالة.</li>
+</ul>
+<div class="note">عند حل تنبيه أو وسمه إيجابية خاطئة، يُؤرشف تلقائياً في بيانات التدريب، وتُحلّ معه التنبيهات المتشابهة من نفس المصدر والنوع.</div>
+
+<h2>9.6 مسح PCAP (scan.html)</h2>
+<p><strong>الغرض:</strong> رفع ملفات الشبكة المسجّلة لتحليلها بالذكاء الاصطناعي.</p>
+<ul>
+  <li><strong>منطقة الرفع:</strong> سحب وإفلات أو تصفّح. الصيغ: .pcap / .pcapng / .cap.</li>
+  <li><strong>Min Confidence:</strong> أقل نسبة ثقة تُقبل لتحويل النتيجة إلى تنبيه.</li>
+  <li><strong>Limit per run:</strong> حدّ عدد التدفقات المعالجة.</li>
+  <li><strong>التقدم:</strong> رفع ← تحليل AI ← حفظ التنبيهات.</li>
+  <li><strong>النتائج:</strong> إجمالي التدفقات، السليمة، الهجمات، متوسط الثقة، وجدول الهجمات المكتشفة.</li>
+</ul>
+
+<h2>9.7 المراقبة الحية (monitoring.html)</h2>
+<p><strong>الغرض:</strong> مراقبة الشبكة وصحة النظام لحظياً.</p>
+<ul>
+  <li><strong>اختيار البطاقة:</strong> Network Interface وأزرار Start / Stop.</li>
+  <li><strong>المؤشرات الحية:</strong> إجمالي التدفقات، السليمة، الهجمات، تدفقات/ثانية، هجمات/ثانية، عمق الطابور.</li>
+  <li><strong>Sparkline:</strong> ترافيك آخر 60 ثانية.</li>
+  <li><strong>Recent Detections:</strong> أحدث الكشوفات.</li>
+  <li><strong>حالة الخدمات:</strong> CPU، الذاكرة، الشبكة، القرص، وحالة كل خدمة.</li>
+</ul>
+
+<h2>9.8 الحوادث (incidents.html / incident.html)</h2>
+<p><strong>الغرض:</strong> عرض الحوادث كتجميعات لتنبيهات مترابطة.</p>
+<ul>
+  <li><strong>incidents:</strong> قائمة الحوادث مع البحث والتصفية حسب الحالة.</li>
+  <li><strong>بطاقة الحادث:</strong> العنوان، IP المصدر، عائلة الهجوم، عدد التنبيهات، الحالة، الوقت.</li>
+  <li><strong>incident:</strong> صفحة تفاصيل حادث واحد مع تنبيهاته وخط زمنه.</li>
+</ul>
+
+<h2>9.9 الجدار الناري (firewall.html)</h2>
+<p><strong>الغرض:</strong> إدارة عناوين IP المحظورة.</p>
+<ul>
+  <li><strong>قائمة المحظورين:</strong> العنوان، السبب، المصدر، التاريخ، السمعة.</li>
+  <li><strong>Block IP:</strong> حظر عنوان جديد يدوياً.</li>
+  <li><strong>Unblock:</strong> فك الحظر وإزالة قاعدة nftables.</li>
+</ul>
+<div class="note">الحظر هنا فعلي على مستوى النواة: يُسقَط ترافيك العنوان المحظور قبل وصوله لأي خدمة على الجهاز.</div>
+
+<h2>9.10 بيانات التدريب (training.html)</h2>
+<p><strong>الغرض:</strong> أرشيف التنبيهات المحلولة لإعادة تدريب النموذج.</p>
+<ul>
+  <li><strong>KPIs:</strong> إجمالي السجلات، الهجمات المؤكّدة، الإيجابيات الخاطئة.</li>
+  <li><strong>الجدول:</strong> النوع، التصنيف الحقيقي، الخطورة، الثقة، المصدر، البروتوكول، تكتيك MITRE، القرار، الإجراء، وقت الحل.</li>
+  <li><strong>لوحة التفاصيل:</strong> السياق الكامل للهجمة + القرار + الإجراء + الوصف.</li>
+  <li><strong>Export CSV:</strong> تصدير كل البيانات لإعادة التدريب.</li>
+</ul>
+
+<h2>9.11 التحليلات (analytics.html)</h2>
+<p><strong>الغرض:</strong> مؤشرات تشغيلية واتجاهات.</p>
+<ul>
+  <li><strong>KPIs:</strong> متوسط زمن الحل (MTTR)، الإجمالي، اليوم الأكثر ازدحاماً، المهاجمون الفريدون.</li>
+  <li><strong>الرسوم:</strong> حجم التنبيهات اليومي، اتجاه الخطورة.</li>
+  <li><strong>Top Attackers:</strong> أكثر عناوين IP هجوماً.</li>
+</ul>
+
+<h2>9.12 MITRE ATT&amp;CK (mitre.html)</h2>
+<p><strong>الغرض:</strong> ربط الهجمات بإطار MITRE ATT&amp;CK.</p>
+<ul>
+  <li><strong>التكتيكات والتقنيات:</strong> عرض التكتيك (Tactic) والتقنية (Technique) لكل نوع هجوم.</li>
+  <li><strong>الخريطة:</strong> ربط التنبيهات بمعرّفات MITRE مثل <code>T1498</code>.</li>
+</ul>
+
+<h2>9.13 التقارير (reports.html)</h2>
+<p><strong>الغرض:</strong> إنشاء وتصدير تقارير الأمان.</p>
+<ul>
+  <li><strong>Export CSV / Generate PDF:</strong> تصدير التقارير.</li>
+  <li><strong>KPIs:</strong> إجمالي الحوادث، معدل الحظر، متوسط الاستجابة، التهديدات النشطة.</li>
+  <li><strong>الرسوم:</strong> اتجاهات الحوادث، توزيع التهديدات.</li>
+  <li><strong>جدول التقارير الأخيرة:</strong> الاسم، النوع، التاريخ، الحجم، الإجراءات.</li>
+</ul>
+
+<h2>9.14 الاستجابة (response.html)</h2>
+<p><strong>الغرض:</strong> عرض خطة الاستجابة للحوادث.</p>
+<ul>
+  <li><strong>خطوات تلقائية ويدوية:</strong> ما نفّذه النظام وما يحتاج تدخّل المحلل.</li>
+  <li><strong>الموافقات والخطوات التالية:</strong> سير عمل الاستجابة.</li>
+  <li><strong>تصدير PDF لخطة الاستجابة.</strong></li>
+</ul>
+
+<h2>9.15 التصنيف والتحليل (classification.html / analysis.html)</h2>
+<p><strong>الغرض:</strong> عرض تصنيفات النموذج وتحليل مفصّل للتدفقات.</p>
+<ul>
+  <li><strong>classification:</strong> نتائج التصنيف وتوزيع الأنواع.</li>
+  <li><strong>analysis:</strong> تحليل أعمق لميزات التدفق والتفسير.</li>
+</ul>
+
+<h2>9.16 المستخدمون (users.html)</h2>
+<p><strong>الغرض:</strong> إدارة مستخدمي المنظمة.</p>
+<ul>
+  <li><strong>Add User:</strong> إضافة مستخدم جديد.</li>
+  <li><strong>الجدول:</strong> الاسم، البريد، الدور، المنظمة، الحالة، آخر دخول.</li>
+  <li><strong>الإجراءات:</strong> تعديل، حذف، إعادة تعيين كلمة المرور.</li>
+</ul>
+
+<h2>9.17 سجل التدقيق (audit.html)</h2>
+<p><strong>الغرض:</strong> سجل ثابت لكل الإجراءات الحساسة.</p>
+<ul>
+  <li><strong>عدّادات:</strong> دخول ناجح/فاشل، تجاوز حدّ الطلبات.</li>
+  <li><strong>تصفية حسب الإجراء:</strong> LOGIN_OK، LOGIN_FAIL، ALERT_STATUS، FIREWALL_BLOCK ... إلخ.</li>
+  <li><strong>الجدول:</strong> الوقت، الإجراء، المنفّذ، المورد، IP المصدر، التفاصيل.</li>
+</ul>
+
+<h2>9.18 Webhooks (webhooks.html)</h2>
+<p><strong>الغرض:</strong> إرسال التنبيهات لأنظمة خارجية.</p>
+<ul>
+  <li><strong>New Webhook:</strong> إنشاء تكامل جديد.</li>
+  <li><strong>الإعدادات:</strong> الاسم، الرابط، القالب (Preset)، أدنى خطورة، التفعيل، السر (HMAC-SHA256).</li>
+  <li><strong>الإجراءات:</strong> تعديل، تدوير السر، حذف.</li>
+</ul>
+
+<h2>9.19 الإشعارات (notifications.html)</h2>
+<p><strong>الغرض:</strong> عرض وإدارة الإشعارات.</p>
+<ul>
+  <li><strong>Mark all read:</strong> تعيين الكل كمقروء.</li>
+  <li><strong>قائمة الإشعارات:</strong> أيقونة حسب الخطورة، عنوان، وقت، زر انتقال.</li>
+</ul>
+
+<h2>9.20 الإعدادات (settings.html)</h2>
+<p><strong>الغرض:</strong> تكوين المنصة (للمسؤول).</p>
+<ul>
+  <li><strong>الأقسام:</strong> إعدادات JWT، تحديد معدّل الطلبات، GeoIP، البريد، إعادة محاولة Webhook، عتبة إعادة تدريب ML.</li>
+</ul>
+
+<h2>9.21 الاتصال (contact.html)</h2>
+<p><strong>الغرض:</strong> التواصل مع فريق الدعم.</p>
+<ul>
+  <li><strong>النموذج:</strong> الموضوع، الرسالة، إرسال.</li>
+</ul>
+
+<!-- ============ 10. APIs ============ -->
+<h1 class="section">10. واجهات الـ API الرئيسية</h1>
+<p>كل الطلبات تمرّ عبر المسار الأساسي <code>/api</code> وتتطلب توكن JWT (عدا الدخول والتسجيل).</p>
+<table>
+  <thead><tr><th>الطريقة</th><th>المسار</th><th>الوظيفة</th></tr></thead>
+  <tbody>
+    <tr><td>POST</td><td><code>/api/auth/login</code></td><td>تسجيل الدخول وإصدار JWT</td></tr>
+    <tr><td>GET</td><td><code>/api/alerts</code></td><td>قائمة التنبيهات (مع تصفية وترقيم)</td></tr>
+    <tr><td>PATCH</td><td><code>/api/alerts/{id}</code></td><td>تحديث حالة/بيانات تنبيه</td></tr>
+    <tr><td>POST</td><td><code>/api/scan</code></td><td>رفع وتحليل ملف PCAP</td></tr>
+    <tr><td>POST</td><td><code>/api/monitor/start</code></td><td>بدء المراقبة الحية</td></tr>
+    <tr><td>POST</td><td><code>/api/monitor/stop</code></td><td>إيقاف المراقبة الحية</td></tr>
+    <tr><td>GET</td><td><code>/api/monitor/status</code></td><td>حالة المراقبة</td></tr>
+    <tr><td>POST</td><td><code>/api/firewall/block</code></td><td>حظر عنوان IP</td></tr>
+    <tr><td>DELETE</td><td><code>/api/firewall/{id}</code></td><td>فك حظر عنوان IP</td></tr>
+    <tr><td>GET</td><td><code>/api/training-data</code></td><td>قائمة بيانات التدريب</td></tr>
+    <tr><td>GET</td><td><code>/api/training-data/export.csv</code></td><td>تصدير بيانات التدريب CSV</td></tr>
+    <tr><td>GET</td><td><code>/api/analytics</code></td><td>مؤشرات الأداء والاتجاهات</td></tr>
+    <tr><td>GET</td><td><code>/api/reports/...</code></td><td>تصدير تقارير PDF</td></tr>
+    <tr><td>POST</td><td><code>/api/company-request</code></td><td>طلب حساب مؤسسي</td></tr>
+  </tbody>
+</table>
+
+<!-- ============ 11. Demo ============ -->
+<h1 class="section">11. سيناريو عرض كامل (Demo)</h1>
+<p>سيناريو مقترح لعرض النظام من البداية للنهاية:</p>
+<ol>
+  <li>تفريغ البيانات للبدء من نظافة (alerts / training / blocked_ips).</li>
+  <li>تشغيل المراقبة الحية من صفحة <strong>Monitoring</strong> على بطاقة الشبكة.</li>
+  <li>تنفيذ هجمة من جهاز آخر (مثل ICMP Flood أو Port Scan).</li>
+  <li>ظهور التنبيه في صفحة <strong>Alerts</strong> مع تفاصيله.</li>
+  <li>حظر عنوان المهاجم عبر <strong>Block IP</strong>.</li>
+  <li>التأكد أن الترافيك توقّف فعلياً (ping يفشل من جهاز المهاجم).</li>
+  <li>تحوّل التنبيهات إلى <strong>Resolved</strong> تلقائياً.</li>
+  <li>ظهور السجل في <strong>Training Data</strong> مع القرار <code>BLOCKED</code>.</li>
+  <li>إصدار تقرير <strong>PDF</strong> للتوثيق.</li>
+</ol>
+<div class="flow">Detected → Alert → Block IP → Traffic Dropped → Resolved → Archived → Report</div>
+
+<!-- ============ 12. التشغيل ============ -->
+<h1 class="section">12. التشغيل والإعداد</h1>
+<h3>المنافذ الافتراضية:</h3>
+<table>
+  <thead><tr><th>الخدمة</th><th>العنوان</th></tr></thead>
+  <tbody>
+    <tr><td>Frontend</td><td><code>http://127.0.0.1:5500</code></td></tr>
+    <tr><td>Backend</td><td><code>http://127.0.0.1:8080</code></td></tr>
+    <tr><td>ML Service</td><td><code>http://127.0.0.1:8001</code></td></tr>
+    <tr><td>PostgreSQL</td><td><code>127.0.0.1:5432</code> (قاعدة <code>ai_ids</code>)</td></tr>
+  </tbody>
+</table>
+<h3>التحقق من الجاهزية:</h3>
+<pre>curl http://127.0.0.1:8080/actuator/health   # Backend
+curl http://127.0.0.1:8001/health             # ML Service</pre>
+<div class="note">لتفعيل الحظر الفعلي على مستوى الشبكة، يجب منح صلاحية <code>nft</code> عبر sudoers كما في القسم 7.</div>
+
+<hr>
+<p style="text-align:center;color:#6f86a3;font-size:12px;">© 2026 MADRS — Malicious Activity Detection &amp; Response System — وثيقة فنية شاملة</p>
+
+<div style="page-break-before:always;page-break-after:always;text-align:center;
+padding:140px 30px;background:linear-gradient(135deg,#06172e,#0b2545,#06172e);
+color:#fff;min-height:92vh;">
+<div style="font-size:90px;color:rgba(34,184,207,.12);font-weight:900;line-height:1;">II</div>
+<h1 style="font-size:36px;color:#22b8cf;margin:16px 0;">الجزء الثاني</h1>
+<p style="font-size:17px;color:#9fb0c5;line-height:2.2;">
+التوثيق التقني العميق<br>
+<span style="font-size:14px;color:#7ecde6;">كيف يكتشف · كيف يربط · كيف يسجّل · كيف يحظر<br>مبني على الكود الفعلي</span>
+</p>
+</div>
+
+<!-- ===== الغلاف ===== -->
+
+  <div class="desc">التوثيق التقني العميق<br>كيف يكتشف النظام الهجمات، ويربطها، ويسجّلها، ويحظرها</div>
+  <div class="desc" style="font-size:14px;">وثيقة دراسية مبنية على الكود الفعلي للنظام</div>
+  <div class="meta">الإصدار 3.0 &nbsp;|&nbsp; 2026</div>
+</div>
+
+<!-- ===== الفهرس ===== -->
+<div class="toc">
+<h1 class="section" style="page-break-before:avoid;">الفهرس</h1>
+<ol>
+  <li>نظرة عامة على خط أنابيب المعالجة (Pipeline)</li>
+  <li>المرحلة 1: التقاط الترافيك واستخراج التدفقات</li>
+  <li>المرحلة 2: كيف يكتشف النظام الهجمات (طبقات الكشف)
+    <ul>
+      <li>2.1 الطبقة الأولى: قائمة التدفقات الآمنة</li>
+      <li>2.2 الطبقة الثانية: تصنيف الذكاء الاصطناعي (XGBoost)</li>
+      <li>2.3 الطبقة الثالثة: مرشّحات الدقة</li>
+      <li>2.4 كشف ICMP الإرشادي (Heuristics)</li>
+      <li>2.5 كشف الشذوذ السلوكي (Behavioral Baseline)</li>
+    </ul>
+  </li>
+  <li>المرحلة 3: تحديد الخطورة وربط MITRE ATT&amp;CK</li>
+  <li>المرحلة 4: نقل الكشف من ML إلى Backend</li>
+  <li>المرحلة 5: كيف تُربط الهجمات (Correlation / Incidents)</li>
+  <li>المرحلة 6: كيف تُسجّل التنبيهات (Persistence + Audit)</li>
+  <li>المرحلة 7: كيف يعمل الحظر (Blocking + nftables)</li>
+  <li>المرحلة 8: الحل الجماعي والأرشفة في التدريب</li>
+  <li>ملخص الثوابت والمعاملات (Tunables)</li>
+</ol>
+</div>
+
+<!-- ===== 1. Pipeline ===== -->
+<h1 class="section">1. نظرة عامة على خط أنابيب المعالجة</h1>
+<p class="lead">يمرّ كل تدفّق شبكي عبر سلسلة مراحل واضحة من لحظة التقاطه حتى إصدار التقرير. هذه الوثيقة تتتبّع هذه الرحلة بالتفصيل التقني المبني على الكود الفعلي.</p>
+<div class="flow">
+[NIC] → التقاط الحزم → استخراج التدفق (NFStream)<br>
+↓<br>
+طبقات الكشف: آمن؟ → ML → مرشّحات الدقة → ICMP/سلوكي<br>
+↓<br>
+خطورة + MITRE → كشف (detection) في طابور ML<br>
+↓<br>
+Backend يسحب كل ثانية → convertToAlert → AlertService.save<br>
+↓<br>
+ربط (Incident) → حفظ → حظر تلقائي (HIGH/CRITICAL) → بث → Webhook<br>
+↓<br>
+تحقيق المحلل → حظر/حل → nftables drop → أرشفة تدريب → تقرير
+</div>
+<p>المكوّنان الأساسيان في هذه الرحلة:</p>
+<ul>
+  <li><strong>ML Service</strong> (Python): <code>live_monitor.py</code> — الكشف والتصنيف.</li>
+  <li><strong>Backend</strong> (Java): <code>LiveMonitorService</code>، <code>AlertService</code>، <code>IncidentService</code>، <code>BlockedIpService</code>، <code>NftablesEnforcer</code>.</li>
+</ul>
+
+<!-- ===== 2. Capture ===== -->
+<h1 class="section">2. المرحلة 1: التقاط الترافيك واستخراج التدفقات</h1>
+<p>تلتقط خدمة ML الحزم الخام من بطاقة الشبكة. ولأن الالتقاط يتطلب صلاحيات منخفضة المستوى، يُمنح مفسّر Python القدرة <code>CAP_NET_RAW</code> عبر السكربت <code>scripts/grant-capture-perms.sh</code> دون تشغيل النظام كله بصلاحية الجذر.</p>
+<p>تُجمَّع الحزم في <strong>تدفّقات (Flows)</strong> باستخدام مكتبة NFStream. التدفّق هو محادثة شبكية بين طرفين، ويُستخرَج منه عشرات الميزات الإحصائية (عدد الحزم، البايتات، التوقيتات، أعلام TCP ...) إضافةً إلى بيانات وصفية:</p>
+<pre>_flow_meta(flow) → {
+  src_ip, dst_ip, src_port, dst_port, protocol,
+  app_name, app_category,            # NFStream nDPI
+  server_name (TLS SNI / HTTP Host),
+  ja3_client (JA3 fingerprint), ...
+}</pre>
+<p class="src">المصدر: ml-service/app/services/live_monitor.py → _flow_meta()</p>
+
+<!-- ===== 3. Detection ===== -->
+<h1 class="section">3. المرحلة 2: كيف يكتشف النظام الهجمات</h1>
+<p class="lead">الكشف ليس قراراً واحداً، بل سلسلة طبقات تصفية تهدف إلى <strong>دقة عالية وضوضاء منخفضة</strong> (تقليل الإنذارات الكاذبة). تُنفَّذ كلها داخل دالة <code>_classify_batch()</code>.</p>
+
+<h2>2.1 الطبقة الأولى: قائمة التدفقات الآمنة</h2>
+<p>قبل استدعاء النموذج إطلاقاً، تُستبعَد تدفقات معروفة أنها حميدة لتجنّب إنذارات كاذبة، لأن مجموعة التدريب CICIDS2017 لم تتضمّن بروتوكولات الشبكة المحلية:</p>
+<ul>
+  <li>عناوين <strong>Multicast</strong> (224.0.0.0 – 239.255.255.255) و IPv6 multicast (<code>ff00::/8</code>).</li>
+  <li>عناوين <strong>Broadcast</strong> (255.255.255.255).</li>
+  <li>عناوين <strong>Link-local</strong> (169.254.0.0/16) ومنها نقطة بيانات السحابة 169.254.169.254.</li>
+  <li>بروتوكولات اكتشاف محلية (mDNS, LLMNR, SSDP).</li>
+</ul>
+<p>كل تدفّق يطابق هذه القائمة يُصنَّف <code>Benign</code> فوراً دون استنتاج ML.</p>
+<p class="src">المصدر: _is_safe_flow() + SAFE_DST_EXACT</p>
+
+<h2>2.2 الطبقة الثانية: تصنيف الذكاء الاصطناعي (XGBoost)</h2>
+<p>التدفقات غير الآمنة تُحوَّل إلى مصفوفة ميزات رقمية بالترتيب نفسه الذي دُرّب عليه النموذج، ثم تُمرَّر إلى نموذج <strong>XGBoost</strong>:</p>
+<pre>names = ml_service.feature_names
+X = np.array([[float(f.get(n, 0.0)) for n in names] for f in feats])
+ml_preds = ml_service._predict_array(X)
+# كل تنبؤ: { predicted: "DDoS", confidence: 0.93, ... }</pre>
+<p>يُخرج النموذج لكل تدفّق: <strong>التصنيف</strong> (نوع الهجوم أو Benign) و<strong>نسبة الثقة</strong> (0 إلى 1).</p>
+<p class="src">المصدر: _classify_batch() + ml_service._predict_array()</p>
+
+<h2>2.3 الطبقة الثالثة: مرشّحات الدقة</h2>
+<p>حتى بعد أن يقول النموذج "هجوم"، تمرّ النتيجة عبر ثلاث بوابات صارمة قبل اعتمادها كتنبيه:</p>
+<table>
+  <thead><tr><th>البوابة</th><th>الشرط</th><th>الغرض</th></tr></thead>
+  <tbody>
+    <tr><td><strong>مرشّح ردّ الخادم</strong></td><td>منفذ المصدر منفذ خدمة معروف والوجهة منفذ عابر (≥1024)</td><td>تجاهل ترافيك ردود الخوادم الذي يخطئ النموذج في تصنيفه</td></tr>
+    <tr><td><strong>بوابة الثقة</strong></td><td><code>confidence ≥ 0.80</code> (MIN_CONFIDENCE)</td><td>إسقاط التنبؤات منخفضة الثقة</td></tr>
+    <tr><td><strong>التحقّق بالتكرار</strong></td><td>≥ <code>2</code> تدفقات بنفس النوع من نفس المصدر خلال <code>60</code> ثانية</td><td>منع إنذار من تدفّق شاذّ منفرد</td></tr>
+  </tbody>
+</table>
+<p>إذا فشلت أي بوابة، يُحتسب التدفّق <code>Benign</code> ولا يُنشأ تنبيه. هذه الطبقة هي سرّ انخفاض الإنذارات الكاذبة في النظام.</p>
+<pre>if confidence &lt; MIN_CONFIDENCE:        # بوابة الثقة
+    self._benign += 1; continue
+hits = self._attack_hits[(src_ip, label)]   # بوابة التكرار
+hits.append(now)
+if len(hits) &lt; MIN_REPEAT:
+    continue
+# ← فقط الآن يُعتبر هجوماً مؤكداً</pre>
+<p class="src">المصدر: _is_response_flow() + Layer 2/3 في _classify_batch()</p>
+
+<h2>2.4 كشف ICMP الإرشادي (Heuristics)</h2>
+<p>هجمات ICMP (مثل ping flood / sweep) لا يلتقطها النموذج جيداً، فيُستخدم منطق إرشادي يتجاوز النموذج ويُصدر تنبيهاً فورياً (دون انتظار بوابة التكرار):</p>
+<table>
+  <thead><tr><th>المعامل</th><th>القيمة</th><th>المعنى</th></tr></thead>
+  <tbody>
+    <tr><td><code>ICMP_FLOOD_PKTS</code></td><td>15</td><td>عدد حزم في تدفّق واحد يكفي لاعتباره فيضاناً</td></tr>
+    <tr><td><code>ICMP_PROBE_THRESHOLD</code></td><td>3</td><td>تدفقات ICMP لوجهة واحدة خلال النافذة → فيضان</td></tr>
+    <tr><td><code>ICMP_SWEEP_HOSTS</code></td><td>3</td><td>عدد المضيفين الذين يلمسهم مصدر واحد → مسح</td></tr>
+    <tr><td><code>ICMP_WINDOW_SEC</code></td><td>15</td><td>النافذة الزمنية المنزلقة للحساب</td></tr>
+  </tbody>
+</table>
+<p class="src">المصدر: _apply_icmp_heuristics()</p>
+
+<h2>2.5 كشف الشذوذ السلوكي (Behavioral Baseline)</h2>
+<p>يقيس النظام خط أساس لمعدّل التدفقات الطبيعي، فإذا قفز المعدّل الحالي بمقدار معامل الطفرة فوق الأساس (وتجاوز 20 تدفق/دقيقة)، يُصدر تنبيه <code>Behavioral Anomaly</code> بخطورة <strong>MEDIUM</strong> وتقنية <code>T1046</code>، حتى لو لم يتعرّف النموذج على نوع محدد:</p>
+<pre>if current_rate &gt;= baseline_rate * BASELINE_SPIKE_FACTOR and current_rate &gt; 20:
+    confidence = min(0.95, 0.70 + 0.05 * (...))
+    → { predicted: "Behavioral Anomaly", severity: "MEDIUM",
+        mitre_technique: "T1046", tactic: "Discovery" }</pre>
+<p class="src">المصدر: كشف الطفرة في live_monitor.py (~سطر 1262)</p>
+
+<!-- ===== 4. Severity & MITRE ===== -->
+<h1 class="section">4. المرحلة 3: تحديد الخطورة وربط MITRE ATT&amp;CK</h1>
+<p>بمجرّد تحديد نوع الهجوم، تُربط به تلقائياً خطورته وتقنية وتكتيك MITRE ATT&amp;CK من جدول ثابت عبر الدالة <code>enrich(label)</code>:</p>
+<table>
+  <thead><tr><th>النوع</th><th>التقنية</th><th>التكتيك</th><th>الخطورة</th></tr></thead>
+  <tbody>
+    <tr><td>Brute Force</td><td>T1110</td><td>Credential Access</td><td>High</td></tr>
+    <tr><td>Port Scan</td><td>T1046</td><td>Discovery</td><td>Medium</td></tr>
+    <tr><td>DDoS</td><td>T1498</td><td>Impact</td><td>High</td></tr>
+    <tr><td>ICMP Flood</td><td>T1498.001</td><td>Impact</td><td>High</td></tr>
+    <tr><td>ICMP Sweep</td><td>T1018</td><td>Discovery</td><td>Medium</td></tr>
+    <tr><td>DoS</td><td>T1499</td><td>Impact</td><td>High</td></tr>
+    <tr><td>Web Attack</td><td>T1190</td><td>Initial Access</td><td>High</td></tr>
+    <tr><td>SQL Injection</td><td>T1190</td><td>Initial Access</td><td>High</td></tr>
+    <tr><td>Command Injection</td><td>T1059</td><td>Execution</td><td>Critical</td></tr>
+    <tr><td>Ransomware</td><td>T1486</td><td>Impact</td><td>Critical</td></tr>
+    <tr><td>Malware</td><td>T1105</td><td>Command and Control</td><td>Critical</td></tr>
+    <tr><td>Data Exfiltration</td><td>T1041</td><td>Exfiltration</td><td>Critical</td></tr>
+    <tr><td>ARP Spoofing</td><td>T1557.002</td><td>Credential Access</td><td>High</td></tr>
+  </tbody>
+</table>
+<p>هذا الربط هو ما يجعل كل تنبيه مفهوماً ضمن إطار معياري عالمي، ويُمكّن صفحة <code>mitre.html</code> من عرض التكتيكات والتقنيات.</p>
+<p class="src">المصدر: ml-service/app/services/mitre.py → MITRE_MAPPING + enrich()</p>
+
+<!-- ===== 5. ML→Backend ===== -->
+<h1 class="section">5. المرحلة 4: نقل الكشف من ML إلى Backend</h1>
+<p>الكشوفات المؤكّدة تُوضَع في طابور <code>_pending</code> داخل خدمة ML. أما الـ Backend فيسحبها دورياً:</p>
+<ul>
+  <li>يفحص <code>LiveMonitorService.pollDetections()</code> كل <strong>ثانية واحدة</strong> حالة المراقبة.</li>
+  <li>إن كانت تعمل، يسحب حتى 200 كشف عبر <code>monitorDrain(200)</code>.</li>
+  <li>مع دفعة المصنّف كل 150ms في ML، يظهر الهجوم في الواجهة خلال <strong>~1.2 ثانية</strong> من نهاية تدفّقه.</li>
+</ul>
+<p>تُحوَّل كل خريطة كشف إلى كيان <code>Alert</code> عبر <code>convertToAlert()</code>:</p>
+<pre>Alert a = new Alert();
+a.setAttackType(d.get("predicted"));
+a.setSourceIp(d.get("src_ip"));
+a.setDestIp(d.get("dst_ip"));
+a.setDestPort(...); a.setProtocol(...);
+a.setConfidence(d.get("confidence"));
+a.setSeverity(parseSeverity(d.get("severity")));
+a.setMitreTechnique(d.get("mitre_technique"));
+a.setMitreTactic(d.get("mitre_tactic"));
+a.setStatus(AlertStatus.NEW);
+alertService.save(a);</pre>
+<p class="src">المصدر: backend/.../service/LiveMonitorService.java</p>
+<div class="note"><strong>مسار PCAP:</strong> تحليل الملفات يتبع نفس المنطق لكن عبر <code>ScanService</code> الذي يستدعي <code>bulkSaveFromScan()</code> لإدراج دفعة واحدة بكفاءة.</div>
+
+<!-- ===== 6. Correlation ===== -->
+<h1 class="section">6. المرحلة 5: كيف تُربط الهجمات (Correlation)</h1>
+<p class="lead">بدل إغراق المحلل بآلاف التنبيهات المنفردة، يجمّع النظام التنبيهات المترابطة في <strong>حوادث (Incidents)</strong>. هذا يحاكي طريقة عمل مراكز العمليات الأمنية الناضجة.</p>
+<h3>قاعدة الربط (محافِظة، دقّة عالية):</h3>
+<p>عند كل تنبيه، تُستدعى <code>IncidentService.correlate()</code> التي تعمل بمنطق مفتاحين:</p>
+<ol>
+  <li><strong>المفتاح الأساسي:</strong> نفس (عنوان المصدر + عائلة الهجوم + المنظمة) ضمن نافذة <strong>ساعة واحدة</strong> ← دمج (نفس المهاجم يكرّر).</li>
+  <li><strong>المفتاح الموزّع:</strong> نفس (الوجهة + العائلة) بسابقة <code>dist:</code> ← يُفعَّل فقط لعائلات موزّعة (DDoS/DoS/Brute/Flood/Scan) لرصد هجوم من مصادر متعددة على هدف واحد.</li>
+</ol>
+<h3>عائلة الهجوم (Attack Family):</h3>
+<p>هي نوع الهجوم بعد إزالة اللاحقة الفرعية: <code>"DoS Hulk"</code> و <code>"DoS slowloris"</code> ← كلاهما عائلة <code>"DoS"</code>. هذا يجمع موجة هجمات متنوعة في سجل واحد.</p>
+<h3>مفتاح الربط (Correlation Key):</h3>
+<pre>raw = srcIp + "|" + family + "|" + orgId
+key = SHA-256(raw)[:40]   // 40 حرفاً سداسياً</pre>
+<h3>عند الدمج (Rollup):</h3>
+<ul>
+  <li>زيادة عدّاد التنبيهات <code>alertCount++</code>.</li>
+  <li>تحديث وقت آخر تنبيه <code>lastAlertAt</code>.</li>
+  <li>تصعيد الخطورة للأعلى إن كان التنبيه الجديد أشدّ.</li>
+</ul>
+<div class="note">يعمل <code>correlate()</code> في معاملة مستقلة <code>REQUIRES_NEW</code> حتى لا يُفسد تصادم مفتاح فريد (متوقّع أثناء الإدراج المتزامن) معاملة حفظ التنبيه بأكملها — وهذا يحمي مسح ملفات PCAP الكبيرة من الفشل الكامل.</div>
+<p class="src">المصدر: backend/.../service/IncidentService.java</p>
+
+<!-- ===== 7. Persistence ===== -->
+<h1 class="section">7. المرحلة 6: كيف تُسجّل التنبيهات</h1>
+<p>كل التنبيهات تمرّ عبر نقطة دخول واحدة: <code>AlertService.save()</code>. خطواتها بالترتيب:</p>
+<ol>
+  <li><strong>فحص الحظر:</strong> إن كان المصدر محظوراً مسبقاً، يُتجاهل التنبيه ويعود <code>null</code> (المحظور لا يظهر كهجمة جديدة).</li>
+  <li><strong>الربط:</strong> استدعاء <code>incidents.correlate(a)</code> وربط الحادث قبل الحفظ.</li>
+  <li><strong>الحفظ:</strong> <code>repo.save(a)</code> في جدول <code>alerts</code>.</li>
+  <li><strong>الحظر التلقائي:</strong> إن كانت الخطورة <strong>HIGH</strong> أو <strong>CRITICAL</strong> يُستدعى <code>firewall.autoBlock()</code>.</li>
+  <li><strong>البثّ اللحظي:</strong> <code>broadcaster.broadcast()</code> لتحديث الواجهة فوراً.</li>
+  <li><strong>Webhook:</strong> إرسال للأنظمة الخارجية (fire-and-forget).</li>
+  <li><strong>إثراء GeoIP:</strong> تعبئة بلد المصدر/الوجهة بشكل غير متزامن.</li>
+  <li><strong>سمعة IP:</strong> تسخين ذاكرة Threat Intel.</li>
+</ol>
+<pre>public AlertDto save(Alert a) {
+  if (firewall.isBlocked(a.getSourceIp(), orgId)) return null;   // 1
+  a.setIncident(incidents.correlate(a));                          // 2
+  Alert saved = repo.save(a);                                     // 3
+  if (severity == HIGH || severity == CRITICAL)
+      firewall.autoBlock(saved, ...);                             // 4
+  broadcaster.broadcast(dto, orgId);                              // 5
+  webhooks.dispatchAlert(dto, orgId);                             // 6
+  geoIp.enrichAsync(...);  threatIntel.lookup(...);               // 7,8
+}</pre>
+<h3>سجل التدقيق (Audit Log):</h3>
+<p>كل عملية حساسة تُسجَّل في جدول <code>audit_log</code> عبر <code>audit.log(action, resource, id, details)</code>. أمثلة على الإجراءات: <code>ALERT_STATUS</code>، <code>ALERT_UPDATE</code>، <code>FIREWALL_BLOCK</code>، <code>FIREWALL_AUTOBLOCK</code>، <code>FIREWALL_UNBLOCK</code>، <code>ALERT_AUTO_RESOLVE</code>.</p>
+<p class="src">المصدر: backend/.../service/AlertService.java → save()</p>
+
+<!-- ===== 8. Blocking ===== -->
+<h1 class="section">8. المرحلة 7: كيف يعمل الحظر</h1>
+<p class="lead">الحظر في MADRS ليس مجرد علامة في قاعدة البيانات — بل قاعدة فعلية في نواة لينكس تُسقط الحزم.</p>
+
+<h2>8.1 الحظر اليدوي (BlockedIpService.block)</h2>
+<ol>
+  <li><strong>التطبيع:</strong> <code>normalise()</code> تنظّف العنوان وترفض المدخلات غير الصالحة.</li>
+  <li><strong>منع التكرار (Idempotency):</strong> إعادة حظر عنوان محظور تُحدّث بياناته فقط دون صفّ مكرّر.</li>
+  <li><strong>حلّ التنبيهات:</strong> <code>autoResolveAlerts()</code> تُحلّ كل تنبيهات هذا المصدر المفتوحة وتُلحق وسماً <code>[firewall:block#ID]</code> بالوصف وتؤرشفها في التدريب.</li>
+  <li><strong>حلّ الحوادث:</strong> <code>autoResolveIncidents()</code> تُغلق الحوادث المرتبطة.</li>
+  <li><strong>التطبيق الفعلي:</strong> <code>enforcer.applyBlock(ip)</code> يدفع القاعدة لنواة النظام.</li>
+  <li><strong>التدقيق:</strong> تسجيل <code>FIREWALL_BLOCK</code> مع عدد ما حُلّ.</li>
+</ol>
+
+<h2>8.2 الحظر التلقائي (autoBlock)</h2>
+<p>يُستدعى تلقائياً للتنبيهات <strong>HIGH/CRITICAL</strong> فقط (الخطورات الأدنى مزعجة وقد تسبب حظراً خاطئاً). تتجاهل الدالة العناوين غير القابلة للحظر عبر <code>isUnsafeForAutoBlock()</code>:</p>
+<ul>
+  <li>Loopback (<code>127.</code>, <code>::1</code>)، Link-local (<code>169.254.</code>)، Multicast/Broadcast.</li>
+  <li>القيمة <code>0.0.0.0</code> أو <code>MULTIPLE</code> أو IPv6 link-local (<code>fe80</code>).</li>
+</ul>
+<div class="note">عناوين الشبكة الداخلية (RFC1918) <strong>مسموح حظرها</strong> لأن النظام يُستخدم غالباً لاحتواء مهاجم داخلي.</div>
+
+<h2>8.3 التطبيق على نواة النظام (NftablesEnforcer)</h2>
+<p>يُنشئ المُنفِّذ جدول <code>inet aisec</code> ومجموعتين <code>aisec_block_v4</code> و <code>aisec_block_v6</code>، ثم قواعد <code>drop</code> على <strong>ثلاث سلاسل</strong>:</p>
+<table>
+  <thead><tr><th>السلسلة</th><th>الاتجاه</th><th>الحالة المستهدفة</th></tr></thead>
+  <tbody>
+    <tr><td><strong>input</strong></td><td>وارد من المهاجم</td><td><code>ip saddr @set drop</code></td></tr>
+    <tr><td><strong>output</strong></td><td>صادر نحو الهدف</td><td><code>ip daddr @set drop</code> (حين يكون جهازنا هو المهاجم)</td></tr>
+    <tr><td><strong>forward</strong></td><td>ترافيك مُمرَّر</td><td>عزل عبر ARP spoofing</td></tr>
+  </tbody>
+</table>
+<pre>// تطبيق حظر عنوان:
+nft add element inet aisec aisec_block_v4 { 192.168.1.110 }
+// كل أوامر nft تمرّ عبر: sudo -n /usr/sbin/nft ...</pre>
+<p>عند الإقلاع، يُزامن <code>syncEnforcerOnStartup()</code> النواة مع قاعدة البيانات: يُفرّغ المجموعات ثم يعيد إضافة كل العناوين النشطة، فلا تبقى قواعد قديمة عالقة.</p>
+<div class="warn"><strong>شرط التفعيل:</strong> يحتاج مستخدم الـ Backend صلاحية sudoers:<br><code>mohamed ALL=(root) NOPASSWD: /usr/sbin/nft</code><br>بدونها يسقط النظام إلى <code>NoOpFirewallEnforcer</code> (تسجيل فقط دون إسقاط فعلي).</div>
+<p class="src">المصدر: backend/.../service/firewall/NftablesEnforcer.java + BlockedIpService.java</p>
+
+<!-- ===== 9. Group resolve ===== -->
+<h1 class="section">9. المرحلة 8: الحل الجماعي والأرشفة في التدريب</h1>
+<h3>الحل الجماعي (closeRelatedAlerts):</h3>
+<p>عند حلّ تنبيه أو وسمه إيجابية خاطئة، لا يُحلّ وحده. تبحث <code>closeRelatedAlerts()</code> عن كل التنبيهات المفتوحة بنفس (المصدر + النوع) في المنظمة، وتُغلقها جميعاً، وتؤرشفها، ثم تحذف صفوفها من قائمة التنبيهات النشطة:</p>
+<pre>related = repo.findOpenBySourceIpAndAttackType(srcIp, attackType, orgId, open);
+for (Alert alert : related) {
+    alert.setStatus(status);                 // RESOLVED / FALSE_POSITIVE
+    alert.setResolvedAt(resolvedAt);
+    mlTraining.archiveAlert(saved);          // أرشفة في التدريب
+    deleteAlertRow(saved);                   // إزالة من النشط
+}</pre>
+<div class="note">النتيجة: حل تنبيه واحد من 100 هجمة متكرّرة من نفس الجهاز والنوع يحلّها كلها ويؤرشفها دفعة واحدة.</div>
+<h3>الأرشفة في بيانات التدريب (MlTrainingService.archiveAlert):</h3>
+<p>تُخزَّن في جدول <code>ml_training_data</code> مع السياق الكامل: النوع، الخطورة، الثقة، البلد، الوصف، تغذية ML، المسؤول، الحادث، إضافةً إلى:</p>
+<ul>
+  <li><strong>responseDecision:</strong> يُشتقّ كالتالي:
+    <ul>
+      <li><code>BLOCKED</code> إذا احتوى الوصف وسم <code>[firewall:block#id]</code>.</li>
+      <li><code>MARKED_FALSE_POSITIVE</code> للإيجابيات الخاطئة.</li>
+      <li><code>RESOLVED</code> للتنبيهات المحلولة دون حظر.</li>
+    </ul>
+  </li>
+  <li><strong>responseAction:</strong> وصف الإجراء المُتّخَذ.</li>
+</ul>
+<p>هذه البيانات تُصدَّر CSV عبر <code>MlTrainingController</code> وتُستخدم لإعادة تدريب النموذج — فيتعلّم النظام من قرارات المحلّلين، ويغلق حلقة <strong>الكشف ← الاستجابة ← التعلّم</strong>.</p>
+<p class="src">المصدر: AlertService.closeRelatedAlerts() + MlTrainingService.archiveAlert()</p>
+
+<!-- ===== 10. Tunables ===== -->
+<h1 class="section">10. ملخص الثوابت والمعاملات (Tunables)</h1>
+<table>
+  <thead><tr><th>المعامل</th><th>القيمة</th><th>الموقع</th><th>الأثر</th></tr></thead>
+  <tbody>
+    <tr><td><code>MIN_CONFIDENCE</code></td><td>0.80</td><td>live_monitor.py</td><td>أدنى ثقة لاعتماد تنبؤ ML</td></tr>
+    <tr><td><code>MIN_REPEAT</code></td><td>2</td><td>live_monitor.py</td><td>تكرارات لازمة لتأكيد الهجوم</td></tr>
+    <tr><td><code>REPEAT_WINDOW_SEC</code></td><td>60</td><td>live_monitor.py</td><td>نافذة احتساب التكرار</td></tr>
+    <tr><td><code>ICMP_FLOOD_PKTS</code></td><td>15</td><td>live_monitor.py</td><td>عتبة فيضان ICMP لتدفّق واحد</td></tr>
+    <tr><td><code>ICMP_PROBE_THRESHOLD</code></td><td>3</td><td>live_monitor.py</td><td>تدفقات ICMP لوجهة → فيضان</td></tr>
+    <tr><td><code>ICMP_SWEEP_HOSTS</code></td><td>3</td><td>live_monitor.py</td><td>مضيفون لمصدر واحد → مسح</td></tr>
+    <tr><td><code>MERGE_WINDOW</code></td><td>1 ساعة</td><td>IncidentService.java</td><td>نافذة دمج التنبيهات في حادث</td></tr>
+    <tr><td>عتبة الحظر التلقائي</td><td>HIGH / CRITICAL</td><td>AlertService.java</td><td>الخطورات التي تُحظر تلقائياً</td></tr>
+    <tr><td>فترة سحب الكشوفات</td><td>1 ثانية</td><td>LiveMonitorService.java</td><td>تردّد سحب Backend للكشوفات</td></tr>
+  </tbody>
+</table>
+
+<hr>
+<p style="text-align:center;color:#6f86a3;font-size:12px;">© 2026 MADRS — التوثيق التقني العميق — مبني على الكود الفعلي للنظام</p>
+</body>
+</html>

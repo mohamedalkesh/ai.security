@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Setup Wizard — MADRS</title>
+<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="login.css"/>
+<link rel="stylesheet" href="setup.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+</head>
+<body class="setup-body">
+
+<!-- Background -->
+<div class="bg-decor"><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div></div>
+
+<main class="setup-shell">
+  <!-- Brand -->
+  <div class="sw-brand">
+    <div class="sw-logo"><i class="fa-solid fa-shield-halved"></i></div>
+  </div>
+  <h1 class="sw-title">Setup Wizard</h1>
+  <p class="sw-sub">Configure your security monitoring system</p>
+
+  <!-- Stepper -->
+  <div class="stepper" id="stepper">
+    <div class="stp active" data-n="1">
+      <div class="stp-circle"><span>1</span><i class="fa-solid fa-check"></i></div>
+      <div class="stp-label">Welcome</div>
+    </div>
+    <div class="stp-line"></div>
+    <div class="stp" data-n="2">
+      <div class="stp-circle"><i class="fa-solid fa-diagram-project"></i></div>
+      <div class="stp-label">Method</div>
+    </div>
+    <div class="stp-line"></div>
+    <div class="stp" data-n="3">
+      <div class="stp-circle"><i class="fa-solid fa-gear"></i></div>
+      <div class="stp-label">Configuration</div>
+    </div>
+    <div class="stp-line"></div>
+    <div class="stp" data-n="4">
+      <div class="stp-circle"><i class="fa-solid fa-plug-circle-check"></i></div>
+      <div class="stp-label">Test Connection</div>
+    </div>
+    <div class="stp-line"></div>
+    <div class="stp" data-n="5">
+      <div class="stp-circle"><i class="fa-solid fa-circle-check"></i></div>
+      <div class="stp-label">Finish</div>
+    </div>
+  </div>
+
+  <!-- Step panels -->
+  <!-- STEP 1 -->
+  <section class="sw-panel step-panel active" data-step="1">
+    <h2 class="sp-title">Welcome to MADRS</h2>
+    <p class="sp-desc">This wizard will guide you through the process of connecting your network infrastructure to our AI-powered security monitoring system. The setup process takes about 5 minutes.</p>
+    <div class="welcome-grid">
+      <div class="wg-card">
+        <div class="wg-ico"><i class="fa-solid fa-diagram-project"></i></div>
+        <div class="wg-t">Network Setup</div>
+        <div class="wg-d">Configure network monitoring</div>
+      </div>
+      <div class="wg-card">
+        <div class="wg-ico"><i class="fa-solid fa-gear"></i></div>
+        <div class="wg-t">Configuration</div>
+        <div class="wg-d">Set up detection rules</div>
+      </div>
+      <div class="wg-card">
+        <div class="wg-ico"><i class="fa-solid fa-circle-check"></i></div>
+        <div class="wg-t">Activation</div>
+        <div class="wg-d">Start monitoring</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="sw-panel step-panel" data-step="2">
+    <h2 class="sp-title sp-left">Select Monitoring Method</h2>
+    <p class="sp-desc sp-left">Choose how you want to connect the security system to your network</p>
+    <div class="method-list">
+      <label class="method">
+        <input type="radio" name="method" value="sniffer" checked/>
+        <span class="radio"></span>
+        <div>
+          <div class="m-t">Network Sniffer <span class="m-rec">Recommended</span></div>
+          <div class="m-d">Direct packet capture from network interface</div>
+        </div>
+      </label>
+      <label class="method">
+        <input type="radio" name="method" value="syslog"/>
+        <span class="radio"></span>
+        <div>
+          <div class="m-t">Syslog Integration</div>
+          <div class="m-d">Receive logs from existing syslog server</div>
+        </div>
+      </label>
+      <label class="method">
+        <input type="radio" name="method" value="api"/>
+        <span class="radio"></span>
+        <div>
+          <div class="m-t">API Integration</div>
+          <div class="m-d">Connect via RESTful API</div>
+        </div>
+      </label>
+    </div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section class="sw-panel step-panel" data-step="3">
+    <h2 class="sp-title sp-left">Configuration Details</h2>
+    <p class="sp-desc sp-left">Enter the connection parameters for your selected method</p>
+    <div class="sw-form" id="configForm">
+      <!-- dynamic based on method -->
+    </div>
+  </section>
+
+  <!-- STEP 4 -->
+  <section class="sw-panel step-panel" data-step="4">
+    <h2 class="sp-title">Test Connection</h2>
+    <p class="sp-desc">Verify that the system can connect to your network</p>
+    <div class="test-wrap" id="testWrap">
+      <button class="test-btn" id="testBtn"><i class="fa-solid fa-plug"></i> Test Connection</button>
+      <div class="test-log" id="testLog" hidden></div>
+    </div>
+  </section>
+
+  <!-- STEP 5 -->
+  <section class="sw-panel step-panel" data-step="5">
+    <div class="finish-check"><i class="fa-solid fa-check"></i></div>
+    <h2 class="sp-title">Setup Complete!</h2>
+    <p class="sp-desc">Your MADRS is now configured and ready to protect your network. The system is actively monitoring for threats and will alert you of any suspicious activity.</p>
+    <div class="finish-grid">
+      <div class="fg-card"><div class="fg-big cyan">24/7</div><div class="fg-lbl">Active Monitoring</div></div>
+      <div class="fg-card"><div class="fg-big cyan">AI</div><div class="fg-lbl">Powered Detection</div></div>
+      <div class="fg-card"><div class="fg-big cyan">Real-time</div><div class="fg-lbl">Threat Response</div></div>
+    </div>
+  </section>
+
+  <!-- Nav -->
+  <div class="sw-nav">
+    <button class="sw-back" id="backBtn"><i class="fa-solid fa-arrow-left"></i> Back</button>
+    <span class="sw-step">Step <span id="stepNum">1</span> of 5</span>
+    <button class="sw-next" id="nextBtn">Next <i class="fa-solid fa-arrow-right"></i></button>
+  </div>
+</main>
+
+<div class="toast" id="toast"><i class="fa-solid fa-check-circle"></i> <span>Done</span></div>
+
+<script src="setup.js"></script>
+</body>
+</html>

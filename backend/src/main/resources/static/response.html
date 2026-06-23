@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Response Plan — MADRS</title>
+<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="dashboard.css"/>
+<link rel="stylesheet" href="alerts.css"/>
+<link rel="stylesheet" href="incident.css"/>
+<link rel="stylesheet" href="analysis.css"/>
+<link rel="stylesheet" href="classification.css"/>
+<link rel="stylesheet" href="mitre.css"/>
+<link rel="stylesheet" href="response.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+</head>
+<body class="dash-body">
+
+<div class="dash-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="side-brand">
+      <div class="brand-logo"><i class="fa-solid fa-shield-halved"></i></div>
+      <div><div class="side-title">MADRS</div><div class="side-sub">Incident Response</div></div>
+    </div>
+    <nav class="side-nav">
+      <a class="side-link" href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+      <a class="side-link active" href="alerts.html"><i class="fa-solid fa-triangle-exclamation"></i> Alerts </a>
+      <a class="side-link" href="scan.html"><i class="fa-solid fa-magnifying-glass-chart"></i> Scan PCAP</a>
+      <a class="side-link" href="monitoring.html"><i class="fa-solid fa-wave-square"></i> Monitoring</a>
+      <a class="side-link" href="reports.html"><i class="fa-solid fa-file-lines"></i> Reports</a>
+      <a class="side-link" href="users.html"><i class="fa-solid fa-users"></i> Users</a>
+      <a class="side-link" href="audit.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-clipboard-list"></i> Audit Log</a>
+      <a class="side-link" href="webhooks.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-bell"></i> Webhooks</a>
+      <a class="side-link" href="firewall.html"><i class="fa-solid fa-ban"></i> Firewall</a>
+      <a class="side-link" href="analytics.html"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
+      <a class="side-link" href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+      <a class="side-link" href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications</a>
+      <a class="side-link" href="contact.html"><i class="fa-solid fa-envelope"></i> Contact</a>
+    </nav>
+    <a href="index.html" class="side-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="dash-main">
+    <a href="#" id="backLink" class="back-link"><i class="fa-solid fa-arrow-left"></i> Back to Incident</a>
+
+    <header class="inc-header reveal">
+      <div class="inc-title">
+        <h1 class="resp-head"><span class="resp-logo"><i class="fa-solid fa-bolt"></i></span> Response Plan</h1>
+        <p class="muted">Incident: <span id="incRef" class="mono">—</span> · Automated &amp; Manual Response Steps</p>
+      </div>
+      <div class="inc-actions">
+        <button class="btn-action exec-all" id="execAll"><i class="fa-solid fa-circle-play"></i> Execute All Automated</button>
+        <button class="btn-action export-plan" id="exportPlan"><i class="fa-solid fa-file-export"></i> Export Plan</button>
+      </div>
+    </header>
+
+    <!-- Stats -->
+    <section class="stat-row">
+      <div class="panel reveal stat-summary">
+        <div class="ss-val" data-target="7">0</div>
+        <div class="ss-lbl">Total Steps</div>
+      </div>
+      <div class="panel reveal stat-summary">
+        <div class="ss-val cyan" data-target="5">0</div>
+        <div class="ss-lbl">Automated</div>
+      </div>
+      <div class="panel reveal stat-summary">
+        <div class="ss-val orange" data-target="2">0</div>
+        <div class="ss-lbl">Manual Required</div>
+      </div>
+      <div class="panel reveal stat-summary">
+        <div class="ss-val green">~<span data-target="21">0</span> min</div>
+        <div class="ss-lbl">Est. Completion</div>
+      </div>
+    </section>
+
+    <div class="inc-layout">
+      <!-- LEFT: Steps -->
+      <div class="inc-left">
+        <div id="stepsWrap"></div>
+      </div>
+
+      <!-- RIGHT -->
+      <aside class="inc-right">
+        <!-- Execution Timeline -->
+        <section class="panel reveal">
+          <div class="panel-head"><h3><i class="fa-regular fa-clock"></i> Execution Timeline</h3></div>
+          <div class="exec-phase green">
+            <div class="ep-head"><i class="fa-solid fa-circle-check"></i> Immediate (0-5 min)</div>
+            <div class="ep-desc">Critical actions: 2 steps</div>
+          </div>
+          <div class="exec-phase yellow">
+            <div class="ep-head"><i class="fa-solid fa-clock"></i> Short-term (5-15 min)</div>
+            <div class="ep-desc">High priority: 2 steps</div>
+          </div>
+          <div class="exec-phase blue">
+            <div class="ep-head"><i class="fa-solid fa-calendar-days"></i> Follow-up (15+ min)</div>
+            <div class="ep-desc">Medium/Low priority: 3 steps</div>
+          </div>
+        </section>
+
+        <!-- Impact Assessment -->
+        <section class="panel reveal">
+          <div class="panel-head"><h3><i class="fa-solid fa-chart-simple"></i> Impact Assessment</h3></div>
+          <div class="impact">
+            <div class="ia-head"><span>Service Disruption</span><span class="ia-lbl low">Low</span></div>
+            <div class="meter-bar"><span class="yellow" id="barSd" style="width:0"></span></div>
+          </div>
+          <div class="impact">
+            <div class="ia-head"><span>Data at Risk</span><span class="ia-lbl high">High</span></div>
+            <div class="meter-bar"><span class="red" id="barDr" style="width:0"></span></div>
+          </div>
+          <div class="impact">
+            <div class="ia-head"><span>Response Effectiveness</span><span class="ia-lbl high">High</span></div>
+            <div class="meter-bar"><span class="green" id="barRe" style="width:0"></span></div>
+          </div>
+        </section>
+
+        <!-- Approvals -->
+        <section class="panel reveal">
+          <div class="panel-head"><h3><i class="fa-solid fa-user-check"></i> Required Approvals</h3></div>
+          <div class="approvals">
+            <div class="app-row approved"><span>Step 1-2</span><i class="fa-solid fa-circle-check"></i></div>
+            <div class="app-row pending"><span>Step 3</span><span>Pending Admin</span></div>
+            <div class="app-row notreq"><span>Step 4-7</span><span>Not Required</span></div>
+          </div>
+        </section>
+
+        <!-- Actions -->
+        <section class="panel reveal">
+          <div class="panel-head"><h3><i class="fa-solid fa-gear"></i> Actions</h3></div>
+          <div class="next-steps">
+            <button class="ns-btn green" id="approveAll"><i class="fa-solid fa-circle-check"></i> Approve All</button>
+            <button class="ns-btn dark" id="scheduleExec"><i class="fa-regular fa-calendar"></i> Schedule Execution</button>
+            <button class="ns-btn cyan" id="backBtn2"><i class="fa-solid fa-arrow-left"></i> Back to Incident</button>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </main>
+</div>
+
+<!-- Execute overlay -->
+<div class="deep-overlay" id="execOverlay">
+  <div class="deep-card">
+    <div class="deep-spinner"><div></div><div></div><div></div></div>
+    <h2 id="execTitle">Executing Automated Steps</h2>
+    <p class="muted" id="execStep">Initializing playbook...</p>
+    <div class="deep-bar"><span id="execBar"></span></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="fa-solid fa-check-circle"></i> <span>Action triggered</span></div>
+
+<script src="env-config.js"></script>
+<script src="api.js"></script>
+<script src="response.js"></script>
+</body>
+</html>

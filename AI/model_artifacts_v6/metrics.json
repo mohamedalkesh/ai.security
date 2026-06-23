@@ -1,0 +1,24 @@
+{
+  "accuracy": 0.999190507216332,
+  "f1_macro": 0.9956501480380985,
+  "labels": [
+    "Benign",
+    "Bot",
+    "Brute Force",
+    "DDoS",
+    "DoS",
+    "Port Scan",
+    "XSS"
+  ],
+  "xgb_weight": 0.49999999949999996,
+  "lgbm_weight": 0.49999999949999996,
+  "per_class_thresholds": {
+    "Benign": 0.47,
+    "Bot": 0.52,
+    "Brute Force": 0.47,
+    "DDoS": 0.3,
+    "DoS": 0.64,
+    "Port Scan": 0.56,
+    "XSS": 0.3
+  }
+}

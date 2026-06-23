@@ -122,16 +122,22 @@
         <span class="live-dot" id="monitorLiveDot" style="display:none"></span>
       </div>
       <div style="padding:20px 22px">
-        <div style="display:flex;gap:12px;align-items:end;margin-bottom:16px">
-          <div style="flex:1">
-            <label style="display:block;font-size:12px;font-weight:600;color:#8ea0b8;margin-bottom:6px">Network Interface</label>
-            <select id="monitorIface" class="form-select" style="width:100%;padding:10px 14px;background:#0d1b2e;border:1px solid #1e3557;border-radius:8px;color:#fff;font-size:14px">
-              <option value="">Loading interfaces...</option>
-            </select>
+        <div style="display:flex;gap:12px;align-items:start;margin-bottom:16px;flex-wrap:wrap">
+          <div style="flex:1;min-width:220px">
+            <label style="display:block;font-size:12px;font-weight:600;color:#8ea0b8;margin-bottom:6px">
+              Network Interfaces <span style="font-weight:400;color:#506a8a">— select one or more</span>
+            </label>
+            <div id="monitorIfaceList" style="background:#0d1b2e;border:1px solid #1e3557;border-radius:8px;padding:8px 12px;display:flex;flex-wrap:wrap;gap:8px;min-height:42px;align-items:center">
+              <span style="color:#506a8a;font-size:13px">Loading interfaces…</span>
+            </div>
           </div>
-          <button id="monitorStartBtn" class="btn-primary" style="padding:10px 20px"><i class="fa-solid fa-play"></i> Start</button>
-          <button id="monitorStopBtn" class="btn-secondary" style="padding:10px 20px;display:none"><i class="fa-solid fa-stop"></i> Stop</button>
-          <button id="monitorAutostartBtn" class="btn-secondary" style="padding:10px 16px" title="Save as auto-start interface on boot"><i class="fa-solid fa-bookmark"></i> Set as Default</button>
+          <div style="display:flex;flex-direction:column;gap:8px;padding-top:22px">
+            <div style="display:flex;gap:8px">
+              <button id="monitorStartBtn" class="btn-primary" style="padding:10px 20px"><i class="fa-solid fa-play"></i> Start</button>
+              <button id="monitorStopBtn" class="btn-secondary" style="padding:10px 20px;display:none"><i class="fa-solid fa-stop"></i> Stop</button>
+              <button id="monitorAutostartBtn" class="btn-secondary" style="padding:10px 16px" title="Save selected interfaces as default on boot"><i class="fa-solid fa-bookmark"></i> Set as Default</button>
+            </div>
+          </div>
         </div>
         <div class="stat-row" style="margin-top:16px">
           <div class="metric-card-sm">
@@ -165,6 +171,14 @@
           <div class="metric-card-sm">
             <div class="mc-lbl">Total Volume</div>
             <div class="mc-val-sm" id="monTotalBytes">0 B</div>
+          </div>
+          <div class="metric-card-sm" title="Percentage of flows that reached the classifier without being dropped">
+            <div class="mc-lbl">Capture Quality</div>
+            <div class="mc-val-sm" style="color:#10b981" id="monCaptureQuality">100%</div>
+          </div>
+          <div class="metric-card-sm" title="Flows dropped because the classifier queue was full">
+            <div class="mc-lbl">Dropped Flows</div>
+            <div class="mc-val-sm" style="color:#f59e0b" id="monDropped">0</div>
           </div>
         </div>
 

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Reports &amp; Analytics — MADRS</title>
+<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="dashboard.css"/>
+<link rel="stylesheet" href="alerts.css"/>
+<link rel="stylesheet" href="monitoring.css"/>
+<link rel="stylesheet" href="incident.css"/>
+<link rel="stylesheet" href="analysis.css"/>
+<link rel="stylesheet" href="reports.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body class="dash-body">
+
+<div class="dash-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="side-brand">
+      <div class="brand-logo"><i class="fa-solid fa-shield-halved"></i></div>
+      <div><div class="side-title">MADRS</div><div class="side-sub">Incident Response</div></div>
+    </div>
+    <nav class="side-nav">
+      <a class="side-link" href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+      <a class="side-link" href="alerts.html"><i class="fa-solid fa-triangle-exclamation"></i> Alerts </a>
+      <a class="side-link" href="scan.html"><i class="fa-solid fa-magnifying-glass-chart"></i> Scan PCAP</a>
+      <a class="side-link" href="monitoring.html"><i class="fa-solid fa-wave-square"></i> Monitoring</a>
+      <a class="side-link active" href="reports.html"><i class="fa-solid fa-file-lines"></i> Reports</a>
+      <a class="side-link" href="users.html"><i class="fa-solid fa-users"></i> Users</a>
+      <a class="side-link" href="audit.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-clipboard-list"></i> Audit Log</a>
+      <a class="side-link" href="webhooks.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-bell"></i> Webhooks</a>
+      <a class="side-link" href="firewall.html"><i class="fa-solid fa-ban"></i> Firewall</a>
+      <a class="side-link" href="analytics.html"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
+      <a class="side-link" href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+      <a class="side-link" href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications</a>
+      <a class="side-link" href="contact.html"><i class="fa-solid fa-envelope"></i> Contact</a>
+    </nav>
+    <a href="index.html" class="side-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="dash-main">
+    <header class="dash-top">
+      <div>
+        <h1>Reports &amp; Analytics</h1>
+        <p class="muted">Generate and view security reports</p>
+      </div>
+      <div class="top-actions">
+        <button class="btn-action export-mitre" id="genCsv"><i class="fa-solid fa-file-csv"></i> Export CSV</button>
+        <button class="btn-action export-mitre" id="genReport"><i class="fa-solid fa-file-pdf"></i> Generate PDF Report</button>
+      </div>
+    </header>
+
+    <!-- Stats -->
+    <section class="stat-row">
+      <div class="panel reveal kpi">
+        <div class="kpi-val" data-target="0">0</div>
+        <div class="kpi-lbl">Total Incidents</div>
+        <div class="kpi-trend up"><i class="fa-solid fa-arrow-trend-up"></i> —</div>
+      </div>
+      <div class="panel reveal kpi">
+        <div class="kpi-val green"><span data-target="0" data-float="1">0</span>%</div>
+        <div class="kpi-lbl">Block Rate</div>
+        <div class="kpi-trend up"><i class="fa-solid fa-arrow-trend-up"></i> —</div>
+      </div>
+      <div class="panel reveal kpi">
+        <div class="kpi-val cyan"><span data-target="0" data-float="1">0</span>s</div>
+        <div class="kpi-lbl">Avg Response Time</div>
+        <div class="kpi-trend down"><i class="fa-solid fa-arrow-trend-down"></i> —</div>
+      </div>
+      <div class="panel reveal kpi">
+        <div class="kpi-val orange" data-target="0">0</div>
+        <div class="kpi-lbl">Active Threats</div>
+        <div class="kpi-trend up red"><i class="fa-solid fa-arrow-trend-up"></i> —</div>
+      </div>
+    </section>
+
+    <!-- Charts -->
+    <section class="chart-row">
+      <div class="panel panel-wide reveal">
+        <div class="panel-head">
+          <h3><i class="fa-solid fa-chart-column"></i> Incident Trends</h3>
+          <div class="select-mini small">
+            <select id="trendRange">
+              <option>Last 4 Months</option>
+              <option>Last 6 Months</option>
+              <option>Last 12 Months</option>
+            </select>
+            <i class="fa-solid fa-chevron-down caret"></i>
+          </div>
+        </div>
+        <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
+        <div class="legend">
+          <span><i class="dot red"></i> Incidents</span>
+          <span><i class="dot cyan"></i> Blocked</span>
+        </div>
+      </div>
+
+      <div class="panel reveal">
+        <div class="panel-head"><h3><i class="fa-solid fa-chart-pie"></i> Threat Distribution</h3></div>
+        <div class="donut-wrap"><canvas id="distChart"></canvas>
+          <div class="donut-center">
+            <div class="d-num">0</div>
+            <div class="d-lbl muted sm">Threats</div>
+          </div>
+        </div>
+        <ul class="dist-legend" id="distLegend"></ul>
+      </div>
+    </section>
+
+    <!-- Recent Reports -->
+    <section class="panel reveal table-panel">
+      <div class="panel-head" style="padding:20px 22px 0">
+        <h3><i class="fa-regular fa-folder-open"></i> Recent Reports</h3>
+        <div class="rp-actions">
+          <button class="chip-btn"><i class="fa-solid fa-filter"></i> Filter</button>
+          <button class="chip-btn"><i class="fa-regular fa-calendar"></i> Date Range</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="alerts-table reports-table">
+          <thead>
+            <tr>
+              <th>REPORT NAME</th>
+              <th>TYPE</th>
+              <th>DATE</th>
+              <th>SIZE</th>
+              <th class="right">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="reportsBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Generate Report overlay -->
+<div class="deep-overlay" id="genOverlay">
+  <div class="deep-card">
+    <div class="deep-spinner"><div></div><div></div><div></div></div>
+    <h2>Generating Report</h2>
+    <p class="muted" id="genStep">Collecting incident data...</p>
+    <div class="deep-bar"><span id="genBar"></span></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="fa-solid fa-check-circle"></i> <span>Downloaded</span></div>
+
+<script src="env-config.js"></script>
+<script src="api.js"></script>
+<script src="reports.js"></script>
+</body>
+</html>

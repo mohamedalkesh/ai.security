@@ -1,0 +1,40 @@
+<svg width="160" height="160" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="outer-ring" x1="24" y1="18" x2="136" y2="142" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#24E0FF"/>
+      <stop offset="1" stop-color="#127CFF"/>
+    </linearGradient>
+    <linearGradient id="inner-ring" x1="48" y1="40" x2="112" y2="120" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#24BAFF" stop-opacity="0.95"/>
+      <stop offset="1" stop-color="#1060D4" stop-opacity="0.85"/>
+    </linearGradient>
+    <radialGradient id="radar" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(80 80) rotate(90) scale(58)">
+      <stop offset="0" stop-color="#031629" stop-opacity="0"/>
+      <stop offset="0.55" stop-color="#051C34" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#041427"/>
+    </radialGradient>
+    <filter id="badge-shadow" x="0" y="0" width="160" height="160" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="8" stdDeviation="8" flood-color="#0AB6FF" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <g filter="url(#badge-shadow)">
+    <polygon points="80,14 136,47 136,113 80,146 24,113 24,47" fill="#010A16" stroke="url(#outer-ring)" stroke-width="3" stroke-linejoin="round"/>
+    <polygon points="80,30 122,55 122,105 80,130 38,105 38,55" fill="url(#radar)" stroke="url(#inner-ring)" stroke-width="2" stroke-linejoin="round"/>
+
+    <circle cx="80" cy="80" r="43" stroke="#1ED6FF" stroke-opacity="0.5" stroke-width="2" stroke-dasharray="10 7"/>
+    <circle cx="80" cy="80" r="30" stroke="#25E5FF" stroke-opacity="0.7" stroke-width="2"/>
+
+    <path d="M80 52C71.5 52 60 67.2 60 80C60 92.8 71.5 108 80 108C88.5 108 100 92.8 100 80C100 67.2 88.5 52 80 52Z" fill="#072139" stroke="#24E0FF" stroke-width="2"/>
+    <circle cx="80" cy="80" r="12" fill="#0AB6FF" stroke="#7DF2FF" stroke-width="2"/>
+    <circle cx="80" cy="80" r="5" fill="#001220"/>
+
+    <path d="M82 64L108 80L82 96" stroke="#24E0FF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M78 64L52 80L78 96" stroke="#24E0FF" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <circle cx="108" cy="73" r="4" fill="#FFB347"/>
+    <circle cx="60" cy="94" r="4.2" fill="#FF4D6D"/>
+
+    <path d="M80 36V28M80 132V124M46 80H38M122 80H130M58 58L52 50M108 110L114 118M108 58L114 50M58 110L52 118" stroke="#22D8FF" stroke-opacity="0.7" stroke-width="2" stroke-linecap="round"/>
+  </g>
+</svg>

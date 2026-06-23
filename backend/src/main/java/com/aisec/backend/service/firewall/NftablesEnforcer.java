@@ -94,40 +94,87 @@ public class NftablesEnforcer implements FirewallEnforcer {
     /* ============================ Internals ============================ */
 
     /**
-     * Lazily create the table, sets, and drop rule. Each step is wrapped in
+     * Lazily create the table, sets, and drop rules. Each step is wrapped in
      * its own nft invocation because nft refuses partial transactions if any
      * piece already exists — splitting lets us tolerate restarts cleanly.
+     *
+     * <p>Three chains are created:
+     * <ul>
+     *   <li><b>input</b>  — drops inbound traffic FROM blocked IPs</li>
+     *   <li><b>output</b> — drops outbound traffic TO blocked IPs (for when this
+     *       machine is the attacker, e.g. ICMP flood to 1.1.1.1)</li>
+     *   <li><b>forward</b> — drops forwarded traffic for IPs isolated via ARP
+     *       spoofing (their packets arrive at our NIC but are destined elsewhere)</li>
+     * </ul>
      */
     private void ensureInitialised() {
         if (initialised) return;
-        // Create-if-absent ladder. "create" errors when present, which is
-        // why we use runNftIgnoreFailure for the structural pieces.
         runNftIgnoreFailure("add", "table", "inet", TABLE);
         runNftIgnoreFailure("add", "set", "inet", TABLE, SET_V4,
                 "{ type ipv4_addr; flags interval; }");
         runNftIgnoreFailure("add", "set", "inet", TABLE, SET_V6,
                 "{ type ipv6_addr; flags interval; }");
+
+        // ── input chain (block inbound FROM attacker) ──────────────────────
         runNftIgnoreFailure("add", "chain", "inet", TABLE, "input",
                 "{ type filter hook input priority -10; policy accept; }");
-        // The drop rule itself is added twice (once per family). Both forms
-        // are idempotent-friendly: if a matching rule already exists, nft
-        // happily appends a duplicate — harmless, but we use a handle-free
-        // string-compare against `nft list` to avoid stacking copies.
-        if (!ruleExists("ip saddr @" + SET_V4)) {
+        if (!ruleExistsInChain("input", "ip saddr @" + SET_V4)) {
             runNftIgnoreFailure("add", "rule", "inet", TABLE, "input",
                     "ip saddr @" + SET_V4 + " drop");
         }
-        if (!ruleExists("ip6 saddr @" + SET_V6)) {
+        if (!ruleExistsInChain("input", "ip6 saddr @" + SET_V6)) {
             runNftIgnoreFailure("add", "rule", "inet", TABLE, "input",
                     "ip6 saddr @" + SET_V6 + " drop");
         }
+
+        // ── output chain (block outbound TO target) ────────────────────────
+        runNftIgnoreFailure("add", "chain", "inet", TABLE, "output",
+                "{ type filter hook output priority -10; policy accept; }");
+        if (!ruleExistsInChain("output", "ip daddr @" + SET_V4)) {
+            runNftIgnoreFailure("add", "rule", "inet", TABLE, "output",
+                    "ip daddr @" + SET_V4 + " drop");
+        }
+        if (!ruleExistsInChain("output", "ip6 daddr @" + SET_V6)) {
+            runNftIgnoreFailure("add", "rule", "inet", TABLE, "output",
+                    "ip6 daddr @" + SET_V6 + " drop");
+        }
+
+        // ── forward chain (drop ARP-intercepted packets from isolated hosts) ─
+        // When an IP is quarantined via ArpIsolator its traffic is rerouted
+        // through this machine.  Without a FORWARD drop rule those packets
+        // would be forwarded normally if ip_forward=1 is enabled.
+        runNftIgnoreFailure("add", "chain", "inet", TABLE, "forward",
+                "{ type filter hook forward priority -10; policy accept; }");
+        if (!ruleExistsInChain("forward", "ip saddr @" + SET_V4)) {
+            runNftIgnoreFailure("add", "rule", "inet", TABLE, "forward",
+                    "ip saddr @" + SET_V4 + " drop");
+        }
+        if (!ruleExistsInChain("forward", "ip6 saddr @" + SET_V6)) {
+            runNftIgnoreFailure("add", "rule", "inet", TABLE, "forward",
+                    "ip6 saddr @" + SET_V6 + " drop");
+        }
+        if (!ruleExistsInChain("forward", "ip daddr @" + SET_V4)) {
+            runNftIgnoreFailure("add", "rule", "inet", TABLE, "forward",
+                    "ip daddr @" + SET_V4 + " drop");
+        }
+        if (!ruleExistsInChain("forward", "ip6 daddr @" + SET_V6)) {
+            runNftIgnoreFailure("add", "rule", "inet", TABLE, "forward",
+                    "ip6 daddr @" + SET_V6 + " drop");
+        }
+
         initialised = true;
-        log.info("nftables enforcer initialised (table=inet/{}, sets={},{})",
+        log.info("nftables enforcer initialised (table=inet/{}, sets={},{}) — input+output+forward drop rules applied",
                  TABLE, SET_V4, SET_V6);
     }
 
-    private boolean ruleExists(String needle) {
-        String out = runNftCapture("list", "table", "inet", TABLE);
+    /**
+     * Check whether a rule matching {@code needle} already exists in the
+     * specified chain.  Scopes the search to a single chain to avoid false
+     * positives when the same rule text appears in sibling chains (e.g.
+     * {@code ip saddr @set drop} in both {@code input} and {@code forward}).
+     */
+    private boolean ruleExistsInChain(String chain, String needle) {
+        String out = runNftCapture("list", "chain", "inet", TABLE, chain);
         return out != null && out.contains(needle);
     }
 

@@ -143,6 +143,13 @@ public interface AlertRepository extends JpaRepository<Alert, Long> {
                                     @Param("orgId") Long orgId,
                                     @Param("open") List<AlertStatus> open);
 
+    @Query("SELECT a FROM Alert a WHERE a.sourceIp = :ip AND a.attackType = :attackType AND a.status IN :open AND " +
+           "((:orgId IS NULL AND a.organization IS NULL) OR a.organization.id = :orgId)")
+    List<Alert> findOpenBySourceIpAndAttackType(@Param("ip") String ip,
+                                                 @Param("attackType") String attackType,
+                                                 @Param("orgId") Long orgId,
+                                                 @Param("open") List<AlertStatus> open);
+
     /** Open alerts whose severity is in the given set — used for backfilling the auto-block rule retroactively. */
     @Query("SELECT a FROM Alert a WHERE a.severity IN :sev AND a.status IN :open AND " +
            "((:orgId IS NULL AND a.organization IS NULL) OR a.organization.id = :orgId) " +

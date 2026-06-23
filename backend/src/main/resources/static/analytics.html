@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Analytics — MADRS</title>
+<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="dashboard.css"/>
+<link rel="stylesheet" href="alerts.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<style>
+.an-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+.an-kpi{background:#16243d;border:1px solid #1e3557;border-radius:12px;padding:18px}
+.an-kpi h3{margin:0;font-size:11px;color:#8ea0b8;text-transform:uppercase;letter-spacing:.06em}
+.an-kpi .v{font-size:28px;font-weight:800;color:#e6edf7;margin-top:6px}
+.an-kpi .sub{font-size:12px;color:#8ea0b8;margin-top:4px}
+.an-charts{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.an-card{background:#16243d;border:1px solid #1e3557;border-radius:12px;padding:18px}
+.an-card h2{margin:0 0 14px;color:#e6edf7;font-size:15px;font-weight:700}
+.an-attackers{margin-top:14px}
+.an-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.05);font-size:13px;color:#cbd5e1}
+.an-row:last-child{border:0}
+.an-row .ip{font-family:'JetBrains Mono',monospace;color:#a5f3fc}
+.an-row .cnt{color:#fcd34d;font-weight:600}
+canvas{max-height:280px}
+@media (max-width:1100px){.an-grid{grid-template-columns:repeat(2,1fr)}.an-charts{grid-template-columns:1fr}}
+</style>
+</head>
+<body class="dash-body">
+
+<div class="dash-layout">
+  <aside class="sidebar">
+    <div class="side-brand">
+      <div class="brand-logo"><i class="fa-solid fa-shield-halved"></i></div>
+      <div>
+        <div class="side-title">MADRS</div>
+        <div class="side-sub">Operational Analytics</div>
+      </div>
+    </div>
+    <nav class="side-nav">
+      <a class="side-link" href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+      <a class="side-link" href="alerts.html"><i class="fa-solid fa-triangle-exclamation"></i> Alerts</a>
+      <a class="side-link" href="incidents.html"><i class="fa-solid fa-layer-group"></i> Incidents</a>
+      <a class="side-link active" href="analytics.html"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
+      <a class="side-link" href="scan.html"><i class="fa-solid fa-magnifying-glass-chart"></i> Scan PCAP</a>
+      <a class="side-link" href="monitoring.html"><i class="fa-solid fa-wave-square"></i> Monitoring</a>
+      <a class="side-link" href="reports.html"><i class="fa-solid fa-file-lines"></i> Reports</a>
+      <a class="side-link" href="users.html"><i class="fa-solid fa-users"></i> Users</a>
+      <a class="side-link" href="audit.html"><i class="fa-solid fa-clipboard-list"></i> Audit Log</a>
+      <a class="side-link" href="webhooks.html"><i class="fa-solid fa-bell"></i> Webhooks</a>
+      <a class="side-link" href="firewall.html"><i class="fa-solid fa-ban"></i> Firewall</a>
+      <a class="side-link" href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+      <a class="side-link" href="contact.html"><i class="fa-solid fa-envelope"></i> Contact</a>
+    </nav>
+    <a href="index.html" class="side-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <main class="dash-main">
+    <header class="dash-top alerts-top">
+      <div>
+        <h1>Analytics</h1>
+        <p class="muted">Trends, MTTR, and the noisiest sources — across the time window of your choice.</p>
+      </div>
+      <div class="select-mini">
+        <i class="fa-solid fa-calendar"></i>
+        <select id="anRange">
+          <option value="7">Last 7 days</option>
+          <option value="14" selected>Last 14 days</option>
+          <option value="30">Last 30 days</option>
+          <option value="90">Last 90 days</option>
+        </select>
+        <i class="fa-solid fa-chevron-down caret"></i>
+      </div>
+    </header>
+
+    <section class="an-grid">
+      <div class="an-kpi"><h3>Mean Time to Resolve</h3><div class="v" id="kMttr">—</div><div class="sub">across all resolved alerts</div></div>
+      <div class="an-kpi"><h3>Total in Window</h3><div class="v" id="kTotal">—</div><div class="sub" id="kTotalSub">over selected window</div></div>
+      <div class="an-kpi"><h3>Peak Day</h3><div class="v" id="kPeak">—</div><div class="sub" id="kPeakSub">most alerts in a single day</div></div>
+      <div class="an-kpi"><h3>Unique Attackers</h3><div class="v" id="kUniq">—</div><div class="sub">distinct source IPs</div></div>
+    </section>
+
+    <section class="an-charts">
+      <div class="an-card">
+        <h2><i class="fa-solid fa-chart-line"></i> Daily Alert Volume</h2>
+        <canvas id="trendChart"></canvas>
+      </div>
+      <div class="an-card">
+        <h2><i class="fa-solid fa-layer-group"></i> Severity Trend</h2>
+        <canvas id="sevChart"></canvas>
+      </div>
+    </section>
+
+    <section class="an-card" style="margin-top:14px">
+      <h2><i class="fa-solid fa-fire"></i> Top Attackers <small class="muted" style="font-weight:400;font-size:12px">— last 7 days</small></h2>
+      <div class="an-attackers" id="attackers"></div>
+    </section>
+  </main>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="env-config.js"></script>
+<script src="api.js"></script>
+<script src="analytics.js"></script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Notifications — MADRS</title>
+<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="dashboard.css"/>
+<link rel="stylesheet" href="alerts.css"/>
+<link rel="stylesheet" href="users.css"/>
+<link rel="stylesheet" href="notifications.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+</head>
+<body class="dash-body">
+
+<div class="dash-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="side-brand">
+      <div class="brand-logo"><i class="fa-solid fa-shield-halved"></i></div>
+      <div><div class="side-title">MADRS</div><div class="side-sub">Incident Response</div></div>
+    </div>
+    <nav class="side-nav">
+      <a class="side-link" href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+      <a class="side-link" href="alerts.html"><i class="fa-solid fa-triangle-exclamation"></i> Alerts </a>
+      <a class="side-link" href="scan.html"><i class="fa-solid fa-magnifying-glass-chart"></i> Scan PCAP</a>
+      <a class="side-link" href="monitoring.html"><i class="fa-solid fa-wave-square"></i> Monitoring</a>
+      <a class="side-link" href="reports.html"><i class="fa-solid fa-file-lines"></i> Reports</a>
+      <a class="side-link" href="users.html"><i class="fa-solid fa-users"></i> Users</a>
+      <a class="side-link" href="audit.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-clipboard-list"></i> Audit Log</a>
+      <a class="side-link" href="webhooks.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-bell"></i> Webhooks</a>
+      <a class="side-link" href="firewall.html"><i class="fa-solid fa-ban"></i> Firewall</a>
+      <a class="side-link" href="analytics.html"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
+      <a class="side-link" href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+      <a class="side-link active" href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications <span class="side-badge" id="sideUnread"></span></a>
+      <a class="side-link" href="contact.html"><i class="fa-solid fa-envelope"></i> Contact</a>
+    </nav>
+    <a href="index.html" class="side-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="dash-main">
+    <header class="dash-top">
+      <div>
+        <h1><i class="fa-solid fa-bell bell-ico"></i> Notifications</h1>
+        <p class="muted">Stay updated with system alerts and activities</p>
+      </div>
+      <div class="top-actions">
+        <button class="btn-action mark-all" id="markAllBtn"><i class="fa-solid fa-check-double"></i> Mark All as Read</button>
+        <button class="btn-action clear-all" id="clearAllBtn"><i class="fa-solid fa-trash"></i> Clear All</button>
+      </div>
+    </header>
+
+    <!-- Stats -->
+    <section class="stat-row">
+      <div class="panel reveal n-stat">
+        <div class="ns-val" id="nUnread">0</div>
+        <div class="ns-lbl">Unread Notifications</div>
+      </div>
+      <div class="panel reveal n-stat">
+        <div class="ns-val red" id="nCrit">0</div>
+        <div class="ns-lbl">Critical Alerts</div>
+      </div>
+      <div class="panel reveal n-stat">
+        <div class="ns-val yellow" id="nWarn">0</div>
+        <div class="ns-lbl">Warnings</div>
+      </div>
+      <div class="panel reveal n-stat">
+        <div class="ns-val" id="nTotal">0</div>
+        <div class="ns-lbl">Total Notifications</div>
+      </div>
+    </section>
+
+    <!-- Tabs -->
+    <div class="n-tabs reveal">
+      <button class="n-tab active" data-filter="all">All</button>
+      <button class="n-tab" data-filter="unread">Unread <span id="unreadCount">(2)</span></button>
+      <button class="n-tab" data-filter="critical">Critical</button>
+      <button class="n-tab" data-filter="warning">Warnings</button>
+    </div>
+
+    <!-- Notifications list -->
+    <div id="notifList"></div>
+
+    <div class="load-more-wrap">
+      <button class="load-more" id="loadMore"><i class="fa-solid fa-rotate-right"></i> Load More Notifications</button>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"><i class="fa-solid fa-check-circle"></i> <span>Done</span></div>
+
+<script src="env-config.js"></script>
+<script src="api.js"></script>
+<script src="notifications.js"></script>
+</body>
+</html>

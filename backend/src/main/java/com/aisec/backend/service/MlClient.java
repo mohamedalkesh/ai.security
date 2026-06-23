@@ -111,11 +111,19 @@ public class MlClient {
                 .body(java.util.List.class);
     }
 
-    public Map<String, Object> monitorStart(String iface) {
+    /**
+     * Start capture on one or more interfaces.
+     * Pass a single interface name or a {@code List<String>} for multi-interface mode.
+     */
+    @SuppressWarnings("unchecked")
+    public Map<String, Object> monitorStart(Object iface) {
+        Object body = (iface instanceof java.util.List)
+                ? Map.of("interfaces", iface)
+                : Map.of("interface", iface);
         return ml.post()
                 .uri("/api/monitor/start")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Map.of("interface", iface))
+                .body(body)
                 .retrieve()
                 .body(Map.class);
     }
@@ -141,6 +149,37 @@ public class MlClient {
                 .retrieve()
                 .body(Map.class);
         return (java.util.List<Map<String, Object>>) resp.get("detections");
+    }
+
+    // ─── Network Isolation (ARP-based) ───────────────────────────────
+
+    public Map<String, Object> monitorIsolate(String ip, String reason) {
+        return ml.post()
+                .uri("/api/monitor/isolate")
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Map.of("ip", ip, "reason", reason != null ? reason : ""))
+                .retrieve()
+                .body(Map.class);
+    }
+
+    public Map<String, Object> monitorRelease(String ip) {
+        return ml.delete()
+                .uri("/api/monitor/isolate/" + ip)
+                .retrieve()
+                .body(Map.class);
+    }
+
+    @SuppressWarnings("unchecked")
+    public java.util.List<Map<String, Object>> monitorListIsolated() {
+        Map<String, Object> resp = ml.get()
+                .uri("/api/monitor/isolated")
+                .retrieve()
+                .body(Map.class);
+        if (resp == null) return java.util.List.of();
+        Object isolated = resp.get("isolated");
+        return isolated instanceof java.util.List
+                ? (java.util.List<Map<String, Object>>) isolated
+                : java.util.List.of();
     }
 
     // ─── Drift Detection Proxy ────────────────────────────────────────

@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <title>دليل واجهات منصة الأمن السيبراني</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.8;
+            max-width: 900px;
+            margin: 40px auto;
+            padding: 20px;
+            background: #f5f5f5;
+            color: #333;
+        }
+        h1 {
+            color: #1a1a2e;
+            border-bottom: 3px solid #22b8cf;
+            padding-bottom: 10px;
+            text-align: center;
+        }
+        h2 {
+            color: #16213e;
+            margin-top: 30px;
+            padding-right: 15px;
+            border-right: 4px solid #22b8cf;
+        }
+        h3 {
+            color: #0f3460;
+            margin-top: 20px;
+        }
+        ul, ol {
+            margin: 10px 0;
+            padding-right: 25px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        strong {
+            color: #e94560;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: right;
+        }
+        th {
+            background: #22b8cf;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+        hr {
+            border: none;
+            border-top: 2px solid #ddd;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+<h1>دليل واجهات منصة الأمن السيبراني بالعربي</h1>
+<hr />
+<h2>1️⃣ صفحة تسجيل الدخول (login.html)</h2>
+<p><strong>الغرض:</strong> الدخول إلى المنصة باستخدام بيانات الاعتماد</p>
+<h3>العناصر:</h3>
+<ul>
+<li><strong>Username:</strong> اسم المستخدم — أدخل اسم المستخدم الخاص بك</li>
+<li><strong>Password:</strong> كلمة المرور — أدخل كلمة المرور (يمكنك إظهارها/إخفاءها بالزر 👁️)</li>
+<li><strong>Role:</strong> الدور — اختر صلاحيتك:</li>
+<li><code>Administrator</code> — مسؤول النظام (يستطيع رؤية وإدارة كل شيء)</li>
+<li><code>Organisation Admin</code> — مسؤول المنظمة (يدير مستخدمي منظمته فقط)</li>
+<li><code>Security Analyst</code> — محلل أمني (يحق له التحقيق في التنبيهات)</li>
+<li><code>Viewer</code> — مشاهد (قراءة فقط، لا تعديل)</li>
+<li><strong>Remember me:</strong> تذكرني — يحفظ الجلسة في المتصفح</li>
+<li><strong>Forgot Password?:</strong> نسيت كلمة المرور — يوجهك لصفحة الاستعادة</li>
+<li><strong>Sign In:</strong> زر الدخول — يرسل البيانات للسيرفر للتحقق</li>
+<li><strong>Request enterprise access:</strong> طلب وصول مؤسسي — يفتح نموذج لطلب إنشاء حساب مؤسسي</li>
+</ul>
+<hr />
+<h2>2️⃣ لوحة التحكم (dashboard.html)</h2>
+<p><strong>الغرض:</strong> نظرة عامة على حالة الأمان في الوقت الحقيقي</p>
+<h3>القسم العلوي:</h3>
+<ul>
+<li><strong>Search:</strong> بحث — ابحث عن حوادث، عناوين IP، مستخدمين</li>
+<li><strong>Notifications 🔔:</strong> الإشعارات — يعرض قائمة الإشعارات الجديدة</li>
+<li><code>Mark all read</code> — عيّن الكل كمقروء</li>
+<li><code>View all alerts →</code> — انتقل لصفحة التنبيهات</li>
+<li><strong>User Chip:</strong> معلومات المستخدم — اسمك ودورك في النظام</li>
+</ul>
+<h3>الإحصائيات (KPIs):</h3>
+<ul>
+<li><strong>Active Alerts 🔴:</strong> عدد التنبيهات النشطة حالياً</li>
+<li><strong>Threats Blocked 🟢:</strong> عدد التهديدات التي تم حظرها</li>
+<li><strong>System Health 📊:</strong> صحة النظام كنسبة مئوية</li>
+<li><strong>Avg Response Time ⏱️:</strong> متوسط وقت الاستجابة بالثواني</li>
+</ul>
+<h3>الرسوم البيانية:</h3>
+<ul>
+<li><strong>Threat Activity:</strong> نشاط التهديدات — رسم بياني للهجمات والحجب خلال فترة زمنية</li>
+<li>أزرار: <code>Last 24 Hours</code> / <code>7 Days</code> / <code>30 Days</code> — تغيير نطاق الوقت</li>
+<li><strong>Attack Types:</strong> أنواع الهجمات — رسم دائري يوزع الهجمات حسب النوع</li>
+</ul>
+<h3>الأسفل:</h3>
+<ul>
+<li><strong>Recent Alerts:</strong> أحدث التنبيهات</li>
+<li><strong>Activity Log:</strong> سجل النشاط</li>
+</ul>
+<hr />
+<h2>3️⃣ صفحة التنبيهات (alerts.html)</h2>
+<p><strong>الغرض:</strong> إدارة والتحقيق في جميع تنبيهات الأمان</p>
+<h3>الشريط العلوي:</h3>
+<ul>
+<li><strong>Severity Pills:</strong> حبوب الخطورة — عدد التنبيهات لكل مستوى:</li>
+<li><code>Critical</code> 🔴 — حرجة</li>
+<li><code>High</code> 🟠 — عالية</li>
+<li><code>Medium</code> 🟡 — متوسطة</li>
+<li><code>Low</code> 🔵 — منخفضة</li>
+</ul>
+<h3>شريط الأدوات:</h3>
+<ul>
+<li><strong>Search:</strong> بحث — بالمعرف، النوع، أو عنوان IP</li>
+<li><strong>Filter by Severity:</strong> تصفية حسب الخطورة</li>
+<li><strong>Sort by:</strong> ترتيب حسب — الوقت / الخطورة / المعرف</li>
+<li><strong>Export CSV 📥:</strong> تصدير قائمة التنبيهات</li>
+<li><strong>Toggle Columns 🎛️:</strong> إظهار/إخفاء أعمدة الجدول</li>
+</ul>
+<h3>شريط الإجراءات الجماعية:</h3>
+<ul>
+<li><strong>Investigate 👁️:</strong> عيّن كـ "قيد التحقيق"</li>
+<li><strong>Resolve ✅:</strong> عيّن كـ "محلولة"</li>
+<li><strong>False Positive 👎:</strong> عيّن كإيجابية خاطئة</li>
+<li><strong>Clear ❌:</strong> إلغاء الاختيار</li>
+</ul>
+<h3>الجدول:</h3>
+<p>الأعمدة: INCIDENT ID, TYPE, SEVERITY, SOURCE, STATUS, ASSIGNED, TIME, ACTIONS</p>
+<h3>نافذة التفاصيل (Modal):</h3>
+<ul>
+<li><strong>Assigned To:</strong> تعيين لمحلل آخر</li>
+<li><strong>ML Feedback:</strong> تغذية راجعة للذكاء الاصطناعي:</li>
+<li><code>True Attack 👍</code> — هجوم حقيقي</li>
+<li><code>False Positive 👎</code> — إيجابية خاطئة</li>
+<li><code>Uncertain ❓</code> — غير مؤكد</li>
+<li><strong>Investigation Notes:</strong> ملاحظات التحقيق</li>
+<li><strong>أزرار الإجراء:</strong> Investigating, False Positive, Mark Resolved</li>
+</ul>
+<hr />
+<h2>4️⃣ صفحة مسح PCAP (scan.html)</h2>
+<p><strong>الغرض:</strong> رفع ملفات PCAP للتحليل باستخدام الذكاء الاصطناعي</p>
+<h3>منطقة الرفع:</h3>
+<ul>
+<li><strong>Drop PCAP file here:</strong> اسحب وأفلت ملف PCAP هنا</li>
+<li><strong>Browse File:</strong> تصفح لاختيار ملف</li>
+<li><strong>Formats:</strong> .pcap, .pcapng, .cap</li>
+<li><strong>Max size:</strong> 100 MB</li>
+</ul>
+<h3>شريط التقدم:</h3>
+<ul>
+<li><strong>Uploading ☁️:</strong> رفع الملف للسيرفر</li>
+<li><strong>AI Analyzing 🧠:</strong> استخراج التدفقات وتصنيفها باستخدام XGBoost</li>
+<li><strong>Saving Alerts 💾:</strong> حفظ التنبيهات</li>
+</ul>
+<h3>النتائج:</h3>
+<ul>
+<li><strong>Total Flows:</strong> إجمالي عدد التدفقات</li>
+<li><strong>Benign Flows 🟢:</strong> التدفقات السليمة</li>
+<li><strong>Attack Flows 🔴:</strong> التدفقات الخبيثة</li>
+<li><strong>Avg Confidence:</strong> متوسط ثقة النموذج</li>
+</ul>
+<h3>جدول الهجمات المكتشفة:</h3>
+<p>Attack Type, Count, Severity, Sample Source</p>
+<h3>أزرار:</h3>
+<ul>
+<li><strong>Scan Another File 🔄:</strong> مسح ملف جديد</li>
+<li><strong>Go to Alerts ⚠️:</strong> الانتقال لصفحة التنبيهات</li>
+</ul>
+<hr />
+<h2>5️⃣ صفحة الحوادث (incidents.html)</h2>
+<p><strong>الغرض:</strong> عرض الحوادث (مجموعات من التنبيهات ذات الصلة)</p>
+<h3>الشريط العلوي:</h3>
+<ul>
+<li><strong>Open:</strong> عدد الحوادث المفتوحة</li>
+<li><strong>Resolved:</strong> عدد الحوادث المحلولة</li>
+</ul>
+<h3>شريط الأدوات:</h3>
+<ul>
+<li><strong>Search:</strong> بحث بالعنوان أو IP المصدر</li>
+<li><strong>Filter by Status:</strong> تصفية حسب الحالة</li>
+<li><strong>Refresh 🔄:</strong> تحديث القائمة</li>
+</ul>
+<h3>بطاقة الحادث:</h3>
+<p>Title, Source IP, Attack Family, Alert Count, Status, Time</p>
+<hr />
+<h2>6️⃣ صفحة التحليلات (analytics.html)</h2>
+<p><strong>الغرض:</strong> عرض مؤشرات الأداء التشغيلية والاتجاهات</p>
+<h3>نطاق الوقت:</h3>
+<p>Last 7 days / 14 days / 30 days / 90 days</p>
+<h3>مؤشرات الأداء (KPIs):</h3>
+<ul>
+<li><strong>Mean Time to Resolve (MTTR):</strong> متوسط وقت حل التنبيهات</li>
+<li><strong>Total in Window:</strong> إجمالي التنبيهات</li>
+<li><strong>Peak Day:</strong> اليوم الأكثر ازدحاماً</li>
+<li><strong>Unique Attackers:</strong> عدد عناوين IP المهاجمة الفريدة</li>
+</ul>
+<h3>الرسوم البيانية:</h3>
+<ul>
+<li><strong>Daily Alert Volume:</strong> حجم التنبيهات اليومي</li>
+<li><strong>Severity Trend:</strong> اتجاه الخطورة</li>
+</ul>
+<h3>القسم السفلي:</h3>
+<ul>
+<li><strong>Top Attackers 🔥:</strong> أكثر عناوين IP هجوماً</li>
+</ul>
+<hr />
+<h2>7️⃣ صفحة Webhooks (webhooks.html)</h2>
+<p><strong>الغرض:</strong> إدارة تكاملات التنبيهات الخارجية</p>
+<h3>الشريط العلوي:</h3>
+<ul>
+<li><strong>New Webhook ➕:</strong> إنشاء تكامل جديد</li>
+</ul>
+<h3>بطاقة Webhook:</h3>
+<p>Name, URL, Preset, Min Severity, Status
+أزرار: Edit, Rotate Secret, Delete</p>
+<h3>نافذة الإنشاء/التعديل:</h3>
+<p>Name, Endpoint URL, Preset, Minimum Severity, Enabled, Secret (HMAC-SHA256)</p>
+<hr />
+<h2>8️⃣ صفحة سجل التدقيق (audit.html)</h2>
+<p><strong>الغرض:</strong> سجل ثابت لكل الإجراءات الحساسة</p>
+<h3>الشريط العلوي:</h3>
+<p>Login OK, Login Fail, Rate Limit counts</p>
+<h3>شريط الأدوات:</h3>
+<p>Search, Filter by Action (LOGIN_OK, LOGIN_FAIL, REGISTER_OK, RATE_LIMIT, ALERT_STATUS, ALERT_UPDATE, ALERT_DELETE, ALERT_BULK, ALERT_COMMENT), Export CSV, Refresh</p>
+<h3>الجدول:</h3>
+<p>WHEN, ACTION, ACTOR, RESOURCE, SOURCE IP, DETAILS</p>
+<hr />
+<h2>9️⃣ صفحة المراقبة (monitoring.html)</h2>
+<p><strong>الغرض:</strong> مراقبة صحة النظام والأداء في الوقت الحقيقي</p>
+<h3>بطاقات المؤشرات:</h3>
+<ul>
+<li><strong>CPU Usage 🖥️:</strong> استخدام المعالج</li>
+<li><strong>Memory Usage 💾:</strong> استخدام الذاكرة</li>
+<li><strong>Network Traffic 🌐:</strong> حركة الشبكة</li>
+<li><strong>Disk Usage 💿:</strong> استخدام القرص</li>
+</ul>
+<h3>الرسوم البيانية:</h3>
+<p>CPU Usage — Last 24h, Network Traffic — Last 24h</p>
+<h3>شاشة مراقبة الشبكة الحية:</h3>
+<p>Network Interface, Start/Stop buttons
+مؤشرات: Total Flows, Benign, Attacks, Flows/sec, Attacks/sec, Queue Depth
+Traffic last 60s sparkline, Recent Detections</p>
+<h3>جدول حالة الخدمات:</h3>
+<p>SERVICE NAME, STATUS, UPTIME, CPU, MEMORY, ACTIONS (Restart / View Logs)</p>
+<h3>نافذة السجلات:</h3>
+<p>Download, Auto-scroll
+ألوان: INFO (أزرق), WARN (أصفر), ERROR (أحمر), DEBUG (بنفسجي)</p>
+<hr />
+<h2>🔟 صفحة التقارير (reports.html)</h2>
+<p><strong>الغرض:</strong> إنشاء وتصدير تقارير الأمان</p>
+<h3>الشريط العلوي:</h3>
+<p>Export CSV, Generate PDF Report</p>
+<h3>مؤشرات الأداء:</h3>
+<p>Total Incidents, Block Rate, Avg Response Time, Active Threats</p>
+<h3>الرسوم البيانية:</h3>
+<p>Incident Trends (4/6/12 months), Threat Distribution (donut)</p>
+<h3>جدول التقارير الأخيرة:</h3>
+<p>REPORT NAME, TYPE, DATE, SIZE, ACTIONS</p>
+<hr />
+<h2>1️⃣1️⃣ صفحة المستخدمين (users.html)</h2>
+<p><strong>الغرض:</strong> إدارة مستخدمي المنظمة</p>
+<h3>الشريط العلوي:</h3>
+<p>Add User</p>
+<h3>الجدول:</h3>
+<p>Username, Email, Role, Organization, Status, Last Login
+ACTIONS: Edit, Delete, Reset Password</p>
+<hr />
+<h2>1️⃣2️⃣ صفحة الإعدادات (settings.html)</h2>
+<p><strong>الغرض:</strong> تكوين إعدادات المنصة</p>
+<h3>الأقسام:</h3>
+<p>JWT Configuration, Rate Limiting, GeoIP Settings, Email Settings, Webhook Retry, ML Retrain Threshold</p>
+<hr />
+<h2>1️⃣3️⃣ صفحة الإشعارات (notifications.html)</h2>
+<p><strong>الغرض:</strong> عرض وإدارة الإشعارات</p>
+<h3>العناصر:</h3>
+<p>Mark all read, قائمة الإشعارات (أيقونة حسب الخطورة، عنوان، وقت، زر الانتقال)</p>
+<hr />
+<h2>1️⃣4️⃣ صفحة الاتصال (contact.html)</h2>
+<p><strong>الغرض:</strong> التواصل مع فريق الدعم</p>
+<h3>النموذج:</h3>
+<p>Subject, Message, Send</p>
+<hr />
+<h2>🎯 ملخص الصلاحيات حسب الدور</h2>
+<table>
+<thead>
+<tr>
+<th>الدور</th>
+<th>يمكنه رؤية</th>
+<th>يمكنه تعديل</th>
+<th>صفحات خاصة</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>ADMIN</strong></td>
+<td>كل شيء (System tenant only)</td>
+<td>كل شيء</td>
+<td>Settings, Audit, Webhooks</td>
+</tr>
+<tr>
+<td><strong>ORG_ADMIN</strong></td>
+<td>بيانات منظمته فقط</td>
+<td>مستخدمي منظمته</td>
+<td>Audit, Webhooks</td>
+</tr>
+<tr>
+<td><strong>ANALYST</strong></td>
+<td>بيانات منظمته فقط</td>
+<td>التنبيهات والحوادث</td>
+<td>لا شيء خاص</td>
+</tr>
+<tr>
+<td><strong>VIEWER</strong></td>
+<td>بيانات منظمته فقط</td>
+<td>لا شيء (قراءة فقط)</td>
+<td>لا شيء خاص</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><em>تم إنشاء هذا الدليل لمنصة MADRS v3.0</em></p>
+</body>
+</html>

@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<title>MADRS — التوثيق التقني العميق</title>
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Noto Naskh Arabic', 'Amiri', 'Segoe UI', Tahoma, sans-serif;
+    line-height: 1.95; color: #1f2933; margin: 0; background: #fff; font-size: 13px;
+  }
+  .cover {
+    text-align: center; padding: 120px 30px 80px;
+    background: linear-gradient(160deg, #06172e 0%, #0b1f37 55%, #06111f 100%);
+    color: #e8f0fc; page-break-after: always; min-height: 95vh;
+  }
+  .cover h1 { font-size: 42px; margin: 24px 0 8px; color: #fff; }
+  .cover .sub { color: #22b8cf; font-size: 15px; letter-spacing: 5px; text-transform: uppercase; }
+  .cover .desc { margin-top: 40px; font-size: 17px; color: #9fb0c5; line-height: 2; }
+  .cover .meta { margin-top: 70px; font-size: 13px; color: #6f86a3; }
+  .cover .badge-mark { width: 120px; height: 120px; margin: 0 auto; display: block; filter: drop-shadow(0 0 22px rgba(34,184,207,.45)); }
+  h1.section { font-size: 25px; color: #06172e; border-bottom: 3px solid #22b8cf; padding-bottom: 10px; margin-top: 10px; page-break-before: always; }
+  h2 { font-size: 19px; color: #0b2545; margin-top: 26px; padding-right: 14px; border-right: 5px solid #22b8cf; }
+  h3 { font-size: 15.5px; color: #0f3460; margin-top: 16px; }
+  p { margin: 8px 0; text-align: justify; }
+  ul, ol { margin: 8px 0; padding-right: 26px; }
+  li { margin: 6px 0; }
+  strong { color: #0b6fa4; }
+  code { background: #eef3f8; color: #0b4f6c; padding: 1px 6px; border-radius: 5px; font-family: 'Courier New', monospace; font-size: 12px; direction: ltr; display: inline-block; }
+  pre { background: #06172e; color: #d6e6f5; padding: 14px 18px; border-radius: 10px; direction: ltr; text-align: left; overflow-x: auto; font-size: 11.5px; line-height: 1.6; white-space: pre-wrap; }
+  table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 12px; }
+  th, td { border: 1px solid #d4dde6; padding: 8px 10px; text-align: right; vertical-align: top; }
+  th { background: #0b2545; color: #fff; }
+  tr:nth-child(even) td { background: #f4f8fb; }
+  .toc { background: #f7fafc; border: 1px solid #d4dde6; border-radius: 12px; padding: 18px 26px; }
+  .toc ol { font-size: 14px; } .toc li { margin: 7px 0; }
+  .note { background: #eafaf1; border-right: 5px solid #22c55e; padding: 12px 16px; border-radius: 8px; margin: 14px 0; }
+  .warn { background: #fff7e6; border-right: 5px solid #f59e0b; padding: 12px 16px; border-radius: 8px; margin: 14px 0; }
+  .flow { background: #06172e; color: #d6e6f5; padding: 16px; border-radius: 10px; text-align: center; direction: ltr; font-family: 'Courier New', monospace; font-size: 11.5px; line-height: 2; }
+  hr { border: none; border-top: 1px solid #e2e8f0; margin: 24px 0; }
+  .lead { font-size: 14px; color: #51606e; }
+  .src { font-size: 11px; color: #8a98a8; direction: ltr; text-align: left; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<!-- ===== الغلاف ===== -->
+<div class="cover">
+  <svg class="badge-mark" viewBox="0 0 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <linearGradient id="o" x1="24" y1="18" x2="136" y2="142" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#24E0FF"/><stop offset="1" stop-color="#127CFF"/></linearGradient>
+      <linearGradient id="i" x1="48" y1="40" x2="112" y2="120" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#24BAFF"/><stop offset="1" stop-color="#1060D4"/></linearGradient>
+    </defs>
+    <polygon points="80,14 136,47 136,113 80,146 24,113 24,47" fill="#010A16" stroke="url(#o)" stroke-width="3"/>
+    <polygon points="80,30 122,55 122,105 80,130 38,105 38,55" fill="#051C34" stroke="url(#i)" stroke-width="2"/>
+    <circle cx="80" cy="80" r="43" stroke="#1ED6FF" stroke-opacity="0.5" stroke-width="2" stroke-dasharray="10 7"/>
+    <circle cx="80" cy="80" r="30" stroke="#25E5FF" stroke-opacity="0.7" stroke-width="2"/>
+    <path d="M80 52C71.5 52 60 67.2 60 80C60 92.8 71.5 108 80 108C88.5 108 100 92.8 100 80C100 67.2 88.5 52 80 52Z" fill="#072139" stroke="#24E0FF" stroke-width="2"/>
+    <circle cx="80" cy="80" r="12" fill="#0AB6FF" stroke="#7DF2FF" stroke-width="2"/>
+    <circle cx="80" cy="80" r="5" fill="#001220"/>
+  </svg>
+  <h1>MADRS</h1>
+  <div class="sub">Technical Deep-Dive</div>
+  <div class="desc">التوثيق التقني العميق<br>كيف يكتشف النظام الهجمات، ويربطها، ويسجّلها، ويحظرها</div>
+  <div class="desc" style="font-size:14px;">وثيقة دراسية مبنية على الكود الفعلي للنظام</div>
+  <div class="meta">الإصدار 3.0 &nbsp;|&nbsp; 2026</div>
+</div>
+
+<!-- ===== الفهرس ===== -->
+<div class="toc">
+<h1 class="section" style="page-break-before:avoid;">الفهرس</h1>
+<ol>
+  <li>نظرة عامة على خط أنابيب المعالجة (Pipeline)</li>
+  <li>المرحلة 1: التقاط الترافيك واستخراج التدفقات</li>
+  <li>المرحلة 2: كيف يكتشف النظام الهجمات (طبقات الكشف)
+    <ul>
+      <li>2.1 الطبقة الأولى: قائمة التدفقات الآمنة</li>
+      <li>2.2 الطبقة الثانية: تصنيف الذكاء الاصطناعي (XGBoost)</li>
+      <li>2.3 الطبقة الثالثة: مرشّحات الدقة</li>
+      <li>2.4 كشف ICMP الإرشادي (Heuristics)</li>
+      <li>2.5 كشف الشذوذ السلوكي (Behavioral Baseline)</li>
+    </ul>
+  </li>
+  <li>المرحلة 3: تحديد الخطورة وربط MITRE ATT&amp;CK</li>
+  <li>المرحلة 4: نقل الكشف من ML إلى Backend</li>
+  <li>المرحلة 5: كيف تُربط الهجمات (Correlation / Incidents)</li>
+  <li>المرحلة 6: كيف تُسجّل التنبيهات (Persistence + Audit)</li>
+  <li>المرحلة 7: كيف يعمل الحظر (Blocking + nftables)</li>
+  <li>المرحلة 8: الحل الجماعي والأرشفة في التدريب</li>
+  <li>ملخص الثوابت والمعاملات (Tunables)</li>
+</ol>
+</div>
+
+<!-- ===== 1. Pipeline ===== -->
+<h1 class="section">1. نظرة عامة على خط أنابيب المعالجة</h1>
+<p class="lead">يمرّ كل تدفّق شبكي عبر سلسلة مراحل واضحة من لحظة التقاطه حتى إصدار التقرير. هذه الوثيقة تتتبّع هذه الرحلة بالتفصيل التقني المبني على الكود الفعلي.</p>
+<div class="flow">
+[NIC] → التقاط الحزم → استخراج التدفق (NFStream)<br>
+↓<br>
+طبقات الكشف: آمن؟ → ML → مرشّحات الدقة → ICMP/سلوكي<br>
+↓<br>
+خطورة + MITRE → كشف (detection) في طابور ML<br>
+↓<br>
+Backend يسحب كل ثانية → convertToAlert → AlertService.save<br>
+↓<br>
+ربط (Incident) → حفظ → حظر تلقائي (HIGH/CRITICAL) → بث → Webhook<br>
+↓<br>
+تحقيق المحلل → حظر/حل → nftables drop → أرشفة تدريب → تقرير
+</div>
+<p>المكوّنان الأساسيان في هذه الرحلة:</p>
+<ul>
+  <li><strong>ML Service</strong> (Python): <code>live_monitor.py</code> — الكشف والتصنيف.</li>
+  <li><strong>Backend</strong> (Java): <code>LiveMonitorService</code>، <code>AlertService</code>، <code>IncidentService</code>، <code>BlockedIpService</code>، <code>NftablesEnforcer</code>.</li>
+</ul>
+
+<!-- ===== 2. Capture ===== -->
+<h1 class="section">2. المرحلة 1: التقاط الترافيك واستخراج التدفقات</h1>
+<p>تلتقط خدمة ML الحزم الخام من بطاقة الشبكة. ولأن الالتقاط يتطلب صلاحيات منخفضة المستوى، يُمنح مفسّر Python القدرة <code>CAP_NET_RAW</code> عبر السكربت <code>scripts/grant-capture-perms.sh</code> دون تشغيل النظام كله بصلاحية الجذر.</p>
+<p>تُجمَّع الحزم في <strong>تدفّقات (Flows)</strong> باستخدام مكتبة NFStream. التدفّق هو محادثة شبكية بين طرفين، ويُستخرَج منه عشرات الميزات الإحصائية (عدد الحزم، البايتات، التوقيتات، أعلام TCP ...) إضافةً إلى بيانات وصفية:</p>
+<pre>_flow_meta(flow) → {
+  src_ip, dst_ip, src_port, dst_port, protocol,
+  app_name, app_category,            # NFStream nDPI
+  server_name (TLS SNI / HTTP Host),
+  ja3_client (JA3 fingerprint), ...
+}</pre>
+<p class="src">المصدر: ml-service/app/services/live_monitor.py → _flow_meta()</p>
+
+<!-- ===== 3. Detection ===== -->
+<h1 class="section">3. المرحلة 2: كيف يكتشف النظام الهجمات</h1>
+<p class="lead">الكشف ليس قراراً واحداً، بل سلسلة طبقات تصفية تهدف إلى <strong>دقة عالية وضوضاء منخفضة</strong> (تقليل الإنذارات الكاذبة). تُنفَّذ كلها داخل دالة <code>_classify_batch()</code>.</p>
+
+<h2>2.1 الطبقة الأولى: قائمة التدفقات الآمنة</h2>
+<p>قبل استدعاء النموذج إطلاقاً، تُستبعَد تدفقات معروفة أنها حميدة لتجنّب إنذارات كاذبة، لأن مجموعة التدريب CICIDS2017 لم تتضمّن بروتوكولات الشبكة المحلية:</p>
+<ul>
+  <li>عناوين <strong>Multicast</strong> (224.0.0.0 – 239.255.255.255) و IPv6 multicast (<code>ff00::/8</code>).</li>
+  <li>عناوين <strong>Broadcast</strong> (255.255.255.255).</li>
+  <li>عناوين <strong>Link-local</strong> (169.254.0.0/16) ومنها نقطة بيانات السحابة 169.254.169.254.</li>
+  <li>بروتوكولات اكتشاف محلية (mDNS, LLMNR, SSDP).</li>
+</ul>
+<p>كل تدفّق يطابق هذه القائمة يُصنَّف <code>Benign</code> فوراً دون استنتاج ML.</p>
+<p class="src">المصدر: _is_safe_flow() + SAFE_DST_EXACT</p>
+
+<h2>2.2 الطبقة الثانية: تصنيف الذكاء الاصطناعي (XGBoost)</h2>
+<p>التدفقات غير الآمنة تُحوَّل إلى مصفوفة ميزات رقمية بالترتيب نفسه الذي دُرّب عليه النموذج، ثم تُمرَّر إلى نموذج <strong>XGBoost</strong>:</p>
+<pre>names = ml_service.feature_names
+X = np.array([[float(f.get(n, 0.0)) for n in names] for f in feats])
+ml_preds = ml_service._predict_array(X)
+# كل تنبؤ: { predicted: "DDoS", confidence: 0.93, ... }</pre>
+<p>يُخرج النموذج لكل تدفّق: <strong>التصنيف</strong> (نوع الهجوم أو Benign) و<strong>نسبة الثقة</strong> (0 إلى 1).</p>
+<p class="src">المصدر: _classify_batch() + ml_service._predict_array()</p>
+
+<h2>2.3 الطبقة الثالثة: مرشّحات الدقة</h2>
+<p>حتى بعد أن يقول النموذج "هجوم"، تمرّ النتيجة عبر ثلاث بوابات صارمة قبل اعتمادها كتنبيه:</p>
+<table>
+  <thead><tr><th>البوابة</th><th>الشرط</th><th>الغرض</th></tr></thead>
+  <tbody>
+    <tr><td><strong>مرشّح ردّ الخادم</strong></td><td>منفذ المصدر منفذ خدمة معروف والوجهة منفذ عابر (≥1024)</td><td>تجاهل ترافيك ردود الخوادم الذي يخطئ النموذج في تصنيفه</td></tr>
+    <tr><td><strong>بوابة الثقة</strong></td><td><code>confidence ≥ 0.80</code> (MIN_CONFIDENCE)</td><td>إسقاط التنبؤات منخفضة الثقة</td></tr>
+    <tr><td><strong>التحقّق بالتكرار</strong></td><td>≥ <code>2</code> تدفقات بنفس النوع من نفس المصدر خلال <code>60</code> ثانية</td><td>منع إنذار من تدفّق شاذّ منفرد</td></tr>
+  </tbody>
+</table>
+<p>إذا فشلت أي بوابة، يُحتسب التدفّق <code>Benign</code> ولا يُنشأ تنبيه. هذه الطبقة هي سرّ انخفاض الإنذارات الكاذبة في النظام.</p>
+<pre>if confidence &lt; MIN_CONFIDENCE:        # بوابة الثقة
+    self._benign += 1; continue
+hits = self._attack_hits[(src_ip, label)]   # بوابة التكرار
+hits.append(now)
+if len(hits) &lt; MIN_REPEAT:
+    continue
+# ← فقط الآن يُعتبر هجوماً مؤكداً</pre>
+<p class="src">المصدر: _is_response_flow() + Layer 2/3 في _classify_batch()</p>
+
+<h2>2.4 كشف ICMP الإرشادي (Heuristics)</h2>
+<p>هجمات ICMP (مثل ping flood / sweep) لا يلتقطها النموذج جيداً، فيُستخدم منطق إرشادي يتجاوز النموذج ويُصدر تنبيهاً فورياً (دون انتظار بوابة التكرار):</p>
+<table>
+  <thead><tr><th>المعامل</th><th>القيمة</th><th>المعنى</th></tr></thead>
+  <tbody>
+    <tr><td><code>ICMP_FLOOD_PKTS</code></td><td>15</td><td>عدد حزم في تدفّق واحد يكفي لاعتباره فيضاناً</td></tr>
+    <tr><td><code>ICMP_PROBE_THRESHOLD</code></td><td>3</td><td>تدفقات ICMP لوجهة واحدة خلال النافذة → فيضان</td></tr>
+    <tr><td><code>ICMP_SWEEP_HOSTS</code></td><td>3</td><td>عدد المضيفين الذين يلمسهم مصدر واحد → مسح</td></tr>
+    <tr><td><code>ICMP_WINDOW_SEC</code></td><td>15</td><td>النافذة الزمنية المنزلقة للحساب</td></tr>
+  </tbody>
+</table>
+<p class="src">المصدر: _apply_icmp_heuristics()</p>
+
+<h2>2.5 كشف الشذوذ السلوكي (Behavioral Baseline)</h2>
+<p>يقيس النظام خط أساس لمعدّل التدفقات الطبيعي، فإذا قفز المعدّل الحالي بمقدار معامل الطفرة فوق الأساس (وتجاوز 20 تدفق/دقيقة)، يُصدر تنبيه <code>Behavioral Anomaly</code> بخطورة <strong>MEDIUM</strong> وتقنية <code>T1046</code>، حتى لو لم يتعرّف النموذج على نوع محدد:</p>
+<pre>if current_rate &gt;= baseline_rate * BASELINE_SPIKE_FACTOR and current_rate &gt; 20:
+    confidence = min(0.95, 0.70 + 0.05 * (...))
+    → { predicted: "Behavioral Anomaly", severity: "MEDIUM",
+        mitre_technique: "T1046", tactic: "Discovery" }</pre>
+<p class="src">المصدر: كشف الطفرة في live_monitor.py (~سطر 1262)</p>
+
+<!-- ===== 4. Severity & MITRE ===== -->
+<h1 class="section">4. المرحلة 3: تحديد الخطورة وربط MITRE ATT&amp;CK</h1>
+<p>بمجرّد تحديد نوع الهجوم، تُربط به تلقائياً خطورته وتقنية وتكتيك MITRE ATT&amp;CK من جدول ثابت عبر الدالة <code>enrich(label)</code>:</p>
+<table>
+  <thead><tr><th>النوع</th><th>التقنية</th><th>التكتيك</th><th>الخطورة</th></tr></thead>
+  <tbody>
+    <tr><td>Brute Force</td><td>T1110</td><td>Credential Access</td><td>High</td></tr>
+    <tr><td>Port Scan</td><td>T1046</td><td>Discovery</td><td>Medium</td></tr>
+    <tr><td>DDoS</td><td>T1498</td><td>Impact</td><td>High</td></tr>
+    <tr><td>ICMP Flood</td><td>T1498.001</td><td>Impact</td><td>High</td></tr>
+    <tr><td>ICMP Sweep</td><td>T1018</td><td>Discovery</td><td>Medium</td></tr>
+    <tr><td>DoS</td><td>T1499</td><td>Impact</td><td>High</td></tr>
+    <tr><td>Web Attack</td><td>T1190</td><td>Initial Access</td><td>High</td></tr>
+    <tr><td>SQL Injection</td><td>T1190</td><td>Initial Access</td><td>High</td></tr>
+    <tr><td>Command Injection</td><td>T1059</td><td>Execution</td><td>Critical</td></tr>
+    <tr><td>Ransomware</td><td>T1486</td><td>Impact</td><td>Critical</td></tr>
+    <tr><td>Malware</td><td>T1105</td><td>Command and Control</td><td>Critical</td></tr>
+    <tr><td>Data Exfiltration</td><td>T1041</td><td>Exfiltration</td><td>Critical</td></tr>
+    <tr><td>ARP Spoofing</td><td>T1557.002</td><td>Credential Access</td><td>High</td></tr>
+  </tbody>
+</table>
+<p>هذا الربط هو ما يجعل كل تنبيه مفهوماً ضمن إطار معياري عالمي، ويُمكّن صفحة <code>mitre.html</code> من عرض التكتيكات والتقنيات.</p>
+<p class="src">المصدر: ml-service/app/services/mitre.py → MITRE_MAPPING + enrich()</p>
+
+<!-- ===== 5. ML→Backend ===== -->
+<h1 class="section">5. المرحلة 4: نقل الكشف من ML إلى Backend</h1>
+<p>الكشوفات المؤكّدة تُوضَع في طابور <code>_pending</code> داخل خدمة ML. أما الـ Backend فيسحبها دورياً:</p>
+<ul>
+  <li>يفحص <code>LiveMonitorService.pollDetections()</code> كل <strong>ثانية واحدة</strong> حالة المراقبة.</li>
+  <li>إن كانت تعمل، يسحب حتى 200 كشف عبر <code>monitorDrain(200)</code>.</li>
+  <li>مع دفعة المصنّف كل 150ms في ML، يظهر الهجوم في الواجهة خلال <strong>~1.2 ثانية</strong> من نهاية تدفّقه.</li>
+</ul>
+<p>تُحوَّل كل خريطة كشف إلى كيان <code>Alert</code> عبر <code>convertToAlert()</code>:</p>
+<pre>Alert a = new Alert();
+a.setAttackType(d.get("predicted"));
+a.setSourceIp(d.get("src_ip"));
+a.setDestIp(d.get("dst_ip"));
+a.setDestPort(...); a.setProtocol(...);
+a.setConfidence(d.get("confidence"));
+a.setSeverity(parseSeverity(d.get("severity")));
+a.setMitreTechnique(d.get("mitre_technique"));
+a.setMitreTactic(d.get("mitre_tactic"));
+a.setStatus(AlertStatus.NEW);
+alertService.save(a);</pre>
+<p class="src">المصدر: backend/.../service/LiveMonitorService.java</p>
+<div class="note"><strong>مسار PCAP:</strong> تحليل الملفات يتبع نفس المنطق لكن عبر <code>ScanService</code> الذي يستدعي <code>bulkSaveFromScan()</code> لإدراج دفعة واحدة بكفاءة.</div>
+
+<!-- ===== 6. Correlation ===== -->
+<h1 class="section">6. المرحلة 5: كيف تُربط الهجمات (Correlation)</h1>
+<p class="lead">بدل إغراق المحلل بآلاف التنبيهات المنفردة، يجمّع النظام التنبيهات المترابطة في <strong>حوادث (Incidents)</strong>. هذا يحاكي طريقة عمل مراكز العمليات الأمنية الناضجة.</p>
+<h3>قاعدة الربط (محافِظة، دقّة عالية):</h3>
+<p>عند كل تنبيه، تُستدعى <code>IncidentService.correlate()</code> التي تعمل بمنطق مفتاحين:</p>
+<ol>
+  <li><strong>المفتاح الأساسي:</strong> نفس (عنوان المصدر + عائلة الهجوم + المنظمة) ضمن نافذة <strong>ساعة واحدة</strong> ← دمج (نفس المهاجم يكرّر).</li>
+  <li><strong>المفتاح الموزّع:</strong> نفس (الوجهة + العائلة) بسابقة <code>dist:</code> ← يُفعَّل فقط لعائلات موزّعة (DDoS/DoS/Brute/Flood/Scan) لرصد هجوم من مصادر متعددة على هدف واحد.</li>
+</ol>
+<h3>عائلة الهجوم (Attack Family):</h3>
+<p>هي نوع الهجوم بعد إزالة اللاحقة الفرعية: <code>"DoS Hulk"</code> و <code>"DoS slowloris"</code> ← كلاهما عائلة <code>"DoS"</code>. هذا يجمع موجة هجمات متنوعة في سجل واحد.</p>
+<h3>مفتاح الربط (Correlation Key):</h3>
+<pre>raw = srcIp + "|" + family + "|" + orgId
+key = SHA-256(raw)[:40]   // 40 حرفاً سداسياً</pre>
+<h3>عند الدمج (Rollup):</h3>
+<ul>
+  <li>زيادة عدّاد التنبيهات <code>alertCount++</code>.</li>
+  <li>تحديث وقت آخر تنبيه <code>lastAlertAt</code>.</li>
+  <li>تصعيد الخطورة للأعلى إن كان التنبيه الجديد أشدّ.</li>
+</ul>
+<div class="note">يعمل <code>correlate()</code> في معاملة مستقلة <code>REQUIRES_NEW</code> حتى لا يُفسد تصادم مفتاح فريد (متوقّع أثناء الإدراج المتزامن) معاملة حفظ التنبيه بأكملها — وهذا يحمي مسح ملفات PCAP الكبيرة من الفشل الكامل.</div>
+<p class="src">المصدر: backend/.../service/IncidentService.java</p>
+
+<!-- ===== 7. Persistence ===== -->
+<h1 class="section">7. المرحلة 6: كيف تُسجّل التنبيهات</h1>
+<p>كل التنبيهات تمرّ عبر نقطة دخول واحدة: <code>AlertService.save()</code>. خطواتها بالترتيب:</p>
+<ol>
+  <li><strong>فحص الحظر:</strong> إن كان المصدر محظوراً مسبقاً، يُتجاهل التنبيه ويعود <code>null</code> (المحظور لا يظهر كهجمة جديدة).</li>
+  <li><strong>الربط:</strong> استدعاء <code>incidents.correlate(a)</code> وربط الحادث قبل الحفظ.</li>
+  <li><strong>الحفظ:</strong> <code>repo.save(a)</code> في جدول <code>alerts</code>.</li>
+  <li><strong>الحظر التلقائي:</strong> إن كانت الخطورة <strong>HIGH</strong> أو <strong>CRITICAL</strong> يُستدعى <code>firewall.autoBlock()</code>.</li>
+  <li><strong>البثّ اللحظي:</strong> <code>broadcaster.broadcast()</code> لتحديث الواجهة فوراً.</li>
+  <li><strong>Webhook:</strong> إرسال للأنظمة الخارجية (fire-and-forget).</li>
+  <li><strong>إثراء GeoIP:</strong> تعبئة بلد المصدر/الوجهة بشكل غير متزامن.</li>
+  <li><strong>سمعة IP:</strong> تسخين ذاكرة Threat Intel.</li>
+</ol>
+<pre>public AlertDto save(Alert a) {
+  if (firewall.isBlocked(a.getSourceIp(), orgId)) return null;   // 1
+  a.setIncident(incidents.correlate(a));                          // 2
+  Alert saved = repo.save(a);                                     // 3
+  if (severity == HIGH || severity == CRITICAL)
+      firewall.autoBlock(saved, ...);                             // 4
+  broadcaster.broadcast(dto, orgId);                              // 5
+  webhooks.dispatchAlert(dto, orgId);                             // 6
+  geoIp.enrichAsync(...);  threatIntel.lookup(...);               // 7,8
+}</pre>
+<h3>سجل التدقيق (Audit Log):</h3>
+<p>كل عملية حساسة تُسجَّل في جدول <code>audit_log</code> عبر <code>audit.log(action, resource, id, details)</code>. أمثلة على الإجراءات: <code>ALERT_STATUS</code>، <code>ALERT_UPDATE</code>، <code>FIREWALL_BLOCK</code>، <code>FIREWALL_AUTOBLOCK</code>، <code>FIREWALL_UNBLOCK</code>، <code>ALERT_AUTO_RESOLVE</code>.</p>
+<p class="src">المصدر: backend/.../service/AlertService.java → save()</p>
+
+<!-- ===== 8. Blocking ===== -->
+<h1 class="section">8. المرحلة 7: كيف يعمل الحظر</h1>
+<p class="lead">الحظر في MADRS ليس مجرد علامة في قاعدة البيانات — بل قاعدة فعلية في نواة لينكس تُسقط الحزم.</p>
+
+<h2>8.1 الحظر اليدوي (BlockedIpService.block)</h2>
+<ol>
+  <li><strong>التطبيع:</strong> <code>normalise()</code> تنظّف العنوان وترفض المدخلات غير الصالحة.</li>
+  <li><strong>منع التكرار (Idempotency):</strong> إعادة حظر عنوان محظور تُحدّث بياناته فقط دون صفّ مكرّر.</li>
+  <li><strong>حلّ التنبيهات:</strong> <code>autoResolveAlerts()</code> تُحلّ كل تنبيهات هذا المصدر المفتوحة وتُلحق وسماً <code>[firewall:block#ID]</code> بالوصف وتؤرشفها في التدريب.</li>
+  <li><strong>حلّ الحوادث:</strong> <code>autoResolveIncidents()</code> تُغلق الحوادث المرتبطة.</li>
+  <li><strong>التطبيق الفعلي:</strong> <code>enforcer.applyBlock(ip)</code> يدفع القاعدة لنواة النظام.</li>
+  <li><strong>التدقيق:</strong> تسجيل <code>FIREWALL_BLOCK</code> مع عدد ما حُلّ.</li>
+</ol>
+
+<h2>8.2 الحظر التلقائي (autoBlock)</h2>
+<p>يُستدعى تلقائياً للتنبيهات <strong>HIGH/CRITICAL</strong> فقط (الخطورات الأدنى مزعجة وقد تسبب حظراً خاطئاً). تتجاهل الدالة العناوين غير القابلة للحظر عبر <code>isUnsafeForAutoBlock()</code>:</p>
+<ul>
+  <li>Loopback (<code>127.</code>, <code>::1</code>)، Link-local (<code>169.254.</code>)، Multicast/Broadcast.</li>
+  <li>القيمة <code>0.0.0.0</code> أو <code>MULTIPLE</code> أو IPv6 link-local (<code>fe80</code>).</li>
+</ul>
+<div class="note">عناوين الشبكة الداخلية (RFC1918) <strong>مسموح حظرها</strong> لأن النظام يُستخدم غالباً لاحتواء مهاجم داخلي.</div>
+
+<h2>8.3 التطبيق على نواة النظام (NftablesEnforcer)</h2>
+<p>يُنشئ المُنفِّذ جدول <code>inet aisec</code> ومجموعتين <code>aisec_block_v4</code> و <code>aisec_block_v6</code>، ثم قواعد <code>drop</code> على <strong>ثلاث سلاسل</strong>:</p>
+<table>
+  <thead><tr><th>السلسلة</th><th>الاتجاه</th><th>الحالة المستهدفة</th></tr></thead>
+  <tbody>
+    <tr><td><strong>input</strong></td><td>وارد من المهاجم</td><td><code>ip saddr @set drop</code></td></tr>
+    <tr><td><strong>output</strong></td><td>صادر نحو الهدف</td><td><code>ip daddr @set drop</code> (حين يكون جهازنا هو المهاجم)</td></tr>
+    <tr><td><strong>forward</strong></td><td>ترافيك مُمرَّر</td><td>عزل عبر ARP spoofing</td></tr>
+  </tbody>
+</table>
+<pre>// تطبيق حظر عنوان:
+nft add element inet aisec aisec_block_v4 { 192.168.1.110 }
+// كل أوامر nft تمرّ عبر: sudo -n /usr/sbin/nft ...</pre>
+<p>عند الإقلاع، يُزامن <code>syncEnforcerOnStartup()</code> النواة مع قاعدة البيانات: يُفرّغ المجموعات ثم يعيد إضافة كل العناوين النشطة، فلا تبقى قواعد قديمة عالقة.</p>
+<div class="warn"><strong>شرط التفعيل:</strong> يحتاج مستخدم الـ Backend صلاحية sudoers:<br><code>mohamed ALL=(root) NOPASSWD: /usr/sbin/nft</code><br>بدونها يسقط النظام إلى <code>NoOpFirewallEnforcer</code> (تسجيل فقط دون إسقاط فعلي).</div>
+<p class="src">المصدر: backend/.../service/firewall/NftablesEnforcer.java + BlockedIpService.java</p>
+
+<!-- ===== 9. Group resolve ===== -->
+<h1 class="section">9. المرحلة 8: الحل الجماعي والأرشفة في التدريب</h1>
+<h3>الحل الجماعي (closeRelatedAlerts):</h3>
+<p>عند حلّ تنبيه أو وسمه إيجابية خاطئة، لا يُحلّ وحده. تبحث <code>closeRelatedAlerts()</code> عن كل التنبيهات المفتوحة بنفس (المصدر + النوع) في المنظمة، وتُغلقها جميعاً، وتؤرشفها، ثم تحذف صفوفها من قائمة التنبيهات النشطة:</p>
+<pre>related = repo.findOpenBySourceIpAndAttackType(srcIp, attackType, orgId, open);
+for (Alert alert : related) {
+    alert.setStatus(status);                 // RESOLVED / FALSE_POSITIVE
+    alert.setResolvedAt(resolvedAt);
+    mlTraining.archiveAlert(saved);          // أرشفة في التدريب
+    deleteAlertRow(saved);                   // إزالة من النشط
+}</pre>
+<div class="note">النتيجة: حل تنبيه واحد من 100 هجمة متكرّرة من نفس الجهاز والنوع يحلّها كلها ويؤرشفها دفعة واحدة.</div>
+<h3>الأرشفة في بيانات التدريب (MlTrainingService.archiveAlert):</h3>
+<p>تُخزَّن في جدول <code>ml_training_data</code> مع السياق الكامل: النوع، الخطورة، الثقة، البلد، الوصف، تغذية ML، المسؤول، الحادث، إضافةً إلى:</p>
+<ul>
+  <li><strong>responseDecision:</strong> يُشتقّ كالتالي:
+    <ul>
+      <li><code>BLOCKED</code> إذا احتوى الوصف وسم <code>[firewall:block#id]</code>.</li>
+      <li><code>MARKED_FALSE_POSITIVE</code> للإيجابيات الخاطئة.</li>
+      <li><code>RESOLVED</code> للتنبيهات المحلولة دون حظر.</li>
+    </ul>
+  </li>
+  <li><strong>responseAction:</strong> وصف الإجراء المُتّخَذ.</li>
+</ul>
+<p>هذه البيانات تُصدَّر CSV عبر <code>MlTrainingController</code> وتُستخدم لإعادة تدريب النموذج — فيتعلّم النظام من قرارات المحلّلين، ويغلق حلقة <strong>الكشف ← الاستجابة ← التعلّم</strong>.</p>
+<p class="src">المصدر: AlertService.closeRelatedAlerts() + MlTrainingService.archiveAlert()</p>
+
+<!-- ===== 10. Tunables ===== -->
+<h1 class="section">10. ملخص الثوابت والمعاملات (Tunables)</h1>
+<table>
+  <thead><tr><th>المعامل</th><th>القيمة</th><th>الموقع</th><th>الأثر</th></tr></thead>
+  <tbody>
+    <tr><td><code>MIN_CONFIDENCE</code></td><td>0.80</td><td>live_monitor.py</td><td>أدنى ثقة لاعتماد تنبؤ ML</td></tr>
+    <tr><td><code>MIN_REPEAT</code></td><td>2</td><td>live_monitor.py</td><td>تكرارات لازمة لتأكيد الهجوم</td></tr>
+    <tr><td><code>REPEAT_WINDOW_SEC</code></td><td>60</td><td>live_monitor.py</td><td>نافذة احتساب التكرار</td></tr>
+    <tr><td><code>ICMP_FLOOD_PKTS</code></td><td>15</td><td>live_monitor.py</td><td>عتبة فيضان ICMP لتدفّق واحد</td></tr>
+    <tr><td><code>ICMP_PROBE_THRESHOLD</code></td><td>3</td><td>live_monitor.py</td><td>تدفقات ICMP لوجهة → فيضان</td></tr>
+    <tr><td><code>ICMP_SWEEP_HOSTS</code></td><td>3</td><td>live_monitor.py</td><td>مضيفون لمصدر واحد → مسح</td></tr>
+    <tr><td><code>MERGE_WINDOW</code></td><td>1 ساعة</td><td>IncidentService.java</td><td>نافذة دمج التنبيهات في حادث</td></tr>
+    <tr><td>عتبة الحظر التلقائي</td><td>HIGH / CRITICAL</td><td>AlertService.java</td><td>الخطورات التي تُحظر تلقائياً</td></tr>
+    <tr><td>فترة سحب الكشوفات</td><td>1 ثانية</td><td>LiveMonitorService.java</td><td>تردّد سحب Backend للكشوفات</td></tr>
+  </tbody>
+</table>
+
+<hr>
+<p style="text-align:center;color:#6f86a3;font-size:12px;">© 2026 MADRS — التوثيق التقني العميق — مبني على الكود الفعلي للنظام</p>
+
+</body>
+</html>

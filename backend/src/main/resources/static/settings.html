@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Settings — MADRS</title>
+<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="dashboard.css"/>
+<link rel="stylesheet" href="alerts.css"/>
+<link rel="stylesheet" href="incident.css"/>
+<link rel="stylesheet" href="users.css"/>
+<link rel="stylesheet" href="settings.css"/>
+<link rel="stylesheet" href="classification.css"/>
+<link rel="stylesheet" href="analysis.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+</head>
+<body class="dash-body">
+
+<div class="dash-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="side-brand">
+      <div class="brand-logo"><i class="fa-solid fa-shield-halved"></i></div>
+      <div><div class="side-title">MADRS</div><div class="side-sub">Incident Response</div></div>
+    </div>
+    <nav class="side-nav">
+      <a class="side-link" href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+      <a class="side-link" href="alerts.html"><i class="fa-solid fa-triangle-exclamation"></i> Alerts </a>
+      <a class="side-link" href="scan.html"><i class="fa-solid fa-magnifying-glass-chart"></i> Scan PCAP</a>
+      <a class="side-link" href="monitoring.html"><i class="fa-solid fa-wave-square"></i> Monitoring</a>
+      <a class="side-link" href="reports.html"><i class="fa-solid fa-file-lines"></i> Reports</a>
+      <a class="side-link" href="users.html"><i class="fa-solid fa-users"></i> Users</a>
+      <a class="side-link" href="audit.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-clipboard-list"></i> Audit Log</a>
+      <a class="side-link" href="webhooks.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-bell"></i> Webhooks</a>
+      <a class="side-link" href="firewall.html"><i class="fa-solid fa-ban"></i> Firewall</a>
+      <a class="side-link" href="analytics.html"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
+      <a class="side-link active" href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+      <a class="side-link" href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications</a>
+      <a class="side-link" href="contact.html"><i class="fa-solid fa-envelope"></i> Contact</a>
+    </nav>
+    <a href="index.html" class="side-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="dash-main">
+    <header class="dash-top">
+      <div>
+        <h1>Settings</h1>
+        <p class="muted">Configure system preferences and security options</p>
+      </div>
+    </header>
+
+    <div class="inc-layout">
+      <!-- LEFT -->
+      <div class="inc-left">
+        <!-- General -->
+        <section class="panel reveal settings-section">
+          <div class="panel-head"><h3><i class="fa-solid fa-sliders"></i> General Settings</h3></div>
+          <div class="set-field">
+            <label>System Name</label>
+            <input type="text" value="MADRS"/>
+          </div>
+          <div class="set-field">
+            <label>Organization</label>
+            <input type="text" value="AISec Libya"/>
+          </div>
+          <div class="set-field">
+            <label>Timezone</label>
+            <div class="select-wrap">
+              <select>
+                <option selected>UTC+02:00 - Libya</option>
+                <option>UTC+03:00 - Egypt</option>
+                <option>UTC+00:00 - UTC</option>
+                <option>UTC+01:00 - London</option>
+                <option>UTC-05:00 - New York</option>
+                <option>UTC+04:00 - Dubai</option>
+                <option>UTC+09:00 - Tokyo</option>
+              </select>
+              <i class="fa-solid fa-chevron-down caret"></i>
+            </div>
+          </div>
+        </section>
+
+        <!-- Security -->
+        <section class="panel reveal settings-section">
+          <div class="panel-head"><h3><i class="fa-solid fa-lock"></i> Security Settings</h3></div>
+          <div class="toggle-row">
+            <div>
+              <div class="tr-title">Two-Factor Authentication</div>
+              <div class="tr-desc">Require 2FA for all users</div>
+            </div>
+            <label class="switch"><input type="checkbox" checked data-setting="2fa"/><span></span></label>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="tr-title">IP Whitelist</div>
+              <div class="tr-desc">Restrict access by IP address</div>
+            </div>
+            <label class="switch"><input type="checkbox" data-setting="ip"/><span></span></label>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="tr-title">Automatic Lockout</div>
+              <div class="tr-desc">Lock accounts after failed attempts</div>
+            </div>
+            <label class="switch"><input type="checkbox" checked data-setting="lockout"/><span></span></label>
+          </div>
+        </section>
+
+        <!-- AI Config -->
+        <section class="panel reveal settings-section">
+          <div class="panel-head"><h3><i class="fa-solid fa-brain"></i> AI Configuration</h3></div>
+          <div class="set-field">
+            <label>Detection Sensitivity</label>
+            <div class="slider-wrap">
+              <input type="range" id="sens" min="0" max="100" value="75" class="slider"/>
+              <div class="slider-labels"><span>Low</span><span id="sensVal">75%</span><span>High</span></div>
+            </div>
+          </div>
+          <div class="set-field">
+            <label>AI Model</label>
+            <div class="select-wrap">
+              <select>
+                <option>SecurityNet-AI v3.2 (Latest)</option>
+                <option>SecurityNet-AI v3.1</option>
+                <option>SecurityNet-AI v3.0</option>
+                <option>ThreatLens Pro</option>
+              </select>
+              <i class="fa-solid fa-chevron-down caret"></i>
+            </div>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="tr-title">Auto-Classification</div>
+              <div class="tr-desc">Automatically classify threats</div>
+            </div>
+            <label class="switch"><input type="checkbox" checked data-setting="autoclass"/><span></span></label>
+          </div>
+        </section>
+
+        <!-- Notifications -->
+        <section class="panel reveal settings-section">
+          <div class="panel-head"><h3><i class="fa-solid fa-bell"></i> Notification Settings</h3></div>
+          <div class="toggle-row">
+            <div>
+              <div class="tr-title">Email Notifications</div>
+              <div class="tr-desc">Receive alerts via email</div>
+            </div>
+            <label class="switch"><input type="checkbox" checked data-setting="email"/><span></span></label>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="tr-title">SMS Alerts</div>
+              <div class="tr-desc">Critical alerts via SMS</div>
+            </div>
+            <label class="switch"><input type="checkbox" checked data-setting="sms"/><span></span></label>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="tr-title">Slack Integration</div>
+              <div class="tr-desc">Post alerts to Slack channel</div>
+            </div>
+            <label class="switch"><input type="checkbox" data-setting="slack"/><span></span></label>
+          </div>
+        </section>
+      </div>
+
+      <!-- RIGHT -->
+      <aside class="inc-right">
+        <section class="panel reveal">
+          <div class="panel-head"><h3><i class="fa-solid fa-heart-pulse"></i> System Status</h3></div>
+          <div class="sys-list">
+            <div class="sys-row"><span>API Status</span><span class="sys-tag online"><i></i> Online</span></div>
+            <div class="sys-row"><span>Database</span><span class="sys-tag online"><i></i> Healthy</span></div>
+            <div class="sys-row"><span>AI Engine</span><span class="sys-tag online"><i></i> Running</span></div>
+          </div>
+        </section>
+
+        <section class="panel reveal sticky-panel">
+          <div class="panel-head"><h3><i class="fa-solid fa-bolt"></i> Quick Actions</h3></div>
+          <div class="next-steps">
+            <button class="ns-btn cyan" id="saveBtn"  data-requires-role="ADMIN"><i class="fa-solid fa-check"></i> Save Changes</button>
+            <button class="ns-btn dark" id="resetBtn" data-requires-role="ADMIN"><i class="fa-solid fa-rotate-left"></i> Reset to Default</button>
+            <button class="ns-btn dark" id="exportBtn"><i class="fa-solid fa-file-export"></i> Export Config</button>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </main>
+</div>
+
+<!-- Save overlay -->
+<div class="deep-overlay" id="saveOverlay">
+  <div class="deep-card">
+    <div class="save-check"><i class="fa-solid fa-check"></i></div>
+    <h2>Settings Saved</h2>
+    <p class="muted">All changes have been applied successfully</p>
+  </div>
+</div>
+
+<div class="toast" id="toast"><i class="fa-solid fa-check-circle"></i> <span>Updated</span></div>
+
+<!-- Pull classification CSS for ns-btn and overlay -->
+<script src="env-config.js"></script>
+<script src="api.js"></script>
+<script src="settings.js"></script>
+</body>
+</html>

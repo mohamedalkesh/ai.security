@@ -36,6 +36,13 @@
 .sev-chip.MEDIUM   { background:rgba(255,193,7,.12); color:#ffc107; }
 .sev-chip.LOW      { background:rgba(81,207,102,.1); color:#51cf66; }
 .sev-chip.INFORMATIONAL { background:rgba(100,116,139,.1); color:#94a3b8; }
+.decision-chip { display:inline-block; padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700; letter-spacing:.3px; }
+.decision-chip.BLOCKED { background:rgba(81,207,102,.12); color:#51cf66; border:1px solid rgba(81,207,102,.25); }
+.decision-chip.RESOLVED { background:rgba(34,184,207,.12); color:#22b8cf; border:1px solid rgba(34,184,207,.25); }
+.decision-chip.MARKED_FALSE_POSITIVE { background:rgba(255,193,7,.12); color:#ffc107; border:1px solid rgba(255,193,7,.25); }
+.detail-section { grid-column:1/-1; margin-top:8px; padding-top:12px; border-top:1px solid var(--border,#2a3045); }
+.detail-section label { display:block; color:var(--muted,#64748b); font-size:11px; text-transform:uppercase; margin-bottom:6px; }
+.detail-section div { color:var(--text,#e2e8f0); font-size:13px; line-height:1.5; white-space:pre-wrap; }
 
 .export-btn { background:linear-gradient(135deg,#22b8cf,#0f7490); color:#fff;
   border:none; border-radius:8px; padding:9px 18px; font-size:13px;
@@ -147,11 +154,13 @@
               <th>SOURCE IP</th>
               <th>PROTOCOL</th>
               <th>MITRE TACTIC</th>
+              <th>DECISION</th>
+              <th>ACTION</th>
               <th>RESOLVED AT</th>
             </tr>
           </thead>
           <tbody id="tableBody">
-            <tr><td colspan="9" style="text-align:center;padding:40px;color:var(--muted)">Loading…</td></tr>
+            <tr><td colspan="11" style="text-align:center;padding:40px;color:var(--muted)">Loading…</td></tr>
           </tbody>
         </table>
       </div>

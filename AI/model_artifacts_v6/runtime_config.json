@@ -1,0 +1,15 @@
+{
+  "per_class_thresholds": {
+    "Benign": 0.47,
+    "Bot": 0.52,
+    "Brute Force": 0.47,
+    "DDoS": 0.3,
+    "DoS": 0.64,
+    "Port Scan": 0.56,
+    "XSS": 0.3
+  },
+  "ensemble_weights": {
+    "xgb": 0.49999999949999996,
+    "lgbm": 0.49999999949999996
+  }
+}

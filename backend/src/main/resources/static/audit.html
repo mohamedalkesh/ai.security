@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Audit Log — MADRS</title>
+<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="dashboard.css"/>
+<link rel="stylesheet" href="alerts.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<style>
+.audit-row { transition: background .15s; }
+.audit-row:hover { background: rgba(34,184,207,.05); }
+.action-pill {
+  display:inline-flex; align-items:center; gap:6px; padding:3px 10px;
+  border-radius:14px; font-size:11px; font-weight:600;
+  letter-spacing:.04em; text-transform:uppercase;
+}
+.act-LOGIN_OK     { background:rgba(34,197,94,.15); color:#86efac; }
+.act-LOGIN_FAIL   { background:rgba(239,68,68,.15); color:#fca5a5; }
+.act-RATE_LIMIT   { background:rgba(245,158,11,.15); color:#fcd34d; }
+.act-REGISTER_OK  { background:rgba(59,130,246,.15); color:#93c5fd; }
+.act-ALERT_STATUS { background:rgba(34,184,207,.15); color:#a5f3fc; }
+.act-ALERT_UPDATE { background:rgba(34,184,207,.15); color:#a5f3fc; }
+.act-ALERT_DELETE { background:rgba(239,68,68,.15); color:#fca5a5; }
+.act-ALERT_BULK   { background:rgba(168,85,247,.15); color:#d8b4fe; }
+.act-ALERT_COMMENT{ background:rgba(34,184,207,.10); color:#a5f3fc; }
+.act-default      { background:rgba(150,160,180,.15); color:#cbd5e1; }
+.audit-mono { font-family:'JetBrains Mono','Fira Code',monospace; font-size:12px; color:#cbd5e1; }
+</style>
+</head>
+<body class="dash-body">
+
+<div class="dash-layout">
+  <aside class="sidebar">
+    <div class="side-brand">
+      <div class="brand-logo"><i class="fa-solid fa-shield-halved"></i></div>
+      <div>
+        <div class="side-title">MADRS</div>
+        <div class="side-sub">Audit & Compliance</div>
+      </div>
+    </div>
+    <nav class="side-nav">
+      <a class="side-link" href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+      <a class="side-link" href="alerts.html"><i class="fa-solid fa-triangle-exclamation"></i> Alerts</a>
+      <a class="side-link" href="incidents.html"><i class="fa-solid fa-layer-group"></i> Incidents</a>
+      <a class="side-link" href="scan.html"><i class="fa-solid fa-magnifying-glass-chart"></i> Scan PCAP</a>
+      <a class="side-link" href="monitoring.html"><i class="fa-solid fa-wave-square"></i> Monitoring</a>
+      <a class="side-link" href="reports.html"><i class="fa-solid fa-file-lines"></i> Reports</a>
+      <a class="side-link" href="users.html"><i class="fa-solid fa-users"></i> Users</a>
+      <a class="side-link active" href="audit.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-clipboard-list"></i> Audit Log</a>
+      <a class="side-link" href="webhooks.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-bell"></i> Webhooks</a>
+      <a class="side-link" href="firewall.html"><i class="fa-solid fa-ban"></i> Firewall</a>
+      <a class="side-link" href="analytics.html"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
+      <a class="side-link" href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+      <a class="side-link" href="contact.html"><i class="fa-solid fa-envelope"></i> Contact</a>
+    </nav>
+    <a href="index.html" class="side-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <main class="dash-main">
+    <header class="dash-top alerts-top">
+      <div>
+        <h1>Audit Log</h1>
+        <p class="muted">Immutable trail of every sensitive action — for incident forensics &amp; compliance.</p>
+      </div>
+      <div class="sev-pills">
+        <span class="sev-pill" style="background:rgba(34,197,94,.15);color:#86efac"><i class="fa-solid fa-circle"></i> Login OK <strong id="cntLoginOk">0</strong></span>
+        <span class="sev-pill" style="background:rgba(239,68,68,.15);color:#fca5a5"><i class="fa-solid fa-circle"></i> Login Fail <strong id="cntLoginFail">0</strong></span>
+        <span class="sev-pill" style="background:rgba(245,158,11,.15);color:#fcd34d"><i class="fa-solid fa-circle"></i> Rate Limit <strong id="cntRateLimit">0</strong></span>
+      </div>
+    </header>
+
+    <section class="panel reveal alerts-toolbar">
+      <div class="search grow">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <input id="auditSearch" placeholder="Search by actor, resource, IP, details…"/>
+      </div>
+      <div class="select-mini">
+        <i class="fa-solid fa-filter"></i>
+        <select id="actionFilter">
+          <option value="">All Actions</option>
+          <option>LOGIN_OK</option>
+          <option>LOGIN_FAIL</option>
+          <option>REGISTER_OK</option>
+          <option>RATE_LIMIT</option>
+          <option>ALERT_STATUS</option>
+          <option>ALERT_UPDATE</option>
+          <option>ALERT_DELETE</option>
+          <option>ALERT_BULK</option>
+          <option>ALERT_COMMENT</option>
+        </select>
+        <i class="fa-solid fa-chevron-down caret"></i>
+      </div>
+      <button class="icon-btn" id="exportAuditBtn" title="Export CSV"><i class="fa-solid fa-download"></i></button>
+      <button class="icon-btn" id="refreshAuditBtn" title="Refresh"><i class="fa-solid fa-rotate"></i></button>
+    </section>
+
+    <section class="panel reveal table-panel">
+      <div class="table-wrap">
+        <table class="alerts-table">
+          <thead>
+            <tr>
+              <th>WHEN</th>
+              <th>ACTION</th>
+              <th>ACTOR</th>
+              <th>RESOURCE</th>
+              <th>SOURCE IP</th>
+              <th>DETAILS</th>
+            </tr>
+          </thead>
+          <tbody id="auditBody"></tbody>
+        </table>
+      </div>
+      <div class="table-foot">
+        <span class="muted sm" id="auditPageInfo">Loading…</span>
+        <div class="pager" id="auditPager"></div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script src="env-config.js"></script>
+<script src="api.js"></script>
+<script src="audit.js"></script>
+</body>
+</html>

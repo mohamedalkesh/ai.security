@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Incident Details — MADRS</title>
+<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="dashboard.css"/>
+<link rel="stylesheet" href="alerts.css"/>
+<link rel="stylesheet" href="incident.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+</head>
+<body class="dash-body">
+
+<div class="dash-layout">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="side-brand">
+      <div class="brand-logo"><i class="fa-solid fa-shield-halved"></i></div>
+      <div>
+        <div class="side-title">MADRS</div>
+        <div class="side-sub">Incident Response</div>
+      </div>
+    </div>
+    <nav class="side-nav">
+      <a class="side-link" href="dashboard.html"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+      <a class="side-link active" href="alerts.html"><i class="fa-solid fa-triangle-exclamation"></i> Alerts </a>
+      <a class="side-link" href="scan.html"><i class="fa-solid fa-magnifying-glass-chart"></i> Scan PCAP</a>
+      <a class="side-link" href="monitoring.html"><i class="fa-solid fa-wave-square"></i> Monitoring</a>
+      <a class="side-link" href="reports.html"><i class="fa-solid fa-file-lines"></i> Reports</a>
+      <a class="side-link" href="users.html"><i class="fa-solid fa-users"></i> Users</a>
+      <a class="side-link" href="audit.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-clipboard-list"></i> Audit Log</a>
+      <a class="side-link" href="webhooks.html" data-requires-role="ADMIN,ORG_ADMIN"><i class="fa-solid fa-bell"></i> Webhooks</a>
+      <a class="side-link" href="firewall.html"><i class="fa-solid fa-ban"></i> Firewall</a>
+      <a class="side-link" href="analytics.html"><i class="fa-solid fa-chart-pie"></i> Analytics</a>
+      <a class="side-link" href="settings.html"><i class="fa-solid fa-gear"></i> Settings</a>
+      <a class="side-link" href="notifications.html"><i class="fa-solid fa-bell"></i> Notifications</a>
+      <a class="side-link" href="contact.html"><i class="fa-solid fa-envelope"></i> Contact</a>
+    </nav>
+    <a href="index.html" class="side-logout"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="dash-main">
+    <a href="alerts.html" class="back-link"><i class="fa-solid fa-arrow-left"></i> Back to Alerts</a>
+
+    <!-- Header -->
+    <header class="inc-header reveal">
+      <div class="inc-title">
+        <div class="inc-id-line">
+          <h1 id="incId">—</h1>
+          <span class="badge-sev" id="incSev">CRITICAL</span>
+          <span class="status-pill active" id="incStatus">active</span>
+        </div>
+        <p class="muted" id="incType">Loading…</p>
+      </div>
+      <div class="inc-actions">
+        <button class="btn-action analyze"><i class="fa-solid fa-brain"></i> Analyze</button>
+        <button class="btn-action respond" data-requires-role="ADMIN,ANALYST"><i class="fa-solid fa-bolt"></i> Respond</button>
+      </div>
+    </header>
+
+    <div class="inc-layout">
+      <!-- Left column -->
+      <div class="inc-left">
+        <!-- Details Panel -->
+        <section class="panel reveal">
+          <div class="panel-head"><h3><i class="fa-solid fa-circle-info"></i> Incident Details</h3></div>
+          <div class="detail-grid">
+            <div class="d-field">
+              <span class="d-lbl"><i class="fa-regular fa-clock"></i> Detection Time</span>
+              <strong class="mono" id="dTime">—</strong>
+            </div>
+            <div class="d-field">
+              <span class="d-lbl"><i class="fa-solid fa-signal"></i> Status</span>
+              <span class="status-pill active" id="dStatus">active</span>
+            </div>
+            <div class="d-field">
+              <span class="d-lbl"><i class="fa-solid fa-location-crosshairs"></i> Source IP</span>
+              <strong class="mono copy" id="dSrc">—</strong>
+            </div>
+            <div class="d-field">
+              <span class="d-lbl"><i class="fa-solid fa-bullseye"></i> Target IP</span>
+              <strong class="mono copy" id="dTarget">—</strong>
+            </div>
+            <div class="d-field">
+              <span class="d-lbl"><i class="fa-solid fa-diagram-project"></i> Protocol</span>
+              <strong id="dProto">—</strong>
+            </div>
+            <div class="d-field">
+              <span class="d-lbl"><i class="fa-solid fa-plug"></i> Target Port</span>
+              <strong id="dPort">—</strong>
+            </div>
+            <div class="d-field">
+              <span class="d-lbl"><i class="fa-solid fa-server"></i> ASN</span>
+              <strong id="dAsn">—</strong>
+            </div>
+            <div class="d-field">
+              <span class="d-lbl"><i class="fa-solid fa-globe"></i> Country</span>
+              <strong id="dCountry">Unknown</strong>
+            </div>
+          </div>
+        </section>
+
+        <!-- Description -->
+        <section class="panel reveal">
+          <div class="panel-head"><h3><i class="fa-solid fa-file-lines"></i> Description</h3></div>
+          <p class="inc-desc" id="dDesc">
+            
+            
+          </p>
+        </section>
+
+        <!-- Attack Payload -->
+        <section class="panel reveal">
+          <div class="panel-head">
+            <h3><i class="fa-solid fa-code"></i> Attack Payload</h3>
+            <button class="copy-btn" id="copyPayload"><i class="fa-regular fa-copy"></i> Copy</button>
+          </div>
+          <pre class="code-block"><code id="payload">POST /api/login HTTP/1.1
+Host: example.com
+Content-Type: application/x-www-form-urlencoded
+
+<span class="hl">username=admin' OR '1'='1&password=anything</span></code></pre>
+        </section>
+
+        <!-- AI Explanation -->
+        <section class="panel reveal">
+          <div class="panel-head">
+            <h3><i class="fa-solid fa-lightbulb"></i> تفسير الذكاء الاصطناعي</h3>
+          </div>
+          <div class="ai-explain">
+            <p id="expSummary" class="exp-summary">—</p>
+            <ul id="expDetails" class="exp-details"></ul>
+            <div id="expSignals" class="exp-signals"></div>
+            <div id="expEmpty" class="exp-empty muted sm">لا توجد تفسيرات متاحة لهذه الهجمة بعد.</div>
+          </div>
+        </section>
+
+        <!-- Alert Journey Timeline -->
+        <section class="panel reveal">
+          <div class="panel-head"><h3><i class="fa-solid fa-route"></i> مسار التنبيه</h3></div>
+          <ul class="timeline" id="timeline"></ul>
+        </section>
+
+        <!-- Event Logs -->
+        <section class="panel reveal">
+          <div class="panel-head"><h3><i class="fa-solid fa-terminal"></i> Event Logs</h3></div>
+          <ul class="event-log" id="eventLog">
+            <li><span class="ev-time mono">14:32:15</span><span class="ev-tag alert">ALERT</span><span>SQL injection pattern detected in request parameters</span></li>
+            <li><span class="ev-time mono">14:32:16</span><span class="ev-tag info">INFO</span><span>Request blocked by WAF</span></li>
+            <li><span class="ev-time mono">14:32:17</span><span class="ev-tag alert">ALERT</span><span>Multiple failed attempts from same IP</span></li>
+            <li><span class="ev-time mono">14:32:18</span><span class="ev-tag warning">WARNING</span><span>IP added to temporary blocklist</span></li>
+            <li><span class="ev-time mono">14:32:25</span><span class="ev-tag success">SUCCESS</span><span>Automated response playbook executed</span></li>
+            <li><span class="ev-time mono">14:33:02</span><span class="ev-tag info">INFO</span><span>Incident report generated and forwarded to SOC</span></li>
+          </ul>
+        </section>
+      </div>
+
+      <!-- Right column -->
+      <aside class="inc-right">
+        <section class="panel reveal">
+          <div class="panel-head"><h3><i class="fa-solid fa-bolt-lightning"></i> Quick Actions</h3></div>
+          <div class="quick-actions">
+            <button class="qa-btn purple">
+              <div class="qa-ico"><i class="fa-solid fa-brain"></i></div>
+              <div><div class="qa-t">AI Classification</div><div class="qa-s muted sm">Analyze with AI</div></div>
+            </button>
+            <button class="qa-btn cyan">
+              <div class="qa-ico"><i class="fa-solid fa-shield-halved"></i></div>
+              <div><div class="qa-t">MITRE ATT&CK</div><div class="qa-s muted sm">View mapping</div></div>
+            </button>
+            <button class="qa-btn gray">
+              <div class="qa-ico"><i class="fa-solid fa-file-arrow-down"></i></div>
+              <div><div class="qa-t">Export Report</div><div class="qa-s muted sm">Download PDF</div></div>
+            </button>
+            <button class="qa-btn gray" id="qaBlockIp" data-requires-role="ADMIN,ORG_ADMIN,ANALYST">
+              <div class="qa-ico"><i class="fa-solid fa-ban"></i></div>
+              <div><div class="qa-t">Block Source IP</div><div class="qa-s muted sm">Add to firewall</div></div>
+            </button>
+          </div>
+        </section>
+
+        <section class="panel reveal">
+          <div class="panel-head"><h3><i class="fa-solid fa-radar"></i> Threat Intelligence</h3></div>
+          <div class="ti-score">
+            <div class="ti-head">
+              <span class="muted sm">Threat Score</span>
+              <span class="ti-val" id="tiVal">0<span class="ti-max">/100</span></span>
+            </div>
+            <div class="ti-bar"><span id="tiBar" style="width:0%"></span></div>
+          </div>
+          <div class="ti-field">
+            <span class="muted sm">Similar incidents</span>
+            <strong><span id="simCount">0</span> in last 30 days</strong>
+          </div>
+          <div class="ti-field">
+            <span class="muted sm">Known Attacker</span>
+            <span class="yes-pill"><i class="fa-solid fa-circle-exclamation"></i> Yes</span>
+          </div>
+          <div class="ti-field">
+            <span class="muted sm">Confidence</span>
+            <strong class="cyan-text">98% (AI)</strong>
+          </div>
+        </section>
+
+        <section class="panel reveal">
+          <div class="panel-head"><h3><i class="fa-solid fa-diagram-project"></i> MITRE ATT&CK</h3></div>
+          <div class="mitre-tag">
+            <div class="mt-id mono">T1190</div>
+            <div>
+              <div class="mt-name">Exploit Public-Facing Application</div>
+              <div class="muted sm">Initial Access</div>
+            </div>
+          </div>
+        </section>
+      </aside>
+    </div>
+  </main>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"><i class="fa-solid fa-check-circle"></i> <span>Copied to clipboard</span></div>
+
+<script src="env-config.js"></script>
+<script src="api.js"></script>
+<script src="incident.js"></script>
+</body>
+</html>

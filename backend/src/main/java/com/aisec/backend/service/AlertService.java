@@ -149,11 +149,10 @@ public class AlertService {
         }
         Alert saved = repo.save(a);
         audit.log("ALERT_STATUS", "Alert", a.getId(), prev + " -> " + s);
-        if (s == AlertStatus.RESOLVED || s == AlertStatus.FALSE_POSITIVE) {
-            try { mlTraining.archiveAlert(saved); } catch (Exception ignored) {}
-        }
         AlertDto dto = AlertDto.from(saved);
-        deleteIfClosed(saved, "ALERT_AUTO_DELETE");
+        if (s == AlertStatus.RESOLVED || s == AlertStatus.FALSE_POSITIVE) {
+            closeRelatedAlerts(saved, s, orgId, "ALERT_GROUP_AUTO_DELETE");
+        }
         return dto;
     }
 
@@ -206,11 +205,10 @@ public class AlertService {
         if (!changes.isEmpty()) {
             audit.log("ALERT_UPDATE", "Alert", a.getId(), String.join(", ", changes));
         }
-        if (saved.getStatus() == AlertStatus.RESOLVED || saved.getStatus() == AlertStatus.FALSE_POSITIVE) {
-            try { mlTraining.archiveAlert(saved); } catch (Exception ignored) {}
-        }
         AlertDto dto = AlertDto.from(saved);
-        deleteIfClosed(saved, "ALERT_AUTO_DELETE");
+        if (saved.getStatus() == AlertStatus.RESOLVED || saved.getStatus() == AlertStatus.FALSE_POSITIVE) {
+            closeRelatedAlerts(saved, saved.getStatus(), orgId, "ALERT_GROUP_AUTO_DELETE");
+        }
         return dto;
     }
 
@@ -294,6 +292,12 @@ public class AlertService {
      *  PCAP analyser, scan results, AND the live-monitor poller. */
     @Transactional
     public AlertDto save(Alert a) {
+        Long ownerOrgId = a.getOrganization() != null ? a.getOrganization().getId() : null;
+        if (firewall.isBlocked(a.getSourceIp(), ownerOrgId)) {
+            log.debug("Alert skipped because source IP is already blocked: ip={} org={}", a.getSourceIp(), ownerOrgId);
+            return null;
+        }
+
         // Correlation — attach incident BEFORE the first save so the FK is persisted in one round-trip.
         try {
             Incident inc = incidents.correlate(a);
@@ -319,7 +323,6 @@ public class AlertService {
         }
 
         AlertDto dto = AlertDto.from(saved);
-        Long ownerOrgId = saved.getOrganization() != null ? saved.getOrganization().getId() : null;
         broadcaster.broadcast(dto, ownerOrgId);
 
         // Outbound webhook delivery — fire-and-forget on taskExecutor.
@@ -363,7 +366,18 @@ public class AlertService {
     @Transactional
     public int bulkSaveFromScan(List<Alert> batch) {
         if (batch == null || batch.isEmpty()) return 0;
-        List<Alert> saved = repo.saveAll(batch);
+        List<Alert> filtered = batch.stream()
+                .filter(a -> {
+                    Long ownerOrgId = a.getOrganization() != null ? a.getOrganization().getId() : null;
+                    boolean blocked = firewall.isBlocked(a.getSourceIp(), ownerOrgId);
+                    if (blocked) {
+                        log.debug("PCAP alert skipped because source IP is already blocked: ip={} org={}", a.getSourceIp(), ownerOrgId);
+                    }
+                    return !blocked;
+                })
+                .toList();
+        if (filtered.isEmpty()) return 0;
+        List<Alert> saved = repo.saveAll(filtered);
 
         // Collect unique (srcIp, dstIp) → list of alert IDs needing enrichment
         java.util.Map<String, java.util.List<Long>> pairToIds = new java.util.LinkedHashMap<>();
@@ -410,6 +424,24 @@ public class AlertService {
             }
             if (changed) repo.save(a);
         });
+    }
+
+    private void closeRelatedAlerts(Alert seed, AlertStatus status, Long orgId, String action) {
+        if (seed == null || seed.getId() == null) return;
+        if (status != AlertStatus.RESOLVED && status != AlertStatus.FALSE_POSITIVE) return;
+        List<AlertStatus> open = List.of(AlertStatus.NEW, AlertStatus.INVESTIGATING, status);
+        List<Alert> related = repo.findOpenBySourceIpAndAttackType(seed.getSourceIp(), seed.getAttackType(), orgId, open);
+        Instant resolvedAt = seed.getResolvedAt() != null ? seed.getResolvedAt() : Instant.now();
+        for (Alert alert : related) {
+            alert.setStatus(status);
+            alert.setResolvedAt(resolvedAt);
+            Alert saved = repo.save(alert);
+            try { mlTraining.archiveAlert(saved); } catch (Exception ignored) {}
+            Long id = saved.getId();
+            String type = saved.getAttackType();
+            deleteAlertRow(saved);
+            audit.log(action, "Alert", id, "closed related alert removed from active list: " + type);
+        }
     }
 
     private void deleteIfClosed(Alert alert, String action) {

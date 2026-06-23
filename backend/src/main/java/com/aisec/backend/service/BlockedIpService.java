@@ -54,6 +54,7 @@ public class BlockedIpService {
     private final AuditService audit;
     private final FirewallEnforcer enforcer;
     private final ThreatIntelService threatIntel;
+    private final MlTrainingService mlTraining;
 
     public BlockedIpService(BlockedIpRepository repo,
                             OrganizationRepository orgs,
@@ -61,7 +62,8 @@ public class BlockedIpService {
                             IncidentRepository incidents,
                             AuditService audit,
                             FirewallEnforcer enforcer,
-                            ThreatIntelService threatIntel) {
+                            ThreatIntelService threatIntel,
+                            MlTrainingService mlTraining) {
         this.repo = repo;
         this.orgs = orgs;
         this.alerts = alerts;
@@ -69,6 +71,7 @@ public class BlockedIpService {
         this.audit = audit;
         this.enforcer = enforcer;
         this.threatIntel = threatIntel;
+        this.mlTraining = mlTraining;
     }
 
     /**
@@ -294,8 +297,11 @@ public class BlockedIpService {
                 a.setDescription(merged);
             }
         }
-        alerts.saveAll(open);
-        return open.size();
+        java.util.List<Alert> saved = alerts.saveAll(open);
+        for (Alert alert : saved) {
+            try { mlTraining.archiveAlert(alert); } catch (Exception ignored) {}
+        }
+        return saved.size();
     }
 
     /** Same idea as {@link #autoResolveAlerts} but for Incident rollups. */

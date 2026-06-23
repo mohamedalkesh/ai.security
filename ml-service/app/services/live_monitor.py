@@ -19,12 +19,13 @@ Upgrades over the original single-flow implementation:
 from __future__ import annotations
 
 import logging
+import os
 import queue
 import threading
 import time
 from collections import Counter, deque, defaultdict
 from datetime import datetime, timezone
-from typing import Any, Deque, Dict, List, Optional, Tuple
+from typing import Any, Deque, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -34,10 +35,21 @@ from app.services.mitre import enrich
 logger = logging.getLogger(__name__)
 
 # Tunables ---------------------------------------------------------------
-BATCH_SIZE = 64            # max flows per inference call
-BATCH_INTERVAL_MS = 150    # flush even if batch not full
+BATCH_SIZE = 128           # max flows per inference call (was 64)
+BATCH_INTERVAL_MS = 100    # flush even if batch not full (was 150)
 RATE_WINDOW_SEC = 10       # rolling window for flows/sec and attacks/sec
 HISTORY_SEC = 60           # per-second buckets retained for sparkline
+
+# Parallel classifier workers — scales with CPU count so multi-core machines
+# can drain the queue faster than a single thread allows.
+N_CLASSIFY_WORKERS: int = max(2, (os.cpu_count() or 4) // 2)
+
+# Queue depth — 20K allows bursts of ~47s at 427 flows/s before any drops.
+QUEUE_MAXSIZE: int = 20_000
+
+# Auto-restart — capture thread restarts on non-permission errors.
+CAPTURE_RESTART_MAX: int = 5
+CAPTURE_RESTART_DELAY_SEC: int = 3
 
 # ── Behavioral Baseline tunables ─────────────────────────────────────────────
 # After BASELINE_WARMUP_SEC of monitoring, the system learns each source IP's
@@ -134,10 +146,10 @@ def _is_response_flow(meta: Dict[str, Any]) -> bool:
 # ICMP heuristics mirror AI/pcap_to_features.py defaults so the live
 # monitor surfaces ping floods / sweeps without needing model retraining.
 ICMP_PROTOCOLS = (1, 58)
-ICMP_FLOOD_PKTS = 50       # single-flow packet threshold (ping -f style)
-ICMP_PROBE_THRESHOLD = 5   # single-packet ICMP probes to one dst → flood
-ICMP_SWEEP_HOSTS = 5       # distinct hosts a source must touch → sweep
-ICMP_WINDOW_SEC = 10       # sliding window for probe accounting
+ICMP_FLOOD_PKTS = 15       # single-flow packet threshold — catches normal test pings
+ICMP_PROBE_THRESHOLD = 3   # ICMP flows to one dst within window → flood signal
+ICMP_SWEEP_HOSTS = 3       # distinct hosts a source must touch → sweep
+ICMP_WINDOW_SEC = 15       # sliding window for probe accounting
 
 # Notable application-protocol port map. Used to tag benign flows so
 # the UI can show real network activity (e.g. "an email was sent") even
@@ -338,11 +350,13 @@ class PacketEnricher:
         self._scapy_ok: bool = False
 
     # ------------------------------------------------------------------
-    def start(self, iface: str) -> None:
+    def start(self, iface: Union[str, List[str]]) -> None:
+        self._ifaces = [iface] if isinstance(iface, str) else list(iface)
         self._stop.clear()
+        label = "+".join(self._ifaces)
         self._thread = threading.Thread(
-            target=self._sniff_loop, args=(iface,),
-            name=f"pkt-enricher-{iface}", daemon=True,
+            target=self._sniff_loop, args=(self._ifaces,),
+            name=f"pkt-enricher-{label}", daemon=True,
         )
         self._thread.start()
 
@@ -375,7 +389,7 @@ class PacketEnricher:
             self._ts[key] = now
 
     # ------------------------------------------------------------------
-    def _sniff_loop(self, iface: str) -> None:
+    def _sniff_loop(self, ifaces: Union[str, List[str]]) -> None:
         try:
             from scapy.all import sniff, conf as scapy_conf
             scapy_conf.verb = 0
@@ -392,13 +406,18 @@ class PacketEnricher:
             except Exception:
                 pass
 
+        # Single iface or list — Scapy accepts both.
+        # Filter covers IPv4, IPv6, and ARP so no traffic type is missed.
+        sniff_iface = ifaces if isinstance(ifaces, list) and len(ifaces) > 1 else (
+            ifaces[0] if isinstance(ifaces, list) else ifaces
+        )
         try:
             sniff(
-                iface=iface,
+                iface=sniff_iface,
                 prn=_cb,
                 store=False,
                 stop_filter=lambda _: self._stop.is_set(),
-                filter="ip or arp",
+                filter="ip or ip6 or arp",
             )
         except Exception as exc:
             logger.warning("PacketEnricher sniff error: %s", exc)
@@ -554,25 +573,290 @@ class PacketEnricher:
         return None
 
 
+class ArpIsolator:
+    """Network-wide host isolation via ARP cache poisoning.
+
+    Sends forged ARP replies to both the target host and the default gateway,
+    claiming to be each other.  All LAN traffic from/to the isolated IP is
+    then rerouted through this machine.  Combined with the nftables FORWARD
+    chain drop rules, the isolated host is effectively quarantined from the
+    entire LAN — not just this machine.
+
+    Requires: scapy (already used by PacketEnricher), raw-socket caps
+    (``cap_net_raw`` on the python binary — granted by grant-capture-perms.sh).
+    """
+
+    ARP_INTERVAL = 2.0     # seconds between ARP poison bursts
+    GW_PROBE_TIMEOUT = 3   # seconds to wait for gateway ARP reply
+    MAC_PROBE_TIMEOUT = 2  # seconds to wait for target ARP reply
+
+    def __init__(self) -> None:
+        self._isolated: Dict[str, Dict[str, Any]] = {}
+        self._lock = threading.Lock()
+        self._stop = threading.Event()
+        self._thread: Optional[threading.Thread] = None
+        self._iface: Optional[str] = None
+        self._local_mac: Optional[str] = None
+        self._local_ip: Optional[str] = None
+        self._gateway_ip: Optional[str] = None
+        self._gateway_mac: Optional[str] = None
+        self._scapy_ok: bool = False
+
+    # ── Public API ───────────────────────────────────────────────────────────
+
+    def start(self, iface: str) -> None:
+        self._iface = iface
+        self._stop.clear()
+        self._thread = threading.Thread(
+            target=self._arp_loop, daemon=True, name="arp-isolator",
+        )
+        self._thread.start()
+
+    def stop(self) -> None:
+        self._stop.set()
+
+    def isolate(self, ip: str, reason: str = "") -> bool:
+        """Add *ip* to the isolation set.  Returns True if newly added."""
+        with self._lock:
+            if ip in self._isolated:
+                return False
+            self._isolated[ip] = {
+                "ip": ip,
+                "reason": reason,
+                "isolated_at": datetime.now(timezone.utc).isoformat(),
+                "target_mac": None,
+                "gateway_mac": None,
+                "arp_ok": False,
+            }
+        logger.info("ArpIsolator: isolating %s (%s)", ip, reason or "no reason")
+        return True
+
+    def release(self, ip: str) -> bool:
+        """Remove *ip* from isolation and send gratuitous ARP to restore caches."""
+        with self._lock:
+            info = self._isolated.pop(ip, None)
+        if info is None:
+            return False
+        logger.info("ArpIsolator: releasing %s — restoring ARP caches", ip)
+        try:
+            self._restore_arp(ip, info)
+        except Exception as e:
+            logger.warning("ArpIsolator: ARP restore for %s failed: %s", ip, e)
+        return True
+
+    def list_isolated(self) -> List[Dict[str, Any]]:
+        with self._lock:
+            return list(self._isolated.values())
+
+    # ── Internal loop ────────────────────────────────────────────────────────
+
+    def _arp_loop(self) -> None:
+        try:
+            from scapy.all import get_if_hwaddr, get_if_addr  # noqa
+            self._scapy_ok = True
+        except ImportError:
+            logger.warning("ArpIsolator: scapy not available — network-wide isolation disabled")
+            return
+
+        self._detect_network_info()
+
+        while not self._stop.is_set():
+            with self._lock:
+                targets = list(self._isolated.items())
+
+            for ip, info in targets:
+                try:
+                    self._spoof_arp(ip, info)
+                except Exception as e:
+                    logger.debug("ArpIsolator.spoof(%s): %s", ip, e)
+
+            self._stop.wait(self.ARP_INTERVAL)
+
+    def _detect_network_info(self) -> None:
+        """Detect local MAC/IP and default gateway once at start."""
+        try:
+            from scapy.all import get_if_hwaddr, get_if_addr, srp, Ether
+            from scapy.layers.inet import IP  # noqa
+            try:
+                from scapy.layers.l2 import ARP as ScapyARP
+            except ImportError:
+                from scapy.all import ARP as ScapyARP
+
+            if not self._iface:
+                return
+
+            self._local_mac = get_if_hwaddr(self._iface)
+            self._local_ip  = get_if_addr(self._iface)
+
+            # Find the default gateway via `ip route`
+            import subprocess
+            out = subprocess.run(
+                ["ip", "route", "show", "default"],
+                capture_output=True, text=True, timeout=5,
+            ).stdout
+            for line in out.splitlines():
+                if "default via" in line:
+                    parts = line.split()
+                    idx = parts.index("via")
+                    self._gateway_ip = parts[idx + 1]
+                    break
+
+            # ARP-probe the gateway for its MAC
+            if self._gateway_ip:
+                ans, _ = srp(
+                    Ether(dst="ff:ff:ff:ff:ff:ff") /
+                    ScapyARP(pdst=self._gateway_ip),
+                    iface=self._iface,
+                    timeout=self.GW_PROBE_TIMEOUT,
+                    verbose=False,
+                )
+                for _, rcv in ans:
+                    self._gateway_mac = rcv[Ether].src
+                    break
+
+            logger.info(
+                "ArpIsolator ready: iface=%s local=%s/%s gateway=%s gw_mac=%s",
+                self._iface, self._local_ip, self._local_mac,
+                self._gateway_ip, self._gateway_mac,
+            )
+        except Exception as e:
+            logger.warning("ArpIsolator: network info detection failed: %s", e)
+
+    def _resolve_target_mac(self, ip: str) -> Optional[str]:
+        try:
+            from scapy.all import srp, Ether
+            try:
+                from scapy.layers.l2 import ARP as ScapyARP
+            except ImportError:
+                from scapy.all import ARP as ScapyARP
+
+            ans, _ = srp(
+                Ether(dst="ff:ff:ff:ff:ff:ff") / ScapyARP(pdst=ip),
+                iface=self._iface,
+                timeout=self.MAC_PROBE_TIMEOUT,
+                verbose=False,
+            )
+            for _, rcv in ans:
+                return rcv[Ether].src
+        except Exception:
+            pass
+        return None
+
+    def _spoof_arp(self, ip: str, info: Dict[str, Any]) -> None:
+        """Send one round of forged ARP replies for *ip*."""
+        if not self._local_mac or not self._gateway_ip:
+            return
+
+        from scapy.all import sendp, Ether
+        try:
+            from scapy.layers.l2 import ARP as ScapyARP
+        except ImportError:
+            from scapy.all import ARP as ScapyARP
+
+        # Lazy-resolve target MAC on first attempt
+        if not info.get("target_mac"):
+            mac = self._resolve_target_mac(ip)
+            if mac:
+                info["target_mac"] = mac
+                with self._lock:
+                    if ip in self._isolated:
+                        self._isolated[ip]["target_mac"] = mac
+
+        if not info.get("gateway_mac") and self._gateway_mac:
+            info["gateway_mac"] = self._gateway_mac
+            with self._lock:
+                if ip in self._isolated:
+                    self._isolated[ip]["gateway_mac"] = self._gateway_mac
+
+        packets = []
+        gw_mac  = info.get("gateway_mac") or self._gateway_mac
+
+        # Tell GATEWAY: "IP X has our MAC" → LAN→X traffic comes to us
+        if gw_mac:
+            packets.append(
+                Ether(dst=gw_mac) /
+                ScapyARP(op=2,
+                         pdst=self._gateway_ip, hwdst=gw_mac,
+                         psrc=ip,                hwsrc=self._local_mac)
+            )
+
+        # Tell TARGET: "gateway has our MAC" → X→internet traffic comes to us
+        if info.get("target_mac"):
+            packets.append(
+                Ether(dst=info["target_mac"]) /
+                ScapyARP(op=2,
+                         pdst=ip,               hwdst=info["target_mac"],
+                         psrc=self._gateway_ip, hwsrc=self._local_mac)
+            )
+
+        if packets:
+            sendp(packets, iface=self._iface, verbose=False)
+            with self._lock:
+                if ip in self._isolated:
+                    self._isolated[ip]["arp_ok"] = True
+
+    def _restore_arp(self, ip: str, info: Dict[str, Any]) -> None:
+        """Send correct ARP replies to undo the poisoning for *ip*."""
+        if not self._iface or not self._gateway_ip:
+            return
+
+        try:
+            from scapy.all import sendp, Ether
+            try:
+                from scapy.layers.l2 import ARP as ScapyARP
+            except ImportError:
+                from scapy.all import ARP as ScapyARP
+
+            target_mac = info.get("target_mac")
+            gw_mac     = info.get("gateway_mac") or self._gateway_mac
+
+            packets = []
+            # Restore gateway's cache: "IP X has its real MAC"
+            if gw_mac and target_mac:
+                packets.append(
+                    Ether(dst=gw_mac) /
+                    ScapyARP(op=2,
+                             pdst=self._gateway_ip, hwdst=gw_mac,
+                             psrc=ip,                hwsrc=target_mac)
+                )
+            # Restore target's cache: "gateway has its real MAC"
+            if target_mac and gw_mac:
+                packets.append(
+                    Ether(dst=target_mac) /
+                    ScapyARP(op=2,
+                             pdst=ip,               hwdst=target_mac,
+                             psrc=self._gateway_ip, hwsrc=gw_mac)
+                )
+
+            if packets:
+                # Send 3 times to reliably update ARP caches on both sides
+                for _ in range(3):
+                    sendp(packets, iface=self._iface, verbose=False)
+                    time.sleep(0.1)
+        except Exception as e:
+            logger.debug("ArpIsolator._restore_arp(%s): %s", ip, e)
+
+
 class LiveMonitor:
     """Singleton live-capture monitor with batched inference."""
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
-        self._capture_thread: Optional[threading.Thread] = None
-        self._classify_thread: Optional[threading.Thread] = None
+        self._capture_threads: List[threading.Thread] = []
+        self._classify_threads: List[threading.Thread] = []
         self._stop_evt = threading.Event()
-        self._streamer = None
+        self._streamers: List[Any] = []   # one NFStreamer per interface
         self._enricher = PacketEnricher()
+        self._isolator = ArpIsolator()
         # Explicit running flag — flips False immediately on stop() so the UI
-        # reflects "Stopped" even if the capture thread is still blocked
-        # inside libpcap waiting on a quiet/DOWN interface.
+        # reflects "Stopped" even if capture threads are still blocked inside
+        # libpcap waiting on a quiet/DOWN interface.
         self._running_flag: bool = False
 
-        # Inter-thread queue from capture → classifier
-        self._queue: "queue.Queue[Tuple[Dict[str, float], Dict[str, Any]]]" = queue.Queue(maxsize=5000)
+        # Inter-thread queue from capture → classifier pool
+        self._queue: "queue.Queue[Tuple[Dict[str, float], Dict[str, Any]]]" = queue.Queue(maxsize=QUEUE_MAXSIZE)
 
-        self._iface: Optional[str] = None
+        self._ifaces: List[str] = []
         self._started_at: Optional[float] = None
         self._last_flow_at: Optional[float] = None
         self._error: Optional[str] = None
@@ -580,7 +864,9 @@ class LiveMonitor:
         self._total_flows: int = 0
         self._benign: int = 0
         self._attacks: int = 0
-        self._dropped: int = 0  # queue overflow
+        self._dropped: int = 0        # queue overflow drops
+        self._iface_flows: Counter = Counter()   # per-interface flow count
+        self._iface_errors: Dict[str, str] = {}  # per-interface error messages
 
         # Non-Benign detections pending pickup by the backend
         self._pending: Deque[Dict[str, Any]] = deque(maxlen=2000)
@@ -626,34 +912,37 @@ class LiveMonitor:
         return self._running_flag
 
     # ------------------------------------------------------------------
-    def start(self, iface: str) -> Dict[str, Any]:
-        # Reject DOWN interfaces up-front — capturing on them blocks libpcap
-        # forever with zero packets and gives the user a misleading "running
-        # but no traffic" state.
+    def start(self, iface: Union[str, List[str]]) -> Dict[str, Any]:
+        ifaces = [iface] if isinstance(iface, str) else list(iface)
+
+        # Reject DOWN interfaces up-front.
         try:
-            import psutil  # local import: only needed at start
+            import psutil
             stats = psutil.net_if_stats()
-            info = stats.get(iface)
-            if info is None:
-                raise ValueError(f"Interface '{iface}' not found")
-            if not info.isup:
-                raise ValueError(
-                    f"Interface '{iface}' is DOWN — pick an UP interface "
-                    f"(e.g. one with an IP address) so packets can be captured."
-                )
+            live = []
+            for i in ifaces:
+                info = stats.get(i)
+                if info is None:
+                    raise ValueError(f"Interface '{i}' not found")
+                if not info.isup:
+                    raise ValueError(
+                        f"Interface '{i}' is DOWN — pick an UP interface "
+                        f"(e.g. one with an IP address) so packets can be captured."
+                    )
+                live.append(i)
+            ifaces = live
         except ValueError:
             raise
         except Exception:
-            # psutil missing or transient error — skip the guard rather than block start
             pass
 
         with self._lock:
             if self.running:
                 return self._status_locked()
 
-            ml_service.load()  # ensure model ready before capture starts
+            ml_service.load()
             self._running_flag = True
-            self._iface = iface
+            self._ifaces = ifaces
             self._error = None
             self._started_at = time.time()
             self._last_flow_at = None
@@ -661,6 +950,8 @@ class LiveMonitor:
             self._benign = 0
             self._attacks = 0
             self._dropped = 0
+            self._iface_flows.clear()
+            self._iface_errors.clear()
             self._pending.clear()
             self._recent.clear()
             self._recent_email.clear()
@@ -681,6 +972,9 @@ class LiveMonitor:
             self._stop_evt.clear()
             self._icmp_src_window.clear()
             self._icmp_dst_window.clear()
+            self._streamers.clear()
+            self._capture_threads.clear()
+            self._classify_threads.clear()
 
             # Drain any stale items
             try:
@@ -689,18 +983,33 @@ class LiveMonitor:
             except queue.Empty:
                 pass
 
-            self._enricher.stop()   # reset from any prior session
-            self._enricher.start(iface)
+            self._enricher.stop()
+            self._enricher.start(ifaces)
+            self._isolator.stop()
+            self._isolator.start(ifaces[0])   # ARP runs on first/primary interface
 
-            self._capture_thread = threading.Thread(
-                target=self._capture_loop, name=f"live-capture-{iface}", daemon=True
+            # One capture thread per interface
+            for i in ifaces:
+                t = threading.Thread(
+                    target=self._capture_worker, args=(i,),
+                    name=f"live-capture-{i}", daemon=True,
+                )
+                self._capture_threads.append(t)
+                t.start()
+
+            # N parallel classifier workers sharing the single queue
+            for n in range(N_CLASSIFY_WORKERS):
+                t = threading.Thread(
+                    target=self._classify_loop,
+                    name=f"live-classify-{n}", daemon=True,
+                )
+                self._classify_threads.append(t)
+                t.start()
+
+            logger.info(
+                "LiveMonitor started on %d interface(s): %s — %d classify workers",
+                len(ifaces), ", ".join(ifaces), N_CLASSIFY_WORKERS,
             )
-            self._classify_thread = threading.Thread(
-                target=self._classify_loop, name=f"live-classify-{iface}", daemon=True
-            )
-            self._capture_thread.start()
-            self._classify_thread.start()
-            logger.info("LiveMonitor started on interface %s", iface)
             return self._status_locked()
 
     # ------------------------------------------------------------------
@@ -709,18 +1018,68 @@ class LiveMonitor:
             if not self.running:
                 return self._status_locked()
             self._stop_evt.set()
-            # Flip running off immediately so the UI updates without waiting
-            # for the (possibly libpcap-blocked) capture thread to unwind.
             self._running_flag = False
+            threads = list(self._capture_threads) + list(self._classify_threads)
             logger.info("LiveMonitor stop requested")
         self._enricher.stop()
-        # Best-effort: wait briefly for threads to finish current batch.
-        # Capture thread may stay alive inside libpcap until the next packet
-        # arrives — it's a daemon, so it will be reaped at process exit.
-        for t in (self._classify_thread, self._capture_thread):
-            if t is not None:
-                t.join(timeout=2)
+        self._isolator.stop()
+        # Best-effort: wait briefly for threads to drain.
+        # Capture threads may stay alive inside libpcap until the next packet.
+        for t in threads:
+            t.join(timeout=2)
         return self.status()
+
+    # ------------------------------------------------------------------
+    def _capture_worker(self, iface: str) -> None:
+        """Auto-restart wrapper around _capture_loop.
+
+        Restarts up to CAPTURE_RESTART_MAX times on transient errors.
+        Permission errors are not retried (they won't self-heal).
+        """
+        for attempt in range(CAPTURE_RESTART_MAX + 1):
+            if self._stop_evt.is_set():
+                break
+            try:
+                self._capture_loop(iface)
+            except PermissionError as e:
+                msg = f"Permission denied on {iface}: {e}"
+                with self._lock:
+                    self._iface_errors[iface] = msg
+                    self._error = msg
+                    # All done — permission won't fix itself
+                    if not any(
+                        t.is_alive() for t in self._capture_threads
+                        if t is not threading.current_thread()
+                    ):
+                        self._running_flag = False
+                logger.error(msg)
+                break
+            except Exception as e:
+                if self._stop_evt.is_set():
+                    break
+                logger.warning(
+                    "Capture on %s crashed (attempt %d/%d): %s",
+                    iface, attempt + 1, CAPTURE_RESTART_MAX, e,
+                )
+                if attempt < CAPTURE_RESTART_MAX:
+                    time.sleep(CAPTURE_RESTART_DELAY_SEC)
+                else:
+                    msg = f"Capture on {iface} failed after {CAPTURE_RESTART_MAX} retries: {e}"
+                    with self._lock:
+                        self._iface_errors[iface] = msg
+                        self._error = msg
+                    logger.error(msg)
+            else:
+                # Normal exit (stop_evt was set)
+                break
+
+        # All retries exhausted — flip running if no other capture is alive
+        if not self._stop_evt.is_set():
+            with self._lock:
+                alive = [t for t in self._capture_threads if t.is_alive()
+                         and t is not threading.current_thread()]
+                if not alive:
+                    self._running_flag = False
 
     # ------------------------------------------------------------------
     def _rolling_counts(self, window: int) -> Tuple[int, int]:
@@ -782,9 +1141,28 @@ class LiveMonitor:
             for p, f in self._proto_flows.most_common()
         ]
 
+        # Capture quality: percentage of flows that made it through without drops.
+        # 100% when no drops; degrades as queue overflows under heavy traffic.
+        observed = self._total_flows + self._dropped
+        capture_quality = round(100.0 * self._total_flows / observed, 1) if observed > 0 else 100.0
+
+        # Per-interface breakdown
+        iface_stats = [
+            {
+                "name": i,
+                "flows": int(self._iface_flows.get(i, 0)),
+                "error": self._iface_errors.get(i),
+            }
+            for i in self._ifaces
+        ]
+
         return {
             "running": self.running,
-            "interface": self._iface,
+            # Single-interface compat field (first iface or None)
+            "interface": self._ifaces[0] if self._ifaces else None,
+            "interfaces": list(self._ifaces),
+            "interface_stats": iface_stats,
+            "classify_workers": N_CLASSIFY_WORKERS,
             "started_at": (
                 datetime.fromtimestamp(self._started_at, tz=timezone.utc).isoformat()
                 if self._started_at else None
@@ -794,24 +1172,26 @@ class LiveMonitor:
             "benign": self._benign,
             "attacks": self._attacks,
             "dropped": self._dropped,
+            "capture_quality": capture_quality,   # 0–100 %
             "queue_depth": self._queue.qsize(),
+            "queue_capacity": QUEUE_MAXSIZE,
             "flows_per_sec": round(flows_per_sec, 2),
             "attacks_per_sec": round(attacks_per_sec, 2),
             "bytes_per_sec": round(bytes_per_sec, 2),
             "total_bytes": int(self._total_bytes),
             "flows_last_10s": flows_w,
             "attacks_last_10s": attacks_w,
-            "top_src_ips": top_src,             # [{ip, flows, bytes}, ...]
+            "top_src_ips": top_src,
             "top_dst_ips": top_dst,
-            "protocol_distribution": proto_dist, # [{label, flows, bytes}, ...]
-            "history_bytes": series_bytes,       # 60 ints, oldest first
+            "protocol_distribution": proto_dist,
+            "history_bytes": series_bytes,
             "pending_detections": len(self._pending),
             "recent_detections": list(self._recent),
             "recent_email": list(self._recent_email),
             "recent_app": list(self._recent_app),
             "email_count": self._email_count,
-            "history_flows": series_flows,      # 60 ints, oldest first
-            "history_attacks": series_attacks,  # 60 ints, oldest first
+            "history_flows": series_flows,
+            "history_attacks": series_attacks,
             "error": self._error,
         }
 
@@ -827,6 +1207,19 @@ class LiveMonitor:
             while self._pending and len(out) < limit:
                 out.append(self._pending.popleft())
         return out
+
+    # ------------------------------------------------------------------
+    def isolate_ip(self, ip: str, reason: str = "") -> bool:
+        """Add *ip* to ARP isolation (network-wide quarantine)."""
+        return self._isolator.isolate(ip, reason)
+
+    def release_ip(self, ip: str) -> bool:
+        """Remove *ip* from ARP isolation and restore ARP caches."""
+        return self._isolator.release(ip)
+
+    def list_isolated(self) -> List[Dict[str, Any]]:
+        """Return the list of currently isolated IPs with their metadata."""
+        return self._isolator.list_isolated()
 
     # ------------------------------------------------------------------
     def _check_behavioral_baseline(self, src_ip: str, now: float) -> Optional[Dict]:
@@ -900,11 +1293,8 @@ class LiveMonitor:
             conf = min(0.99, 0.85 + packets / 500.0)
             return "ICMP Flood", conf
 
-        src_pkts = int(meta.get("src2dst_packets") or packets)
-        dst_pkts = int(meta.get("dst2src_packets") or 0)
-        is_probe = packets <= 4 and src_pkts <= 2 and dst_pkts <= 2
-        if not is_probe:
-            return None
+        # Track ALL ICMP flows (not just tiny probes) in sweep/flood windows.
+        # Flows that reached the flood threshold above are already handled.
 
         now = time.time()
         label: Optional[str] = None
@@ -939,30 +1329,16 @@ class LiveMonitor:
     # ==================================================================
     # Capture thread — produces (feature_dict, meta) into the queue
     # ==================================================================
-    def _capture_loop(self) -> None:
+    def _capture_loop(self, iface: str) -> None:
+        """Inner capture loop for one interface.
+
+        Raises PermissionError on permission failure so _capture_worker can
+        distinguish it from transient errors that warrant a retry.
+        """
         try:
             from nfstream import NFStreamer
         except ImportError as e:
-            self._error = f"nfstream not available: {e}"
-            logger.error(self._error)
-            return
-
-        try:
-            # n_dissections=20 enables nDPI protocol dissection:
-            # application_name, requested_server_name (TLS SNI / HTTP Host),
-            # client_fingerprint (JA3), user_agent, content_type, MAC addresses.
-            self._streamer = NFStreamer(
-                source=self._iface,
-                statistical_analysis=True,
-                n_dissections=20,
-                accounting_mode=0,
-                idle_timeout=5,
-                active_timeout=30,
-            )
-        except Exception as e:
-            self._error = f"Failed to open interface '{self._iface}': {e}"
-            logger.error(self._error)
-            return
+            raise RuntimeError(f"nfstream not available: {e}") from e
 
         def _is_perm_error(msg: str) -> bool:
             m = msg.lower()
@@ -984,15 +1360,42 @@ class LiveMonitor:
             )
 
         try:
-            for flow in self._streamer:
+            # promiscuous_mode=True  → see all frames on the segment (not just
+            #   traffic addressed to this host).
+            # snapshot_length=65535  → capture the full packet (no truncation).
+            # accounting_mode=1      → byte counts at IP level (excludes L2 overhead,
+            #   more accurate for network-layer IDS features).
+            # n_meters=2             → two parallel NFStream flow meters, helps on
+            #   busy interfaces with many concurrent flows.
+            # n_dissections=20       → nDPI deep-packet inspection depth.
+            streamer = NFStreamer(
+                source=iface,
+                statistical_analysis=True,
+                n_dissections=20,
+                accounting_mode=1,
+                idle_timeout=2,
+                active_timeout=30,
+                promiscuous_mode=True,
+                snapshot_length=65535,
+                n_meters=2,
+            )
+        except Exception as e:
+            msg = str(e)
+            if _is_perm_error(msg):
+                raise PermissionError(f"Cannot open '{iface}': {msg}\n{_perm_hint()}") from e
+            raise RuntimeError(f"Failed to open interface '{iface}': {e}") from e
+
+        with self._lock:
+            self._streamers.append(streamer)
+
+        try:
+            for flow in streamer:
                 if self._stop_evt.is_set():
                     break
                 try:
                     feat = _nflow_to_feature_dict(flow)
                     meta = _flow_meta(flow)
-                    # Attach Scapy L7 enrichment (DNS, HTTP, TLS SNI, ICMP…).
-                    # server_name from NFStream DPI takes priority; Scapy fills
-                    # gaps (e.g. tls_sni when nDPI confidence is low).
+                    meta["capture_interface"] = iface
                     enrichment = self._enricher.lookup(
                         str(meta.get("src_ip") or ""),
                         str(meta.get("dst_ip") or ""),
@@ -1004,33 +1407,29 @@ class LiveMonitor:
                         if k not in meta or meta[k] is None:
                             meta[k] = v
                     self._queue.put_nowait((feat, meta))
+                    with self._lock:
+                        self._iface_flows[iface] += 1
                 except queue.Full:
-                    # Classifier can't keep up — count the drop instead of blocking capture.
                     with self._lock:
                         self._dropped += 1
                 except Exception as e:
-                    logger.exception("flow enqueue failed: %s", e)
-        except PermissionError as e:
-            self._error = f"Permission denied on {self._iface}: {e}\n{_perm_hint()}"
-            logger.error(self._error)
+                    logger.exception("flow enqueue failed on %s: %s", iface, e)
+        except PermissionError:
+            raise
         except Exception as e:
             msg = str(e)
             if _is_perm_error(msg):
-                self._error = (
-                    f"Cannot capture on '{self._iface}': {msg}\n{_perm_hint()}"
-                )
-                logger.error(self._error)
-            else:
-                self._error = f"Capture loop error: {msg}"
-                logger.exception("Capture loop error")
+                raise PermissionError(f"Cannot capture on '{iface}': {msg}\n{_perm_hint()}") from e
+            raise
         finally:
-            # Always clear the running flag so the UI doesn't get stuck on
-            # "running" if the capture thread exited on its own (permissions,
-            # iface vanished, libpcap error, ...).
-            self._running_flag = False
+            with self._lock:
+                try:
+                    self._streamers.remove(streamer)
+                except ValueError:
+                    pass
             logger.info(
-                "Capture loop exiting — iface=%s, flows=%d, attacks=%d, dropped=%d",
-                self._iface, self._total_flows, self._attacks, self._dropped,
+                "Capture loop exiting — iface=%s, iface_flows=%d, total_flows=%d, dropped=%d",
+                iface, self._iface_flows.get(iface, 0), self._total_flows, self._dropped,
             )
 
     # ==================================================================
@@ -1169,6 +1568,23 @@ class LiveMonitor:
                     mitre_technique = mitre["technique"]
                     mitre_tactic = mitre["tactic"]
                     description = mitre["description"]
+                    # ICMP heuristics have their own accumulation windows —
+                    # skip the generic MIN_REPEAT gate and alert immediately.
+                    added_attacks += 1
+                    self._attacks += 1
+                    detection = {
+                        "predicted": label,
+                        "confidence": confidence,
+                        "severity": severity,
+                        "mitre_technique": mitre_technique,
+                        "mitre_tactic": mitre_tactic,
+                        "description": description,
+                        "detected_at": datetime.now(timezone.utc).isoformat(),
+                        **meta,
+                    }
+                    self._pending.append(detection)
+                    self._recent.append(detection)
+                    continue
 
                 # Behavioral baseline — run on every flow (Benign or not).
                 # If an IP's rate spikes abnormally, surface it even if the

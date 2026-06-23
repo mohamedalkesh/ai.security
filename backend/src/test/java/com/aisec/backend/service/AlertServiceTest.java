@@ -4,7 +4,11 @@ import com.aisec.backend.dto.alert.AlertDto;
 import com.aisec.backend.entity.Alert;
 import com.aisec.backend.entity.AlertStatus;
 import com.aisec.backend.entity.Severity;
+import com.aisec.backend.repository.AlertCommentRepository;
 import com.aisec.backend.repository.AlertRepository;
+import com.aisec.backend.repository.BlockedIpRepository;
+import com.aisec.backend.repository.UserRepository;
+import com.aisec.backend.service.threatintel.ThreatIntelService;
 import com.aisec.backend.websocket.AlertBroadcaster;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -37,6 +41,16 @@ class AlertServiceTest {
 
     @Mock AlertRepository repo;
     @Mock AlertBroadcaster broadcaster;
+    @Mock AlertCommentRepository commentRepo;
+    @Mock UserRepository userRepo;
+    @Mock IncidentService incidents;
+    @Mock GeoIpService geoIp;
+    @Mock AuditService audit;
+    @Mock WebhookService webhooks;
+    @Mock BlockedIpService firewall;
+    @Mock BlockedIpRepository blockedIpRepo;
+    @Mock MlTrainingService mlTraining;
+    @Mock ThreatIntelService threatIntel;
     @InjectMocks AlertService service;
 
     private Alert sampleAlert;

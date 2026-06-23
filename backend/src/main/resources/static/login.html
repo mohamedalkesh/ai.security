@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Sign In — MADRS</title>
+<link rel="stylesheet" href="styles.css"/>
+<link rel="stylesheet" href="login.css"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+<style>
+.input-wrap > i:first-child {
+  position: absolute !important;
+  left: 18px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  pointer-events: none !important;
+  font-size: 14px !important;
+  z-index: 2 !important;
+}
+.input-wrap input,
+.input-wrap select {
+  padding-left: 48px !important;
+}
+</style>
+</head>
+<body class="login-page">
+
+<div class="auth-bg">
+  <div class="grid-overlay"></div>
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <div class="orb orb-3"></div>
+  <canvas id="particles"></canvas>
+</div>
+
+<main class="auth-wrap">
+  <div class="auth-card">
+
+    <!-- Brand -->
+    <div class="auth-brand">
+      <div class="auth-logo">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" class="madrs-svg-icon">
+          <defs>
+            <linearGradient id="lA" x1="20" y1="10" x2="80" y2="90" gradientUnits="userSpaceOnUse">
+              <stop offset="0" stop-color="#2EE8FF"/><stop offset="1" stop-color="#1560FF"/>
+            </linearGradient>
+            <radialGradient id="lB" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#0A1E35"/><stop offset="100%" stop-color="#020C1A"/>
+            </radialGradient>
+            <filter id="glow-lg"><feGaussianBlur stdDeviation="2.5" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          </defs>
+          <polygon points="50,4 91,27 91,73 50,96 9,73 9,27" fill="url(#lB)" stroke="url(#lA)" stroke-width="2.2"/>
+          <polygon points="50,16 80,33 80,67 50,84 20,67 20,33" fill="none" stroke="#22d4ff" stroke-width="1.2" stroke-opacity="0.5"/>
+          <circle cx="50" cy="50" r="24" stroke="#22d4ff" stroke-width="1" stroke-dasharray="6 5" stroke-opacity="0.4"/>
+          <circle cx="50" cy="50" r="15" stroke="#22d4ff" stroke-width="1" stroke-opacity="0.65"/>
+          <path d="M28 50 Q50 30 72 50 Q50 70 28 50Z" stroke="#2EE8FF" stroke-width="2" fill="#071624" filter="url(#glow-lg)"/>
+          <circle cx="50" cy="50" r="10" fill="#0d2640" stroke="#2EE8FF" stroke-width="1.8"/>
+          <circle cx="50" cy="50" r="5" fill="#2EE8FF"/>
+          <circle cx="50" cy="50" r="2.2" fill="#020C1A"/>
+          <circle cx="68" cy="43" r="2.8" fill="#FFB347"/>
+          <circle cx="36" cy="58" r="2.8" fill="#FF4D6D"/>
+          <line x1="50" y1="18" x2="50" y2="12" stroke="#2EE8FF" stroke-width="1.4" stroke-linecap="round" stroke-opacity="0.7"/>
+          <line x1="50" y1="88" x2="50" y2="82" stroke="#2EE8FF" stroke-width="1.4" stroke-linecap="round" stroke-opacity="0.7"/>
+          <line x1="12" y1="50" x2="18" y2="50" stroke="#2EE8FF" stroke-width="1.4" stroke-linecap="round" stroke-opacity="0.7"/>
+          <line x1="88" y1="50" x2="82" y2="50" stroke="#2EE8FF" stroke-width="1.4" stroke-linecap="round" stroke-opacity="0.7"/>
+        </svg>
+        <span class="pulse-ring"></span>
+      </div>
+      <h1>MADRS</h1>
+      <p>Sign in to your security dashboard</p>
+    </div>
+
+    <form class="auth-form" id="loginForm" novalidate>
+
+      <!-- Username -->
+      <div class="field">
+        <label for="username">Username</label>
+        <div class="input-wrap">
+          <i class="fa-solid fa-user"></i>
+          <input id="username" type="text" placeholder="Enter your username" required/>
+        </div>
+      </div>
+
+      <!-- Password -->
+      <div class="field">
+        <label for="password">Password</label>
+        <div class="input-wrap">
+          <i class="fa-solid fa-lock"></i>
+          <input id="password" type="password" placeholder="Enter your password" required/>
+          <button type="button" class="toggle-pass" aria-label="Show password">
+            <i class="fa-solid fa-eye"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Role -->
+      <div class="field">
+        <label for="role">Role</label>
+        <div class="input-wrap select-wrap">
+          <i class="fa-solid fa-user-shield"></i>
+          <select id="role">
+            <option>Administrator</option>
+            <option>Organisation Admin</option>
+            <option>Security Analyst</option>
+            <option>Viewer</option>
+          </select>
+          <i class="fa-solid fa-chevron-down caret"></i>
+        </div>
+      </div>
+
+      <!-- Row -->
+      <div class="row-between">
+        <label class="checkbox">
+          <input type="checkbox"/>
+          <span class="box"></span>
+          Remember me
+        </label>
+        <a href="forgot-password.html" class="link">Forgot Password?</a>
+      </div>
+
+      <!-- Submit -->
+      <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
+        <i class="fa-solid fa-right-to-bracket"></i>
+        <span>Sign In</span>
+      </button>
+
+      <div class="btn-alt-row">
+        <button type="button" class="btn btn-secondary" id="companyRequestBtn">
+          <i class="fa-solid fa-building"></i>
+          <span>Request enterprise access</span>
+        </button>
+      </div>
+
+    </form>
+
+    <p class="auth-note"><i class="fa-solid fa-lock"></i> Secured with end-to-end encryption</p>
+    <a href="index.html" class="back-home"><i class="fa-solid fa-arrow-left"></i> Back to home</a>
+  </div>
+</main>
+
+<div class="modal-overlay" id="companyModal" aria-hidden="true">
+  <div class="company-modal" role="dialog" aria-modal="true" aria-labelledby="companyModalTitle">
+    <button class="modal-close" id="companyModalClose" aria-label="Close request form"><i class="fa-solid fa-xmark"></i></button>
+    <div class="modal-head">
+      <div class="modal-icon"><i class="fa-solid fa-paper-plane"></i></div>
+      <h3 id="companyModalTitle">Request enterprise onboarding</h3>
+      <p>Tell us about your organization and we will reach out via a dedicated email thread.</p>
+    </div>
+    <form id="companyForm" class="company-form">
+      <label>Company / Institution Name
+        <input type="text" id="companyName" placeholder="e.g. Acme Security" required />
+      </label>
+      <label>Primary contact name
+        <input type="text" id="companyContact" placeholder="e.g. Lina Haddad" required />
+      </label>
+      <label>Corporate email
+        <input type="email" id="companyEmail" placeholder="contact@company.com" required />
+      </label>
+      <label>Notes (optional)
+        <textarea id="companyMessage" rows="3" placeholder="Tell us what you need or preferred onboarding timeline"></textarea>
+      </label>
+      <div class="company-form-footer">
+        <span class="company-hint">We will open a support conversation on your behalf.</span>
+        <button type="submit" class="btn btn-primary">Send request</button>
+      </div>
+    </form>
+    <div class="company-form-feedback" id="companyFormFeedback" role="status"></div>
+  </div>
+</div>
+
+<script src="env-config.js"></script>
+<script src="api.js"></script>
+<script src="login.js"></script>
+</body>
+</html>

@@ -47,8 +47,14 @@ public class MlTrainingService {
         r.setDestIp(alert.getDestIp());
         r.setDestPort(alert.getDestPort());
         r.setProtocol(alert.getProtocol());
+        r.setSrcCountry(alert.getSrcCountry());
+        r.setDstCountry(alert.getDstCountry());
         r.setMitreTechnique(alert.getMitreTechnique());
         r.setMitreTactic(alert.getMitreTactic());
+        r.setDescription(alert.getDescription());
+        r.setMlFeedback(alert.getMlFeedback() != null ? alert.getMlFeedback().name() : null);
+        r.setAssignedToUsername(alert.getAssignedTo() != null ? alert.getAssignedTo().getUsername() : null);
+        r.setIncidentId(alert.getIncident() != null ? alert.getIncident().getId() : null);
         r.setFeaturesJson(alert.getExplanation());
         r.setRawFeaturesJson(alert.getRawFeaturesJson());
         r.setAlertCreatedAt(alert.getCreatedAt());
@@ -64,10 +70,33 @@ public class MlTrainingService {
                 || alert.getStatus() == AlertStatus.FALSE_POSITIVE;
         r.setTrueLabel(isFp ? "BENIGN" : "ATTACK");
         r.setResolutionStatus(alert.getStatus().name());
+        applyResponseDecision(r, alert);
 
         repo.save(r);
         log.info("ML training record saved: alert={} label={} type={}",
                 alert.getId(), r.getTrueLabel(), r.getAttackType());
+    }
+
+    private void applyResponseDecision(MlTrainingRecord record, Alert alert) {
+        String description = alert.getDescription() == null ? "" : alert.getDescription();
+        if (description.contains("[firewall:block#")) {
+            String blockId = description.replaceAll(".*\\[firewall:block#([0-9]+)\\].*", "$1");
+            record.setResponseDecision("BLOCKED");
+            record.setResponseAction("Source IP " + alert.getSourceIp() + " was blocked by firewall rule #" + blockId);
+            return;
+        }
+        if (alert.getStatus() == AlertStatus.FALSE_POSITIVE || alert.getMlFeedback() == MlFeedback.FALSE_POSITIVE) {
+            record.setResponseDecision("MARKED_FALSE_POSITIVE");
+            record.setResponseAction("Alert was closed as benign training feedback");
+            return;
+        }
+        if (alert.getStatus() == AlertStatus.RESOLVED) {
+            record.setResponseDecision("RESOLVED");
+            record.setResponseAction("Alert was resolved without a recorded firewall block");
+            return;
+        }
+        record.setResponseDecision(alert.getStatus().name());
+        record.setResponseAction("Current alert status: " + alert.getStatus().name());
     }
 
     public Page<MlTrainingRecord> list(Long orgId, String label, String attackType, int page, int size) {

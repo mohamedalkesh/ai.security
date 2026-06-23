@@ -54,7 +54,7 @@ public class MlTrainingController {
         List<MlTrainingRecord> records = service.listAll(orgId);
 
         StringBuilder sb = new StringBuilder();
-        sb.append("id,alert_id,true_label,attack_type,severity,confidence,source_ip,dest_ip,dest_port,protocol,mitre_technique,mitre_tactic,resolution_status,alert_created_at,resolved_at\n");
+        sb.append("id,alert_id,true_label,attack_type,severity,confidence,source_ip,dest_ip,dest_port,protocol,src_country,dst_country,mitre_technique,mitre_tactic,ml_feedback,assigned_to,incident_id,response_decision,response_action,resolution_status,description,alert_created_at,resolved_at\n");
         for (MlTrainingRecord r : records) {
             sb.append(csv(r.getId())).append(',')
               .append(csv(r.getAlertId())).append(',')
@@ -66,9 +66,17 @@ public class MlTrainingController {
               .append(csv(r.getDestIp())).append(',')
               .append(csv(r.getDestPort())).append(',')
               .append(csv(r.getProtocol())).append(',')
+              .append(csv(r.getSrcCountry())).append(',')
+              .append(csv(r.getDstCountry())).append(',')
               .append(csv(r.getMitreTechnique())).append(',')
               .append(csv(r.getMitreTactic())).append(',')
+              .append(csv(r.getMlFeedback())).append(',')
+              .append(csv(r.getAssignedToUsername())).append(',')
+              .append(csv(r.getIncidentId())).append(',')
+              .append(csv(r.getResponseDecision())).append(',')
+              .append(csv(r.getResponseAction())).append(',')
               .append(csv(r.getResolutionStatus())).append(',')
+              .append(csv(r.getDescription())).append(',')
               .append(r.getAlertCreatedAt() != null ? FMT.format(r.getAlertCreatedAt()) : "").append(',')
               .append(r.getResolvedAt() != null ? FMT.format(r.getResolvedAt()) : "")
               .append('\n');

@@ -38,9 +38,29 @@ public class MlTrainingRecord {
     @Column(length = 64) private String destIp;
     @Column              private Integer destPort;
     @Column(length = 16) private String protocol;
+    @Column(length = 2)  private String srcCountry;
+    @Column(length = 2)  private String dstCountry;
 
     @Column(length = 32) private String mitreTechnique;
     @Column(length = 64) private String mitreTactic;
+
+    @Column(length = 1024)
+    private String description;
+
+    @Column(length = 16)
+    private String mlFeedback;
+
+    @Column(length = 64)
+    private String assignedToUsername;
+
+    @Column
+    private Long incidentId;
+
+    @Column(length = 64)
+    private String responseDecision;
+
+    @Column(length = 1024)
+    private String responseAction;
 
     /** How the alert was closed: RESOLVED or FALSE_POSITIVE. */
     @Column(length = 20)
@@ -84,10 +104,26 @@ public class MlTrainingRecord {
     public void setDestPort(Integer v)        { this.destPort = v; }
     public String getProtocol()               { return protocol; }
     public void setProtocol(String v)         { this.protocol = v; }
+    public String getSrcCountry()             { return srcCountry; }
+    public void setSrcCountry(String v)       { this.srcCountry = v; }
+    public String getDstCountry()             { return dstCountry; }
+    public void setDstCountry(String v)       { this.dstCountry = v; }
     public String getMitreTechnique()         { return mitreTechnique; }
     public void setMitreTechnique(String v)   { this.mitreTechnique = v; }
     public String getMitreTactic()            { return mitreTactic; }
     public void setMitreTactic(String v)      { this.mitreTactic = v; }
+    public String getDescription()            { return description; }
+    public void setDescription(String v)      { this.description = v; }
+    public String getMlFeedback()             { return mlFeedback; }
+    public void setMlFeedback(String v)       { this.mlFeedback = v; }
+    public String getAssignedToUsername()     { return assignedToUsername; }
+    public void setAssignedToUsername(String v) { this.assignedToUsername = v; }
+    public Long getIncidentId()               { return incidentId; }
+    public void setIncidentId(Long v)         { this.incidentId = v; }
+    public String getResponseDecision()       { return responseDecision; }
+    public void setResponseDecision(String v) { this.responseDecision = v; }
+    public String getResponseAction()         { return responseAction; }
+    public void setResponseAction(String v)   { this.responseAction = v; }
     public String getResolutionStatus()       { return resolutionStatus; }
     public void setResolutionStatus(String v) { this.resolutionStatus = v; }
     public String getFeaturesJson()           { return featuresJson; }
